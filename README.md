@@ -4,7 +4,7 @@ Install node
 Install android studio to get the Android Immulator or you can use your phone
 Install java version 23
 
-## Step1 : tfvaYou must navigate first to
+## Step1 : You must navigate first to
 
 ```
 C:\Users\Bluewind\AppData\Local\Android\Sdk\emulator>
