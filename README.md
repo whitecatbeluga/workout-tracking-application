@@ -1,7 +1,9 @@
 # Requirements
 
 Install node
+
 Install android studio to get the Android Immulator or you can use your phone
+
 Install java version 23
 
 ## Step1 : You must navigate first to
