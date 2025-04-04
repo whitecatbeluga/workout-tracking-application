@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from "react-native";
 import React, { useEffect } from "react";
-import { icon } from "@/constants/NavBarIcons";
+import { icon } from "@/constants/nav-bar-icon";
 import Animated, {
   interpolate,
   useAnimatedStyle,
