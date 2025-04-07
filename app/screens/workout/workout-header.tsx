@@ -1,15 +1,20 @@
-import { View, StyleSheet, SafeAreaView, Button } from "react-native";
 import React from "react";
-import AddExercise from "@/components/add-exercise-button";
+import { BtnTitle, CustomBtn, Icon } from "@/components/custom-btn";
 
 const WorkoutHeader = () => {
-  return <AddExercise/>;
+  const handlePress = () => {
+    console.log("Workout Started");
+  };
+
+  return (
+    <CustomBtn
+      onPress={() => console.log("Button Pressed")}
+      buttonStyle={{ width: "90%", borderRadius: 50 }}
+    >
+      <Icon name="add" iconLibrary="Ionicons" />
+      <BtnTitle title="Start Empty Workout" />
+    </CustomBtn>
+  );
 };
 
 export default WorkoutHeader;
-
-const styles = StyleSheet.create({
-  addExerciseBtn: {
-    marginTop: 10,
-  },
-});
