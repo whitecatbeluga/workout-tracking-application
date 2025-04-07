@@ -45,7 +45,7 @@ const TabLayout = () => {
           ),
         }}
       />
-      <Tabs.Screen name="workout" options={{ title: "Workout" }} />
+      <Tabs.Screen name="workout" options={{ headerShown:false}} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
