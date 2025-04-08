@@ -1,38 +1,38 @@
-import AntDesign from "@expo/vector-icons/AntDesign";
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import React, { forwardRef, useCallback, useMemo, useRef } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import Styles from "@/app/screens/profile/styles";
 
-const DrawerFilter = () => {
+interface Props {
+  title: string;
+}
+
+type RefType = BottomSheet | null;
+
+const BottomSheetFilter = forwardRef<RefType, Props>((props, ref) => {
+  // snap points
+  const snapPoints = useMemo(() => ["25%", "50%"], []);
+
+  // callbacks
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log("handleSheetChanges", index);
+  }, []);
+
+  // renders
   return (
-    <View>
-      <TouchableOpacity style={styles.tabButton}>
-        <Text
-          style={{
-            color: "#006A71",
-          }}
-        >
-          Last 3 Months
-        </Text>
-        <AntDesign name="circledowno" size={18} color="#006A71" />
-      </TouchableOpacity>
-    </View>
+    <BottomSheet
+      ref={ref}
+      index={-1} // default hidden
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      enablePanDownToClose={true}
+    >
+      <BottomSheetView style={Styles.bottomSheetContentContainer}>
+        <Text>Awesome 🎉</Text>
+      </BottomSheetView>
+    </BottomSheet>
   );
-};
-
-const styles = StyleSheet.create({
-  profileName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  profileInfo: {
-    fontSize: 12,
-    color: "gray",
-  },
-
-  tabButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
 });
 
-export default DrawerFilter;
+export default BottomSheetFilter;

@@ -1,12 +1,25 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react";
+import { View, Text, TouchableOpacity, Image } from "react-native";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 
 // imported components
 import BarGraph from "./components/bar-graph";
-import DrawerFilter from "./components/drawer-filter";
+import BottomSheetFilter from "./components/drawer-filter";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import ImageView from "react-native-image-viewing";
+
+import Styles from "@/app/screens/profile/styles";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
+
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const handleOpenBottomSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
+
+  const [visible, setIsVisible] = useState(false);
 
   const graphDataMap: Record<string, any> = {
     Duration: {
@@ -36,20 +49,32 @@ const ProfilePage = () => {
   ];
 
   return (
-    <View>
+    <View style={{ padding: 20, flex: 1 }}>
       {/* profile avatar and info */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Image
-          source={{ uri: "https://avatar.iran.liara.run/public/41" }}
-          style={styles.profileImage}
+        <TouchableOpacity onPress={() => setIsVisible(true)}>
+          <Image
+            source={{ uri: "https://avatar.iran.liara.run/public/41" }}
+            style={Styles.profileImage}
+          />
+        </TouchableOpacity>
+        <ImageView
+          images={[{ uri: "https://avatar.iran.liara.run/public/41" }]}
+          imageIndex={0}
+          visible={visible}
+          onRequestClose={() => setIsVisible(false)}
+          onLongPress={() => setIsVisible(false)}
+          swipeToCloseEnabled={true}
+          doubleTapToZoomEnabled={true}
+          backgroundColor="rgba(0, 0, 0, 0.5)"
         />
         <View>
           <Text style={{ fontSize: 20, fontWeight: "bold" }}>John Doe</Text>
           <View style={{ marginTop: 10, flexDirection: "row" }}>
             {profileInfo.map((info, index) => (
               <View key={index} style={{ marginRight: 20 }}>
-                <Text style={styles.profileInfo}>{info.label}</Text>
-                <Text style={styles.profileInfoCount}>{info.count}</Text>
+                <Text style={Styles.profileInfo}>{info.label}</Text>
+                <Text style={Styles.profileInfoCount}>{info.count}</Text>
               </View>
             ))}
           </View>
@@ -66,10 +91,22 @@ const ProfilePage = () => {
         }}
       >
         <View style={{ marginVertical: 20 }}>
-          <Text style={styles.profileName}>12 Hours</Text>
-          <Text style={styles.profileInfo}>Last Week</Text>
+          <Text style={Styles.profileName}>12 Hours</Text>
+          <Text style={Styles.profileInfo}>Last Week</Text>
         </View>
-        <DrawerFilter />
+        <TouchableOpacity
+          style={Styles.drawerButton}
+          onPress={handleOpenBottomSheet}
+        >
+          <Text
+            style={{
+              color: "#006A71",
+            }}
+          >
+            Last 3 Months
+          </Text>
+          <AntDesign name="circledowno" size={18} color="#006A71" />
+        </TouchableOpacity>
       </View>
 
       {/* chart */}
@@ -79,20 +116,20 @@ const ProfilePage = () => {
       />
 
       {/* buttons */}
-      <View style={styles.tabContainer}>
+      <View style={Styles.tabContainer}>
         {tabLabels.map((label) => (
           <TouchableOpacity
             key={label}
             style={[
-              styles.tabButton,
-              activeTab === label && styles.tabButtonActive,
+              Styles.tabButton,
+              activeTab === label && Styles.tabButtonActive,
             ]}
             onPress={() => setActiveTab(label)}
           >
             <Text
               style={[
-                styles.tabText,
-                activeTab === label && styles.tabTextActive,
+                Styles.tabText,
+                activeTab === label && Styles.tabTextActive,
               ]}
             >
               {label}
@@ -100,52 +137,10 @@ const ProfilePage = () => {
           </TouchableOpacity>
         ))}
       </View>
+
+      <BottomSheetFilter title="Sample" ref={bottomSheetRef} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  profileImage: {
-    width: 80,
-    height: 80,
-    marginRight: 20,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  profileInfo: {
-    fontSize: 12,
-    color: "gray",
-  },
-  profileInfoCount: {
-    fontSize: 14,
-    color: "black",
-  },
-
-  // bar tabs
-  tabContainer: {
-    flexDirection: "row",
-    marginBottom: 10,
-    gap: 10,
-  },
-  tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: "#eee",
-    borderRadius: 20,
-  },
-  tabButtonActive: {
-    backgroundColor: "#006A71",
-  },
-  tabText: {
-    color: "#333",
-    fontWeight: "500",
-  },
-  tabTextActive: {
-    color: "white",
-    fontWeight: "bold",
-  },
-});
 
 export default ProfilePage;

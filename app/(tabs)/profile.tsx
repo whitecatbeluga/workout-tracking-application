@@ -14,7 +14,6 @@ export default Profile;
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
-    margin: 20,
+    flex: 1,
   },
 });
