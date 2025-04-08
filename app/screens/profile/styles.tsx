@@ -47,7 +47,6 @@ const Styles = StyleSheet.create({
   // bottom sheet
   bottomSheetContainer: {
     flex: 1,
-    backgroundColor: "red",
   },
   bottomSheetContentContainer: {
     flex: 1,
@@ -58,6 +57,27 @@ const Styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+  },
+
+  // dashboard buttons
+  dashboardContainer: {
+    gap: 10,
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  dashboardButton: {
+    width: "100%",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#48A6A7",
+    borderRadius: 12,
+  },
+  dashboardButtonActive: {
+    backgroundColor: "#006A71",
+  },
+  dashboardButtonText: {
+    color: "white",
+    fontWeight: "500",
   },
 });
 
