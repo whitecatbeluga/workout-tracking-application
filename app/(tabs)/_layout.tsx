@@ -1,4 +1,11 @@
-import React, { useState, useMemo, useContext, createContext, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useContext,
+  createContext,
+  useRef,
+  useEffect,
+} from "react";
 import { Tabs } from "expo-router";
 import { TabBar } from "@/components/tab-bar";
 import { Ionicons } from "@expo/vector-icons"; // Importing icons from Expo
@@ -43,11 +50,18 @@ const CustomTabBar = (props: BottomTabBarProps) => {
 
 const TabLayout = () => {
   const [isTabVisible, setTabVisible] = useState(true);
-  const contextValue = useMemo(() => ({ isTabVisible, setTabVisible }), [isTabVisible]);
+  const contextValue = useMemo(
+    () => ({ isTabVisible, setTabVisible }),
+    [isTabVisible]
+  );
 
   return (
     <TabVisibilityContext.Provider value={contextValue}>
-      <Tabs tabBar={(props) => <CustomTabBar {...props} />}>
+      <Tabs
+        tabBar={(props: React.JSX.IntrinsicAttributes & BottomTabBarProps) => (
+          <CustomTabBar {...props} />
+        )}
+      >
         <Tabs.Screen
           name="index"
           options={{
@@ -55,6 +69,7 @@ const TabLayout = () => {
             headerTitleStyle: {
               fontSize: 12,
             },
+            tabBarLabel: "Home",
             headerLeft: () => (
               <View style={styles.avatarContainer}>
                 {/* Circular Avatar Image */}
@@ -86,7 +101,10 @@ const TabLayout = () => {
             ),
           }}
         />
-        <Tabs.Screen name="workout" options={{ headerShown: false }} />
+        <Tabs.Screen
+          name="workout"
+          options={{ headerShown: false, tabBarLabel: "Workout" }}
+        />
         <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       </Tabs>
     </TabVisibilityContext.Provider>
