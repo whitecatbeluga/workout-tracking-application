@@ -10,6 +10,8 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Styles from "./screens/profile/styles";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -35,9 +37,11 @@ export default function RootLayout() {
 
   return (
     <>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
+      <GestureHandlerRootView style={Styles.bottomSheetContainer}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
+      </GestureHandlerRootView>
       <StatusBar style="auto" />
     </>
   );
