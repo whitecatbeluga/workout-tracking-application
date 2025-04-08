@@ -4,11 +4,36 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 // imported components
 import BarGraph from "./components/bar-graph";
 import BottomSheetFilter from "./components/drawer-filter";
+import DashboardButtons from "./components/dashboard-buttons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import ImageView from "react-native-image-viewing";
 
 import Styles from "@/app/screens/profile/styles";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { ScrollView } from "react-native-gesture-handler";
+
+const routeNames = [
+  {
+    routeName: "Calendar",
+    routeUrl: "/screens/profile/dashboard-screens/calendar",
+  },
+  {
+    routeName: "Exercise",
+    routeUrl: "/screens/profile/dashboard-screens/exercises",
+  },
+  {
+    routeName: "Mesures",
+    routeUrl: "/screens/profile/dashboard-screens/measures",
+  },
+  {
+    routeName: "Routines",
+    routeUrl: "/screens/profile/dashboard-screens/routines",
+  },
+  {
+    routeName: "Statistics",
+    routeUrl: "/screens/profile/dashboard-screens/statistics",
+  },
+];
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
@@ -49,95 +74,110 @@ const ProfilePage = () => {
   ];
 
   return (
-    <View style={{ padding: 20, flex: 1 }}>
-      {/* profile avatar and info */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <TouchableOpacity onPress={() => setIsVisible(true)}>
-          <Image
-            source={{ uri: "https://avatar.iran.liara.run/public/41" }}
-            style={Styles.profileImage}
+    <View style={{ paddingHorizontal: 20, flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        {/* profile avatar and info */}
+        <View
+          style={{ marginTop: 20, flexDirection: "row", alignItems: "center" }}
+        >
+          <TouchableOpacity onPress={() => setIsVisible(true)}>
+            <Image
+              source={{ uri: "https://avatar.iran.liara.run/public/41" }}
+              style={Styles.profileImage}
+            />
+          </TouchableOpacity>
+          <ImageView
+            images={[{ uri: "https://avatar.iran.liara.run/public/41" }]}
+            imageIndex={0}
+            visible={visible}
+            onRequestClose={() => setIsVisible(false)}
+            onLongPress={() => setIsVisible(false)}
+            swipeToCloseEnabled={true}
+            doubleTapToZoomEnabled={true}
+            backgroundColor="rgba(0, 0, 0, 0.5)"
           />
-        </TouchableOpacity>
-        <ImageView
-          images={[{ uri: "https://avatar.iran.liara.run/public/41" }]}
-          imageIndex={0}
-          visible={visible}
-          onRequestClose={() => setIsVisible(false)}
-          onLongPress={() => setIsVisible(false)}
-          swipeToCloseEnabled={true}
-          doubleTapToZoomEnabled={true}
-          backgroundColor="rgba(0, 0, 0, 0.5)"
-        />
-        <View>
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>John Doe</Text>
-          <View style={{ marginTop: 10, flexDirection: "row" }}>
-            {profileInfo.map((info, index) => (
-              <View key={index} style={{ marginRight: 20 }}>
-                <Text style={Styles.profileInfo}>{info.label}</Text>
-                <Text style={Styles.profileInfoCount}>{info.count}</Text>
-              </View>
-            ))}
+          <View>
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>John Doe</Text>
+            <View style={{ marginTop: 10, flexDirection: "row" }}>
+              {profileInfo.map((info, index) => (
+                <View key={index} style={{ marginRight: 20 }}>
+                  <Text style={Styles.profileInfo}>{info.label}</Text>
+                  <Text style={Styles.profileInfoCount}>{info.count}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* drawer filter */}
-
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <View style={{ marginVertical: 20 }}>
-          <Text style={Styles.profileName}>12 Hours</Text>
-          <Text style={Styles.profileInfo}>Last Week</Text>
-        </View>
-        <TouchableOpacity
-          style={Styles.drawerButton}
-          onPress={handleOpenBottomSheet}
+        {/* drawer filter */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
-          <Text
-            style={{
-              color: "#006A71",
-            }}
-          >
-            Last 3 Months
-          </Text>
-          <AntDesign name="circledowno" size={18} color="#006A71" />
-        </TouchableOpacity>
-      </View>
-
-      {/* chart */}
-      <BarGraph
-        graphData={graphDataMap[activeTab]}
-        ySuffixLabel={graphDataMap[activeTab].ySuffixLabel}
-      />
-
-      {/* buttons */}
-      <View style={Styles.tabContainer}>
-        {tabLabels.map((label) => (
+          <View style={{ marginVertical: 20 }}>
+            <Text style={Styles.profileName}>12 Hours</Text>
+            <Text style={Styles.profileInfo}>Last Week</Text>
+          </View>
           <TouchableOpacity
-            key={label}
-            style={[
-              Styles.tabButton,
-              activeTab === label && Styles.tabButtonActive,
-            ]}
-            onPress={() => setActiveTab(label)}
+            style={Styles.drawerButton}
+            onPress={handleOpenBottomSheet}
           >
             <Text
-              style={[
-                Styles.tabText,
-                activeTab === label && Styles.tabTextActive,
-              ]}
+              style={{
+                color: "#006A71",
+              }}
             >
-              {label}
+              Last 3 Months
             </Text>
+            <AntDesign name="circledowno" size={18} color="#006A71" />
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
+        {/* chart */}
+        <BarGraph
+          graphData={graphDataMap[activeTab]}
+          ySuffixLabel={graphDataMap[activeTab].ySuffixLabel}
+        />
+
+        {/* filter graph buttons */}
+        <View style={Styles.tabContainer}>
+          {tabLabels.map((label) => (
+            <TouchableOpacity
+              key={label}
+              style={[
+                Styles.tabButton,
+                activeTab === label && Styles.tabButtonActive,
+              ]}
+              onPress={() => setActiveTab(label)}
+            >
+              <Text
+                style={[
+                  Styles.tabText,
+                  activeTab === label && Styles.tabTextActive,
+                ]}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* dashboard */}
+        <View style={Styles.dashboardContainer}>
+          {routeNames.map((routes) => (
+            <DashboardButtons
+              key={routes.routeName}
+              routeName={routes.routeName}
+              routeUrl={routes.routeUrl}
+            />
+          ))}
+        </View>
+
+        {/* dashboard buttons */}
+      </ScrollView>
       <BottomSheetFilter title="Sample" ref={bottomSheetRef} />
     </View>
   );
