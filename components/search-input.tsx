@@ -53,10 +53,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "gray",
-    borderRadius: 25,
+    backgroundColor: "#D9D9D9",
+    borderRadius: 10,
     paddingHorizontal: 10,
-    height: 40,
+    height: 48,
     marginVertical: 10,
   },
   input: {
@@ -64,10 +64,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 0,
     paddingLeft: 10,
-    color: "#FFFFFF",
   },
   icon: {
-    marginRight: 10,
-    color: "#FFFFFF",
+    // marginRight: 10,
   },
 });
