@@ -28,10 +28,9 @@ const TabBarButton = ({
   const iconName = routeName as keyof typeof icon;
   const scale = useSharedValue(0);
   useEffect(() => {
-    scale.value = withSpring(
-      typeof isFocused === "boolean" ? (isFocused ? 1 : 0) : isFocused,
-      { duration: 350 }
-    );
+    scale.value = withSpring(typeof isFocused === "boolean" ? (isFocused ? 1 : 0) : isFocused, {
+      duration: 350,
+    });
   }, [scale, isFocused]);
 
   const animateIconStyle = useAnimatedStyle(() => {
@@ -51,17 +50,11 @@ const TabBarButton = ({
   });
 
   return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={styles.tabBarItem}
-    >
+    <Pressable onPress={onPress} onLongPress={onLongPress} style={styles.tabBarItem}>
       <Animated.View style={animateIconStyle}>
-        {icon[iconName]({ color: isFocused ? color : "#222" })}
+        {icon[iconName](isFocused, { color: isFocused ? "#48A6A7" : "#222" })}
       </Animated.View>
-      <Animated.Text
-        style={[{ color: isFocused ? color : "#222" }, animatedTextStyle]}
-      >
+      <Animated.Text style={[{ color: isFocused ? "#48A6A7" : "#222" }, animatedTextStyle]}>
         {label}
       </Animated.Text>
     </Pressable>
