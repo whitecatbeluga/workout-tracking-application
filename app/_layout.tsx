@@ -40,6 +40,10 @@ export default function RootLayout() {
       <GestureHandlerRootView style={Styles.bottomSheetContainer}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="screens/profile"
+            options={{ headerShown: false }}
+          />
         </Stack>
       </GestureHandlerRootView>
       <StatusBar style="auto" />

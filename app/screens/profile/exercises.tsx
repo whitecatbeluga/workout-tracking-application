@@ -1,11 +1,11 @@
 import React from "react";
 import { Text, View } from "react-native";
 
-const Exercises = () => {
+const ExercisesScreen = () => {
   return (
     <View>
       <Text>Exercises Screen</Text>
     </View>
   );
 };
-export default Exercises;
+export default ExercisesScreen;

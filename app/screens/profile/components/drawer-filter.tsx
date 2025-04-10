@@ -15,7 +15,7 @@ type RefType = BottomSheet | null;
 
 const BottomSheetFilter = forwardRef<RefType, Props>((props, ref) => {
   // snap points
-  const snapPoints = useMemo(() => ["25%", "50%"], []);
+  const snapPoints = useMemo(() => ["25%", "50%", "75%"], []);
 
   // callbacks
   const handleSheetChanges = useCallback((index: number) => {
