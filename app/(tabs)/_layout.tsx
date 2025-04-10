@@ -1,15 +1,8 @@
-import React, {
-  useState,
-  useMemo,
-  useContext,
-  createContext,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useMemo, useContext, createContext, useRef, useEffect } from "react";
 import { Tabs } from "expo-router";
 import { TabBar } from "@/components/tab-bar";
 import { Ionicons } from "@expo/vector-icons"; // Importing icons from Expo
-import { Image, View, StyleSheet, Animated } from "react-native"; // Importing Image and View for styling
+import { Image, View, StyleSheet, Animated, TouchableOpacity } from "react-native"; // Importing Image and View for styling
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
 const TabVisibilityContext = createContext({
@@ -50,10 +43,7 @@ const CustomTabBar = (props: BottomTabBarProps) => {
 
 const TabLayout = () => {
   const [isTabVisible, setTabVisible] = useState(true);
-  const contextValue = useMemo(
-    () => ({ isTabVisible, setTabVisible }),
-    [isTabVisible]
-  );
+  const contextValue = useMemo(() => ({ isTabVisible, setTabVisible }), [isTabVisible]);
 
   return (
     <TabVisibilityContext.Provider value={contextValue}>
@@ -67,9 +57,11 @@ const TabLayout = () => {
           options={{
             headerTitle: "John Doe Smith",
             headerTitleStyle: {
-              fontSize: 12,
+              fontSize: 16,
+              fontFamily: "Inter_600SemiBold",
             },
             tabBarLabel: "Home",
+            tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
             headerLeft: () => (
               <View style={styles.avatarContainer}>
                 {/* Circular Avatar Image */}
@@ -84,26 +76,35 @@ const TabLayout = () => {
             headerRight: () => (
               <React.Fragment>
                 {/* Search Icon */}
-                <Ionicons
-                  name="search-outline"
-                  size={24}
-                  color="black"
-                  style={{ marginRight: 10 }}
-                />
+                <TouchableOpacity>
+                  <Ionicons
+                    name="search-outline"
+                    size={24}
+                    color="black"
+                    style={{ marginRight: 10 }}
+                  />
+                </TouchableOpacity>
+
                 {/* Bell Icon */}
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color="black"
-                  style={{ marginRight: 10 }}
-                />
+                <TouchableOpacity>
+                  <Ionicons
+                    name="notifications-outline"
+                    size={24}
+                    color="black"
+                    style={{ marginRight: 10 }}
+                  />
+                </TouchableOpacity>
               </React.Fragment>
             ),
           }}
         />
         <Tabs.Screen
           name="workout"
-          options={{ headerShown: false, tabBarLabel: "Workout" }}
+          options={{
+            headerShown: false,
+            tabBarLabel: "Workout",
+            tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
+          }}
         />
         <Tabs.Screen name="profile" options={{ title: "Profile" }} />
       </Tabs>

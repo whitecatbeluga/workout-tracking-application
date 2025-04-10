@@ -12,6 +12,7 @@ import {
 import React, { useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
+import { useRouter } from "expo-router";
 
 type PostItem = {
   id: string;
@@ -25,6 +26,9 @@ type PostItem = {
   postedPicture: any;
   likes: string;
   comments: string;
+  date: string;
+  sets: string;
+  records: string;
 };
 
 const data: PostItem[] = [
@@ -40,6 +44,9 @@ const data: PostItem[] = [
     postedPicture: require("../../../assets/images/legday.png"),
     likes: "20 Likes",
     comments: "0 comments",
+    date: "Tuesday, April 1, 2025 - 9:55am",
+    sets: "2",
+    records: "1",
   },
   {
     id: "2",
@@ -47,12 +54,15 @@ const data: PostItem[] = [
     active: "5 hours ago",
     postTitle: "Push day!",
     description: "No pain no gain",
-    profilePicture: require("../../../assets/images/guy1.png"),
+    profilePicture: require("../../../assets/images/Pull day.png"),
     time: "30 min",
     volume: "4,780 kg",
     postedPicture: require("../../../assets/images/legday.png"),
     likes: "25 Likes",
     comments: "4 comments",
+    date: "Wednesday, April 2, 2025 - 11:55am",
+    sets: "4",
+    records: "2",
   },
 ];
 
@@ -60,6 +70,7 @@ const HomeScreen = () => {
   const [activeButton, setActiveButton] = useState<"following" | "discover">("discover");
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [seeAllButton, setSeeAllButton] = useState(false);
+  const router = useRouter();
 
   const toggleLike = (postId: string) => {
     setLikedPosts((prev) => ({
@@ -164,43 +175,70 @@ const HomeScreen = () => {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={{ paddingVertical: 6 }}>
-                <View style={{ paddingHorizontal: 16 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <TouchableOpacity
-                      style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
-                    >
-                      <Image style={styles.profileImage} source={item.profilePicture} />
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/screens/home/view-post",
+                      params: {
+                        id: item.id,
+                        name: item.name,
+                        postTitle: item.postTitle,
+                        description: item.description,
+                        time: item.time,
+                        volume: item.volume,
+                        likes: item.likes,
+                        comments: item.comments,
+                        date: item.date,
+                        profilePicture: item.profilePicture,
+                        postedPicture: item.postedPicture,
+                        sets: item.sets,
+                        records: item.records,
+                        isLiked: likedPosts[item.id] ? "true" : "false",
+                      },
+                    })
+                  }
+                >
+                  <View style={{ paddingHorizontal: 16 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      <TouchableOpacity
+                        style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+                      >
+                        <Image style={styles.profileImage} source={item.profilePicture} />
+                        <View>
+                          <Text style={styles.name}>{item.name}</Text>
+                          <Text style={styles.active}>{item.active}</Text>
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={{ flexDirection: "row" }}>
+                        <Ionicons name="add-outline" size={20} color="#48A6A7" />
+                        <Text style={styles.followButton}>Follow</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.postTitle}>{item.postTitle}</Text>
+                    <Text style={styles.postDescription}>{item.description}</Text>
+                    <View style={{ flexDirection: "row", gap: 40 }}>
                       <View>
-                        <Text style={styles.name}>{item.name}</Text>
-                        <Text style={styles.active}>{item.active}</Text>
+                        <Text style={styles.timevolume}>Time</Text>
+                        <Text style={styles.itemTimeVolume}>{item.time}</Text>
                       </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{ flexDirection: "row" }}>
-                      <Ionicons name="add-outline" size={20} color="#48A6A7" />
-                      <Text style={styles.followButton}>Follow</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.postTitle}>{item.postTitle}</Text>
-                  <Text style={styles.postDescription}>{item.description}</Text>
-                  <View style={{ flexDirection: "row", gap: 40 }}>
-                    <View>
-                      <Text style={styles.timevolume}>Time</Text>
-                      <Text style={styles.itemTimeVolume}>{item.time}</Text>
-                    </View>
-                    <View>
-                      <Text style={styles.timevolume}>Volume</Text>
-                      <Text style={styles.itemTimeVolume}>{item.volume}</Text>
+                      <View>
+                        <Text style={styles.timevolume}>Volume</Text>
+                        <Text style={styles.itemTimeVolume}>{item.volume}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-
-                <View style={{ alignItems: "center" }}>
-                  <Image style={styles.postedPicture} source={item.postedPicture} />
-                </View>
+                  <View style={{ alignItems: "center" }}>
+                    <Image style={styles.postedPicture} source={item.postedPicture} />
+                  </View>
+                </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
-                  <Text style={styles.likesText}>{item.likes}</Text>
-                  <Text style={styles.likesText}>{item.comments}</Text>
+                  <TouchableOpacity>
+                    <Text style={styles.likesText}>{item.likes}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity>
+                    <Text style={styles.likesText}>{item.comments}</Text>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.likeCommentShareContainer}>
@@ -332,8 +370,8 @@ const styles = StyleSheet.create({
     color: "#48A6A7",
   },
   postTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    fontSize: 16,
   },
   postDescription: {
     fontFamily: "Inter_400Regular",

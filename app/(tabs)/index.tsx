@@ -4,7 +4,7 @@ import HomeScreen from "../screens/home/index";
 
 const Home = () => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <HomeScreen />
     </View>
   );
