@@ -34,7 +34,6 @@ type BarGraphProps = {
 const BarGraph = ({ graphData, ySuffixLabel }: BarGraphProps) => {
   return (
     <View style={{ gap: 10 }}>
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>Graph Progress</Text>
       <BarChart
         data={graphData}
         width={screenWidth - 40}

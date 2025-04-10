@@ -1,37 +1,47 @@
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import { Href } from "expo-router";
 
 // imported components
 import BarGraph from "./components/bar-graph";
 import BottomSheetFilter from "./components/drawer-filter";
 import DashboardButtons from "./components/dashboard-buttons";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import ImageView from "react-native-image-viewing";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 import Styles from "@/app/screens/profile/styles";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 
-const routeNames = [
+const routeNames: {
+  routeName: string;
+  routeUrl: Href;
+  routeIcon: keyof typeof Ionicons.glyphMap;
+}[] = [
   {
-    routeName: "Calendar",
-    routeUrl: "/screens/profile/dashboard-screens/calendar",
+    routeName: "Statistics",
+    routeUrl: "/screens/profile/statistics",
+    routeIcon: "stats-chart",
   },
   {
     routeName: "Exercise",
-    routeUrl: "/screens/profile/dashboard-screens/exercises",
+    routeUrl: "/screens/profile/exercises",
+    routeIcon: "barbell",
   },
   {
-    routeName: "Mesures",
-    routeUrl: "/screens/profile/dashboard-screens/measures",
+    routeName: "Measures",
+    routeUrl: "/screens/profile/measures",
+    routeIcon: "analytics",
   },
   {
     routeName: "Routines",
-    routeUrl: "/screens/profile/dashboard-screens/routines",
+    routeUrl: "/screens/profile/routines",
+    routeIcon: "book",
   },
   {
-    routeName: "Statistics",
-    routeUrl: "/screens/profile/dashboard-screens/statistics",
+    routeName: "Calendar",
+    routeUrl: "/screens/profile/calendar",
+    routeIcon: "calendar",
   },
 ];
 
@@ -67,59 +77,145 @@ const ProfilePage = () => {
   const tabLabels = Object.keys(graphDataMap);
 
   const profileInfo = [
-    { label: "Workouts", count: 2 },
-    { label: "Routines", count: 10 },
-    { label: "Followers", count: 5 },
-    { label: "Following", count: 5 },
+    { label: "Followers", count: 152 },
+    { label: "Following", count: 52 },
+  ];
+
+  const cards = [
+    { label: "Total Exercises", value: 56, unit: "exercises" },
+    { label: "Total Workouts", value: 12, unit: "workouts" },
   ];
 
   return (
-    <View style={{ paddingHorizontal: 20, flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {/* profile avatar and info */}
         <View
-          style={{ marginTop: 20, flexDirection: "row", alignItems: "center" }}
+          style={{
+            marginHorizontal: 20,
+
+            marginTop: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          <TouchableOpacity onPress={() => setIsVisible(true)}>
-            <Image
-              source={{ uri: "https://avatar.iran.liara.run/public/41" }}
-              style={Styles.profileImage}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <TouchableOpacity onPress={() => setIsVisible(true)}>
+              <Image
+                source={{ uri: "https://avatar.iran.liara.run/public/41" }}
+                style={Styles.profileImage}
+              />
+            </TouchableOpacity>
+            <ImageView
+              images={[{ uri: "https://avatar.iran.liara.run/public/41" }]}
+              imageIndex={0}
+              visible={visible}
+              onRequestClose={() => setIsVisible(false)}
+              onLongPress={() => setIsVisible(false)}
+              swipeToCloseEnabled={true}
+              doubleTapToZoomEnabled={true}
+              backgroundColor="rgba(0, 0, 0, 0.5)"
             />
-          </TouchableOpacity>
-          <ImageView
-            images={[{ uri: "https://avatar.iran.liara.run/public/41" }]}
-            imageIndex={0}
-            visible={visible}
-            onRequestClose={() => setIsVisible(false)}
-            onLongPress={() => setIsVisible(false)}
-            swipeToCloseEnabled={true}
-            doubleTapToZoomEnabled={true}
-            backgroundColor="rgba(0, 0, 0, 0.5)"
-          />
-          <View>
-            <Text style={{ fontSize: 20, fontWeight: "bold" }}>John Doe</Text>
-            <View style={{ marginTop: 10, flexDirection: "row" }}>
-              {profileInfo.map((info, index) => (
-                <View key={index} style={{ marginRight: 20 }}>
-                  <Text style={Styles.profileInfo}>{info.label}</Text>
-                  <Text style={Styles.profileInfoCount}>{info.count}</Text>
-                </View>
-              ))}
+            <View style={{ flexDirection: "column" }}>
+              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                John Smith Doe
+              </Text>
+              <Text style={{ fontSize: 14, fontWeight: "regular" }}>
+                john@email.com
+              </Text>
             </View>
+          </View>
+          <View style={{ gap: 10, flexDirection: "row" }}>
+            {profileInfo.map((info, index) => (
+              <View key={index}>
+                <Text style={Styles.profileInfoCount}>{info.count}</Text>
+                <Text style={Styles.profileInfo}>{info.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* exercises and workout */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 10,
+            justifyContent: "space-between",
+            marginHorizontal: 20,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              marginVertical: 20,
+              gap: 10,
+              justifyContent: "space-between",
+            }}
+          >
+            {cards.map((card, index) => (
+              <View
+                key={index}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 6,
+                  alignItems: "flex-start",
+                  backgroundColor: "white",
+                  borderRadius: 8,
+                  width: "48%",
+                  elevation: 2,
+                }}
+              >
+                <Text
+                  style={{ fontSize: 14, fontWeight: "600", color: "#626262" }}
+                >
+                  {card.label}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "baseline",
+                    gap: 5,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 32,
+                      fontWeight: "700",
+                      color: "#323232",
+                    }}
+                  >
+                    {card.value}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: "#626262",
+                    }}
+                  >
+                    {card.unit}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
 
         {/* drawer filter */}
         <View
           style={{
+            marginHorizontal: 20,
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
+            marginBottom: 20,
           }}
         >
-          <View style={{ marginVertical: 20 }}>
-            <Text style={Styles.profileName}>12 Hours</Text>
-            <Text style={Styles.profileInfo}>Last Week</Text>
+          <View>
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+              Graph Progress
+            </Text>
           </View>
           <TouchableOpacity
             style={Styles.drawerButton}
@@ -128,11 +224,13 @@ const ProfilePage = () => {
             <Text
               style={{
                 color: "#006A71",
+                fontSize: 14,
+                fontWeight: "bold",
               }}
             >
               Last 3 Months
             </Text>
-            <AntDesign name="circledowno" size={18} color="#006A71" />
+            <Ionicons name="chevron-down" size={20} color="#006A71" />
           </TouchableOpacity>
         </View>
 
@@ -172,6 +270,7 @@ const ProfilePage = () => {
               key={routes.routeName}
               routeName={routes.routeName}
               routeUrl={routes.routeUrl}
+              routeIcon={routes.routeIcon}
             />
           ))}
         </View>
