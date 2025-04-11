@@ -1,54 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { Text, View, TouchableOpacity } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import WorkoutCard from "./components/workout-card";
 import ProgressRing from "./components/progress-ring";
-
-const workoutFrequencyCards = [
-  { count: 20, label: "This week", recentCount: 5, unit: "exercises" },
-  { count: 45, label: "This week", recentCount: 10, unit: "workouts" },
-];
-
-const volumeOverTimeCards = [
-  { count: 69, label: "Total Reps", recentCount: 5, unit: "reps", length: 3 },
-  { count: 79, label: "Weight Lifted", recentCount: 2, unit: "kg", length: 3 },
-  { count: 35, label: "Total Sets", recentCount: 23, unit: "sets", length: 3 },
-];
-
-const workoutSummaryDetails = [
-  {
-    count: 4,
-    label: "Total Workouts",
-    unit: "workouts",
-    ellipse_color: "#006A71",
-  },
-  {
-    count: { hours: 6, min: 24 },
-    label: "Total Duration",
-    unit: { hours: "hr", min: "min" },
-    ellipse_color: "#449196",
-  },
-  {
-    count: 59,
-    label: "Total Volume",
-    unit: "kg",
-    ellipse_color: "#66A5A9",
-  },
-];
-
-const data = {
-  labels: ["Swim", "Bike", "Run"], // optional
-
-  datasets: [{ data: [0.4, 0.6, 0.8] }],
-  ySuffixLabel: "",
-};
-
-const routineUsageData = [
-  { name: "Push Day", total_uses: 19, last_used: "2023-10-01" },
-  { name: "Pull Day", total_uses: 15, last_used: "2023-10-01" },
-  { name: "Legs & Core", total_uses: 6, last_used: "2023-10-01" },
-  { name: "Mobility Flow", total_uses: 2, last_used: "2023-10-01" },
-];
 
 type HeaderProps = {
   title: string;
@@ -57,7 +11,7 @@ type HeaderProps = {
 
 const Header = ({ title, isFilter }: HeaderProps) => {
   return (
-    <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+    <View>
       <View
         style={{
           flexDirection: "row",
@@ -87,7 +41,11 @@ const Header = ({ title, isFilter }: HeaderProps) => {
 const StatisticsScreen = () => {
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* workout frequency cards*/}
         <Header title="Workout Frequency" isFilter={true} />
         <View
@@ -95,7 +53,6 @@ const StatisticsScreen = () => {
             flexDirection: "row",
             gap: 10,
             justifyContent: "space-between",
-            marginHorizontal: 20,
           }}
         >
           <View
@@ -118,7 +75,7 @@ const StatisticsScreen = () => {
             flexDirection: "row",
             gap: 10,
             justifyContent: "space-between",
-            marginHorizontal: 20,
+            marginBottom: 20,
           }}
         >
           <View
@@ -228,8 +185,8 @@ const StatisticsScreen = () => {
             flexDirection: "row",
             gap: 10,
             justifyContent: "space-between",
-            marginHorizontal: 20,
             marginTop: 10,
+            marginBottom: 20,
           }}
         >
           <View
@@ -253,7 +210,6 @@ const StatisticsScreen = () => {
             flexDirection: "row",
             gap: 10,
             justifyContent: "space-between",
-            marginHorizontal: 20,
             marginTop: 10,
           }}
         >
@@ -368,6 +324,50 @@ const StatisticsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({});
-
 export default StatisticsScreen;
+
+const workoutFrequencyCards = [
+  { count: 20, label: "This week", recentCount: 5, unit: "exercises" },
+  { count: 45, label: "This week", recentCount: 10, unit: "workouts" },
+];
+
+const volumeOverTimeCards = [
+  { count: 69, label: "Total Reps", recentCount: 5, unit: "reps", length: 3 },
+  { count: 79, label: "Weight Lifted", recentCount: 2, unit: "kg", length: 3 },
+  { count: 35, label: "Total Sets", recentCount: 23, unit: "sets", length: 3 },
+];
+
+const workoutSummaryDetails = [
+  {
+    count: 4,
+    label: "Total Workouts",
+    unit: "workouts",
+    ellipse_color: "#006A71",
+  },
+  {
+    count: { hours: 6, min: 24 },
+    label: "Total Duration",
+    unit: { hours: "hr", min: "min" },
+    ellipse_color: "#449196",
+  },
+  {
+    count: 59,
+    label: "Total Volume",
+    unit: "kg",
+    ellipse_color: "#66A5A9",
+  },
+];
+
+const data = {
+  labels: ["Swim", "Bike", "Run"], // optional
+
+  datasets: [{ data: [0.4, 0.6, 0.8] }],
+  ySuffixLabel: "",
+};
+
+const routineUsageData = [
+  { name: "Push Day", total_uses: 19, last_used: "2023-10-01" },
+  { name: "Pull Day", total_uses: 15, last_used: "2023-10-01" },
+  { name: "Legs & Core", total_uses: 6, last_used: "2023-10-01" },
+  { name: "Mobility Flow", total_uses: 2, last_used: "2023-10-01" },
+];

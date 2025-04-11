@@ -1,56 +1,17 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  forwardRef,
+  useCallback,
+} from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ScrollView, TextInput } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
-
-const workoutCardDetails = [
-  {
-    name: "Full Body Workout",
-    description: "A comprehensive workout targeting all major muscle groups.",
-    duration: 60,
-    intensity: "High",
-    volume: 5,
-    sets: 3,
-    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
-  },
-  {
-    name: "Cardio Blast",
-    description: "A high-intensity cardio workout to improve endurance.",
-    duration: 45,
-    intensity: "Medium",
-    volume: 3,
-    sets: 4,
-    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
-  },
-  {
-    name: "Strength Training",
-    description: "Focus on building muscle strength with compound movements.",
-    duration: 75,
-    intensity: "High",
-    volume: 4,
-    sets: 5,
-    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
-  },
-  {
-    name: "Yoga Flow",
-    description:
-      "A relaxing yoga session to improve flexibility and mindfulness.",
-    duration: 30,
-    intensity: "Low",
-    volume: 6,
-    sets: 2,
-    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
-  },
-  {
-    name: "HIIT Challenge",
-    description: "A short but intense workout to maximize calorie burn.",
-    duration: 20,
-    intensity: "Very High",
-    volume: 8,
-    sets: 3,
-    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
-  },
-];
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 
 type CardWorkoutInfoProps = {
   label: string;
@@ -70,11 +31,20 @@ const CardWorkoutInfo = ({ label, value }: CardWorkoutInfoProps) => {
   );
 };
 
-const Card = ({ card }: any) => {
+type CardProps = {
+  card: any;
+  handleOpenBottomSheet?: () => void;
+  isEditable: boolean;
+};
+
+export const Card = ({
+  card,
+  handleOpenBottomSheet,
+  isEditable,
+}: CardProps) => {
   return (
     <View
       style={{
-        marginHorizontal: 20,
         marginTop: 20,
         backgroundColor: "#fff",
         borderRadius: 8,
@@ -114,14 +84,20 @@ const Card = ({ card }: any) => {
           </Text>
         ))}
       </View>
-      <EditButton />
+      {isEditable && handleOpenBottomSheet && (
+        <EditButton handleOpenBottomSheet={handleOpenBottomSheet} />
+      )}
     </View>
   );
 };
 
-const EditButton = () => {
+type EditButtonProps = {
+  handleOpenBottomSheet: () => void;
+};
+
+const EditButton = ({ handleOpenBottomSheet }: EditButtonProps) => {
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={handleOpenBottomSheet}>
       <View
         style={{
           backgroundColor: "#48A6A7",
@@ -138,18 +114,62 @@ const EditButton = () => {
   );
 };
 
+interface Props {
+  title: string;
+}
+
+type RefType = BottomSheet | null;
+
+const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
+  const snapPoints = useMemo(() => ["25%", "50%", "85%"], []);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log("handleSheetChanges", index);
+  }, []);
+
+  return (
+    <BottomSheet
+      ref={ref}
+      index={-1} // default hidden
+      snapPoints={snapPoints}
+      onChange={handleSheetChanges}
+      enablePanDownToClose={true}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          pressBehavior="close"
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+        />
+      )}
+    >
+      <BottomSheetView style={{}}>
+        <Text>Awesome 🎉</Text>
+      </BottomSheetView>
+    </BottomSheet>
+  );
+});
+
 const WorkoutsCard = () => {
   const [text, setText] = useState("");
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const handleOpenBottomSheet = () => {
+    bottomSheetRef.current?.expand();
+  };
+
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* search input */}
         <View
           style={{
             flex: 1,
             justifyContent: "center",
-            marginHorizontal: 20,
-            marginTop: 20,
           }}
         >
           <Ionicons
@@ -177,10 +197,74 @@ const WorkoutsCard = () => {
 
         {/* workout cards */}
         {workoutCardDetails.map((card, index) => (
-          <Card key={index} card={card} />
+          <Card
+            key={index}
+            card={card}
+            handleOpenBottomSheet={handleOpenBottomSheet}
+            isEditable={true}
+          />
         ))}
       </ScrollView>
+      <EditWorkoutBottomSheet title="Sample" ref={bottomSheetRef} />
     </View>
   );
 };
 export default WorkoutsCard;
+
+const workoutCardDetails = [
+  {
+    name: "Full Body Workout",
+    description: "A comprehensive workout targeting all major muscle groups.",
+    duration: 60,
+    intensity: "High",
+    volume: 5,
+    sets: 3,
+    exercises: [
+      "1 Set Air Bike",
+      "2 Set Burpees",
+      "3 Set Jumping Jacks",
+      "4 Set Mountain Climbers",
+      "5 Set Plank Jacks",
+      "6 Set High Knees",
+      "7 Set Squat Jumps",
+      "8 Set Push-Ups",
+    ],
+  },
+  {
+    name: "Cardio Blast",
+    description: "A high-intensity cardio workout to improve endurance.",
+    duration: 45,
+    intensity: "Medium",
+    volume: 3,
+    sets: 4,
+    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
+  },
+  {
+    name: "Strength Training",
+    description: "Focus on building muscle strength with compound movements.",
+    duration: 75,
+    intensity: "High",
+    volume: 4,
+    sets: 5,
+    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
+  },
+  {
+    name: "Yoga Flow",
+    description:
+      "A relaxing yoga session to improve flexibility and mindfulness.",
+    duration: 30,
+    intensity: "Low",
+    volume: 6,
+    sets: 2,
+    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
+  },
+  {
+    name: "HIIT Challenge",
+    description: "A short but intense workout to maximize calorie burn.",
+    duration: 20,
+    intensity: "Very High",
+    volume: 8,
+    sets: 3,
+    exercises: ["1 Set Air Bike", "2 Set Burpees", "3 Set Jumping Jacks"],
+  },
+];

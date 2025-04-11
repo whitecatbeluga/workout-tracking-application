@@ -25,7 +25,6 @@ const Styles = StyleSheet.create({
   tabContainer: {
     flexDirection: "row",
     marginBottom: 10,
-    marginHorizontal: 20,
 
     gap: 10,
     justifyContent: "space-between",
@@ -69,15 +68,13 @@ const Styles = StyleSheet.create({
   dashboardContainer: {
     gap: 6,
     justifyContent: "space-between",
-    marginBottom: 20,
-    marginHorizontal: 20,
   },
   dashboardButton: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: 9,
     borderRadius: 12,
   },
   dashboardButtonActive: {
