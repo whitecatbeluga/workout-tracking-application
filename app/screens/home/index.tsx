@@ -17,6 +17,8 @@ import { useRouter } from "expo-router";
 type PostItem = {
   id: string;
   name: string;
+  fullName: string;
+  email: string;
   active: string;
   postTitle: string;
   description: string;
@@ -35,6 +37,8 @@ const data: PostItem[] = [
   {
     id: "1",
     name: "mima79",
+    fullName: "John Smith Doe",
+    email: "mima@gmail.com",
     active: "2 hours ago",
     postTitle: "Leg Day!",
     description: "No skip leg day",
@@ -51,6 +55,8 @@ const data: PostItem[] = [
   {
     id: "2",
     name: "luffy",
+    fullName: "Monkey D. Luffy",
+    email: "luffykaizoku@gmail.com",
     active: "5 hours ago",
     postTitle: "Push day!",
     description: "No pain no gain",
@@ -182,6 +188,8 @@ const HomeScreen = () => {
                       params: {
                         id: item.id,
                         name: item.name,
+                        fullName: item.fullName,
+                        email: item.email,
                         postTitle: item.postTitle,
                         description: item.description,
                         time: item.time,
@@ -202,6 +210,29 @@ const HomeScreen = () => {
                     <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                       <TouchableOpacity
                         style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/screens/home/visit-profile",
+                            params: {
+                              id: item.id,
+                              name: item.name,
+                              postTitle: item.postTitle,
+                              description: item.description,
+                              time: item.time,
+                              volume: item.volume,
+                              likes: item.likes,
+                              comments: item.comments,
+                              date: item.date,
+                              profilePicture: item.profilePicture,
+                              postedPicture: item.postedPicture,
+                              sets: item.sets,
+                              records: item.records,
+                              fullName: item.fullName,
+                              email: item.email,
+                              isLiked: likedPosts[item.id] ? "true" : "false",
+                            },
+                          })
+                        }
                       >
                         <Image style={styles.profileImage} source={item.profilePicture} />
                         <View>

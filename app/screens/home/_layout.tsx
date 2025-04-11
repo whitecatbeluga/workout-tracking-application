@@ -14,6 +14,17 @@ export default function HomeLayout() {
           },
         }}
       />
+      <Stack.Screen
+        name="visit-profile"
+        options={({ route }: { route: any }) => ({
+          title: route.params?.name ?? "Profile",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        })}
+      />
     </Stack>
   );
 }
