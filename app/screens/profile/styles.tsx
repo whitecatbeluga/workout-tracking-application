@@ -87,6 +87,8 @@ const Styles = StyleSheet.create({
     color: "#323232",
     fontWeight: "500",
   },
+
+  // statistics
 });
 
 export default Styles;

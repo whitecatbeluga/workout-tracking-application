@@ -12,6 +12,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import Styles from "@/app/screens/profile/styles";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
+import WorkoutCard from "./components/workout-card";
 
 const routeNames: {
   routeName: string;
@@ -24,8 +25,8 @@ const routeNames: {
     routeIcon: "stats-chart",
   },
   {
-    routeName: "Exercise",
-    routeUrl: "/screens/profile/exercises",
+    routeName: "Workouts",
+    routeUrl: "/screens/profile/workouts",
     routeIcon: "barbell",
   },
   {
@@ -82,8 +83,8 @@ const ProfilePage = () => {
   ];
 
   const cards = [
-    { label: "Total Exercises", value: 56, unit: "exercises" },
-    { label: "Total Workouts", value: 12, unit: "workouts" },
+    { count: 56, label: "Total Exercises", unit: "exercises" },
+    { count: 12, label: "Total Workouts", unit: "workouts" },
   ];
 
   return (
@@ -154,50 +155,7 @@ const ProfilePage = () => {
             }}
           >
             {cards.map((card, index) => (
-              <View
-                key={index}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 6,
-                  alignItems: "flex-start",
-                  backgroundColor: "white",
-                  borderRadius: 8,
-                  width: "48%",
-                  elevation: 2,
-                }}
-              >
-                <Text
-                  style={{ fontSize: 14, fontWeight: "600", color: "#626262" }}
-                >
-                  {card.label}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "baseline",
-                    gap: 5,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 32,
-                      fontWeight: "700",
-                      color: "#323232",
-                    }}
-                  >
-                    {card.value}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: "#626262",
-                    }}
-                  >
-                    {card.unit}
-                  </Text>
-                </View>
-              </View>
+              <WorkoutCard key={index} card={card} />
             ))}
           </View>
         </View>
