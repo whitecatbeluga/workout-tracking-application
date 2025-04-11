@@ -89,13 +89,14 @@ const ProfilePage = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* profile avatar and info */}
         <View
           style={{
-            marginHorizontal: 20,
-
-            marginTop: 20,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
@@ -143,7 +144,6 @@ const ProfilePage = () => {
             flexDirection: "row",
             gap: 10,
             justifyContent: "space-between",
-            marginHorizontal: 20,
           }}
         >
           <View
@@ -163,7 +163,6 @@ const ProfilePage = () => {
         {/* drawer filter */}
         <View
           style={{
-            marginHorizontal: 20,
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
