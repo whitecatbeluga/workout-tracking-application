@@ -1,11 +1,13 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import PostCard from "./postCard";
 import { useState } from "react";
 
 const ViewPostScreen = () => {
   const {
     name,
+    fullName,
+    email,
     postTitle,
     description,
     time,
@@ -20,72 +22,31 @@ const ViewPostScreen = () => {
     isLiked,
   } = useLocalSearchParams();
 
-  const liked = isLiked === "true";
+  const toString = (value: string | string[] | undefined): string =>
+    typeof value === "string" ? value : value?.[0] || "";
+
+  const [liked, setLiked] = useState(isLiked === "true");
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={{ padding: 20 }}>
-        <TouchableOpacity style={styles.profilePicContainer}>
-          <Image style={styles.profileImage} source={profilePicture} />
-          <View>
-            <Text style={styles.name}>{name}</Text>
-            <Text style={styles.active}>{date}</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={{ marginVertical: 10 }}>
-          <Text style={styles.postTitle}>{postTitle}</Text>
-          <Text style={styles.postDescription}>{description}</Text>
-        </View>
-        <View style={{ flexDirection: "row", gap: 46 }}>
-          <View>
-            <Text style={styles.tvsr}>Time</Text>
-            <Text>{time}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Volume</Text>
-            <Text>{volume}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Sets</Text>
-            <Text>{sets}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Records</Text>
-            <Text>{records}</Text>
-          </View>
-        </View>
-      </View>
-      <View>
-        <Image style={styles.postedPicture} source={postedPicture} />
-      </View>
-      <View style={styles.likesContainer}>
-        <TouchableOpacity>
-          <Text style={styles.likesText}>{likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.likesText}>{comments}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View>
-        <View style={styles.likeCommentShareContainer}>
-          <TouchableOpacity>
-            <Ionicons
-              style={styles.icons}
-              name={liked ? "thumbs-up-sharp" : "thumbs-up-outline"}
-              size={24}
-              color={liked ? "#48A6A7" : "#606060"}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons style={styles.icons} name="chatbubble-outline" size={24} color="#606060" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons style={styles.icons} name="share-outline" size={24} color="#606060" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
+      <PostCard
+        name={toString(name)}
+        fullName={toString(fullName)}
+        email={toString(email)}
+        date={toString(date)}
+        postTitle={toString(postTitle)}
+        description={toString(description)}
+        time={toString(time)}
+        volume={toString(volume)}
+        sets={toString(sets)}
+        records={toString(records)}
+        profilePicture={profilePicture}
+        postedPicture={postedPicture}
+        likes={toString(likes)}
+        comments={toString(comments)}
+        liked={liked}
+        onLikePress={() => setLiked(!liked)}
+      />
       <View style={{ paddingHorizontal: 16 }}>
         <Text style={styles.workoutTitle}>Workout</Text>
         <Text style={styles.workoutName}>Standing Military Press (Barbell)</Text>
@@ -155,68 +116,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-  },
-  profileImage: {
-    height: 50,
-    width: 50,
-    borderRadius: 50,
-  },
-  name: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: "#000000",
-  },
-  active: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: "#A7A7A7",
-  },
-  profilePicContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  postTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
-  },
-  postDescription: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-  },
-  tvsr: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: "#555555",
-  },
-  postedPicture: {
-    width: "100%",
-    height: 300,
-    resizeMode: "cover",
-  },
-  likesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  likesText: {
-    fontFamily: "Inter_400Regular",
-    color: "#555555",
-    fontSize: 12,
-  },
-  likeCommentShareContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#898989",
-    borderTopWidth: 0.5,
-    borderTopColor: "#898989",
-    marginBottom: 10,
-  },
-  icons: {
-    elevation: 1,
   },
   workoutTitle: {
     fontFamily: "Inter_400Regular",
