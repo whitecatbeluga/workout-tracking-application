@@ -13,7 +13,10 @@ export const login = createAsyncThunk(
   "auth/login",
   async (data: LoginFormData, thunkApi) => {
     try {
-      const response = await axiosIntance.post("/auth/login", data);
+      const response = await axiosIntance.post(`/auth/login`, data, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
       await AsyncStorage.setItem("loggedIn", "true");
       return response.data;
     } catch (error) {
@@ -58,8 +61,11 @@ export const refreshToken = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
   try {
+    console.log("test1");
     const response = await axiosIntance.post("/auth/logout");
+    console.log("response", response);
     await AsyncStorage.removeItem("loggedIn");
+    console.log("test2");
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;
@@ -165,6 +171,7 @@ const authSlice = createSlice({
       state.access_token = null;
       state.user = null;
       state.error = null;
+      console.log("Logout successful");
     });
     builder.addCase(logout.rejected, (state) => {
       state.loading = Loading.Rejected;

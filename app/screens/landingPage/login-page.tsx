@@ -1,8 +1,26 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { LoginFormData } from "@/custom-types/form-data-type";
+import { useRouter } from "expo-router";
+import { login } from "../../../redux/auth-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const LoginPage = () => {
+  const router = useRouter();
+
+  const dispatch = useAppDispatch();
+
+  const { loading, error, access_token } = useAppSelector(
+    (state) => state.auth
+  );
+
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -12,9 +30,15 @@ const LoginPage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleLogin = () => {
-    console.log("Login pressed", formData);
+  const handleLogin = async () => {
+    await dispatch(login(formData));
   };
+
+  useEffect(() => {
+    if (access_token) {
+      router.replace("/(tabs)");
+    }
+  }, [access_token]);
 
   return (
     <View style={styles.container}>
@@ -34,6 +58,8 @@ const LoginPage = () => {
         autoCapitalize="none"
         secureTextEntry
       />
+      {error && <Text style={{ color: "red" }}>{error}</Text>}
+
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
