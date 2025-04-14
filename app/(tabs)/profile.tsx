@@ -1,10 +1,17 @@
 import { View, Text, StyleSheet } from "react-native";
 import React from "react";
+import ProfilePage from "../screens/profile";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { ScrollView } from "react-native-gesture-handler";
 
 const Profile = () => {
   return (
     <View style={styles.container}>
-      <Text>Profile</Text>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={["top"]}>
+          <ProfilePage />
+        </SafeAreaView>
+      </SafeAreaProvider>
     </View>
   );
 };
@@ -14,7 +21,5 @@ export default Profile;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
