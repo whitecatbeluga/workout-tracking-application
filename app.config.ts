@@ -41,7 +41,7 @@ export default {
       typedRoutes: true,
     },
     extra: {
-      API_URL: process.env.API_URL,
+      API_URL: process.env.API_URL || "http://192.168.0.137:8080",
     },
   },
 };

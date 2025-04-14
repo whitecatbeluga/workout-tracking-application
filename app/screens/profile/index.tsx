@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Href } from "expo-router";
+import { Href, useRouter } from "expo-router";
 
 // imported components
 import BarGraph from "./components/bar-graph";
@@ -13,6 +13,8 @@ import Styles from "@/app/screens/profile/styles";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import WorkoutCard from "./components/workout-card";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { logout } from "@/redux/auth-slice";
 
 const routeNames: {
   routeName: string;
@@ -50,9 +52,20 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
 
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const appDispatch = useAppDispatch();
+  const router = useRouter();
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.expand();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await appDispatch(logout());
+      router.push("/screens/landingPage/login-page");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   const [visible, setIsVisible] = useState(false);
@@ -231,6 +244,11 @@ const ProfilePage = () => {
             />
           ))}
         </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* dashboard buttons */}
       </ScrollView>
@@ -240,3 +258,24 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    alignItems: "center",
+    marginBottom: 100,
+  },
+  button: {
+    backgroundColor: "gray",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+});

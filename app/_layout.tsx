@@ -12,6 +12,9 @@ import {
 } from "@expo-google-fonts/inter";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Styles from "./screens/profile/styles";
+import { store } from "@/redux/store";
+import { Provider } from "react-redux";
+import { setupAxiosInstance } from "@/utils/axios-instance";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -31,22 +34,37 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    setupAxiosInstance(store);
+  }, []);
+
   if (!loaded) {
     return null;
   }
 
   return (
     <>
-      <GestureHandlerRootView style={Styles.bottomSheetContainer}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="screens/home" options={{ headerShown: false }} />
-          <Stack.Screen name="screens/profile" options={{ headerShown: false }} />
-          <Stack.Screen name="screens/landingPage" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
-      </GestureHandlerRootView>
-      <StatusBar style="auto" />
+      <Provider store={store}>
+        <GestureHandlerRootView style={Styles.bottomSheetContainer}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="screens/home"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="screens/profile"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="screens/landingPage"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+          </Stack>
+        </GestureHandlerRootView>
+        <StatusBar style="auto" />
+      </Provider>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { RootState } from "@/redux/store";
 import axios, { type AxiosInstance } from "axios";
-import { type Store, configureStore } from "@reduxjs/toolkit";
+import { type Store } from "@reduxjs/toolkit";
 import Constants from "expo-constants";
 import { refreshUserToken } from "../services/api";
 import { setAccessToken } from "@/redux/auth-slice";
@@ -30,10 +30,12 @@ export const setupAxiosInstance = (store: Store<RootState>) => {
       return response;
     },
     async (error) => {
+      console.log("error in axios", error);
       const previousRequest = error.config;
+      console.log("error.response", error.response);
       if (
-        error.response.status === 403 &&
-        error.respnse.dat.message != "PermissionError"
+        error.response?.status === 403 &&
+        error.response?.data?.message !== "PermissionError"
       ) {
         try {
           const tokenResponse = await refreshUserToken();

@@ -9,10 +9,13 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { refreshToken } from "@/redux/auth-slice";
 
 type PostItem = {
   id: string;
@@ -73,10 +76,26 @@ const data: PostItem[] = [
 ];
 
 const HomeScreen = () => {
-  const [activeButton, setActiveButton] = useState<"following" | "discover">("discover");
+  const appDispatch = useAppDispatch();
+
+  const [activeButton, setActiveButton] = useState<"following" | "discover">(
+    "discover"
+  );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [seeAllButton, setSeeAllButton] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const verifyRefreshToken = async () => {
+      const isLoggedIn = AsyncStorage.getItem("loggedIn");
+      if (await isLoggedIn) {
+        await appDispatch(refreshToken());
+      }
+      console.log("isLoggedIn", isLoggedIn);
+    };
+    console.log("hi");
+    void verifyRefreshToken();
+  }, []);
 
   const toggleLike = (postId: string) => {
     setLikedPosts((prev) => ({
@@ -105,7 +124,9 @@ const HomeScreen = () => {
         onPress={() => setSeeAllButton(!seeAllButton)}
         style={{ alignItems: "flex-end", marginRight: 10, marginTop: 10 }}
       >
-        <Text style={styles.seeAllText}>{seeAllButton ? "Back" : "See All"}</Text>
+        <Text style={styles.seeAllText}>
+          {seeAllButton ? "Back" : "See All"}
+        </Text>
       </TouchableOpacity>
 
       <View style={seeAllButton ? { paddingHorizontal: 40 } : null}>
@@ -152,18 +173,34 @@ const HomeScreen = () => {
       {!seeAllButton ? (
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.followingButton, activeButton === "following" && styles.activeButton]}
+            style={[
+              styles.followingButton,
+              activeButton === "following" && styles.activeButton,
+            ]}
             onPress={() => setActiveButton("following")}
           >
-            <Text style={[styles.buttonText, activeButton === "following" && styles.activeText]}>
+            <Text
+              style={[
+                styles.buttonText,
+                activeButton === "following" && styles.activeText,
+              ]}
+            >
               Following
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.discoverButton, activeButton === "discover" && styles.activeButton]}
+            style={[
+              styles.discoverButton,
+              activeButton === "discover" && styles.activeButton,
+            ]}
             onPress={() => setActiveButton("discover")}
           >
-            <Text style={[styles.buttonText, activeButton === "discover" && styles.activeText]}>
+            <Text
+              style={[
+                styles.buttonText,
+                activeButton === "discover" && styles.activeText,
+              ]}
+            >
               Discover
             </Text>
           </TouchableOpacity>
@@ -207,9 +244,18 @@ const HomeScreen = () => {
                   }
                 >
                   <View style={{ paddingHorizontal: 16 }}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <TouchableOpacity
-                        style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
                         onPress={() =>
                           router.push({
                             pathname: "/screens/home/visit-profile",
@@ -234,19 +280,28 @@ const HomeScreen = () => {
                           })
                         }
                       >
-                        <Image style={styles.profileImage} source={item.profilePicture} />
+                        <Image
+                          style={styles.profileImage}
+                          source={item.profilePicture}
+                        />
                         <View>
                           <Text style={styles.name}>{item.name}</Text>
                           <Text style={styles.active}>{item.active}</Text>
                         </View>
                       </TouchableOpacity>
                       <TouchableOpacity style={{ flexDirection: "row" }}>
-                        <Ionicons name="add-outline" size={20} color="#48A6A7" />
+                        <Ionicons
+                          name="add-outline"
+                          size={20}
+                          color="#48A6A7"
+                        />
                         <Text style={styles.followButton}>Follow</Text>
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.postTitle}>{item.postTitle}</Text>
-                    <Text style={styles.postDescription}>{item.description}</Text>
+                    <Text style={styles.postDescription}>
+                      {item.description}
+                    </Text>
                     <View style={{ flexDirection: "row", gap: 40 }}>
                       <View>
                         <Text style={styles.timevolume}>Time</Text>
@@ -259,7 +314,10 @@ const HomeScreen = () => {
                     </View>
                   </View>
                   <View style={{ alignItems: "center" }}>
-                    <Image style={styles.postedPicture} source={item.postedPicture} />
+                    <Image
+                      style={styles.postedPicture}
+                      source={item.postedPicture}
+                    />
                   </View>
                 </TouchableOpacity>
 
@@ -276,7 +334,11 @@ const HomeScreen = () => {
                   <TouchableOpacity onPress={() => toggleLike(item.id)}>
                     <Ionicons
                       style={styles.icons}
-                      name={likedPosts[item.id] ? "thumbs-up-sharp" : "thumbs-up-outline"}
+                      name={
+                        likedPosts[item.id]
+                          ? "thumbs-up-sharp"
+                          : "thumbs-up-outline"
+                      }
                       size={24}
                       color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
                     />
@@ -290,7 +352,12 @@ const HomeScreen = () => {
                     />
                   </TouchableOpacity>
                   <TouchableOpacity>
-                    <Ionicons style={styles.icons} name="share-outline" size={24} color="#606060" />
+                    <Ionicons
+                      style={styles.icons}
+                      name="share-outline"
+                      size={24}
+                      color="#606060"
+                    />
                   </TouchableOpacity>
                 </View>
               </View>

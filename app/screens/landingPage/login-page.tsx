@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,21 +14,37 @@ import { useRouter } from "expo-router";
 import { LoginFormData } from "@/custom-types/form-data-type";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { login } from "@/redux/auth-slice";
 
 const LoginPage = () => {
+  const router = useRouter();
+
+  const dispatch = useAppDispatch();
+
+  const { loading, error, access_token } = useAppSelector(
+    (state) => state.auth
+  );
+
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
-  const router = useRouter();
 
   const handleInputChange = (field: keyof LoginFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleLogin = () => {
-    console.log("Login pressed", formData);
+  const handleLogin = async () => {
+    await dispatch(login(formData));
   };
+
+  useEffect(() => {
+    if (access_token) {
+      router.replace("/(tabs)");
+    }
+  }, [access_token]);
 
   return (
     <KeyboardAvoidingView
@@ -37,10 +53,18 @@ const LoginPage = () => {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={{ width: "100%", paddingHorizontal: 30 }}>
             <View style={styles.inputContainer}>
-              <Ionicons style={styles.icon} name="person" size={24} color="#6F7A88" />
+              <Ionicons
+                style={styles.icon}
+                name="person"
+                size={24}
+                color="#6F7A88"
+              />
               <TextInput
                 style={styles.input}
                 value={formData.email}
@@ -51,7 +75,12 @@ const LoginPage = () => {
               />
             </View>
             <View style={styles.inputContainer}>
-              <Ionicons style={styles.icon} name="lock-closed" size={24} color="#6F7A88" />
+              <Ionicons
+                style={styles.icon}
+                name="lock-closed"
+                size={24}
+                color="#6F7A88"
+              />
               <TextInput
                 style={styles.input}
                 value={formData.password}
@@ -62,7 +91,9 @@ const LoginPage = () => {
               />
               <View style={styles.forgotPasswordContainer}>
                 <TouchableOpacity>
-                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                  <Text style={styles.forgotPasswordText}>
+                    Forgot Password?
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -75,7 +106,9 @@ const LoginPage = () => {
               Don't have an account yet?{" "}
               <Text
                 style={styles.registerButton}
-                onPress={() => router.push("/screens/landingPage/register-page")}
+                onPress={() =>
+                  router.push("/screens/landingPage/register-page")
+                }
               >
                 Register here
               </Text>
