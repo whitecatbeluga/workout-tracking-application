@@ -41,10 +41,9 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="screens/home" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="screens/profile"
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="screens/profile" options={{ headerShown: false }} />
+          <Stack.Screen name="screens/landingPage" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
         </Stack>
       </GestureHandlerRootView>
       <StatusBar style="auto" />
