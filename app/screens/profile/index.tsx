@@ -62,7 +62,7 @@ const ProfilePage = () => {
   const handleLogout = async () => {
     try {
       await appDispatch(logout());
-      router.push("/screens/landingPage/login-page");
+      router.replace("/screens/landingPage/login-page");
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -262,6 +262,7 @@ export default ProfilePage;
 const styles = StyleSheet.create({
   buttonContainer: {
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 100,
   },
   button: {
