@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import PostCard from "./postCard";
+import PostCard from "./post-card";
 import { useState } from "react";
 
 const ViewPostScreen = () => {

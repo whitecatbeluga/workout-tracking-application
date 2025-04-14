@@ -14,6 +14,10 @@ const LandingPage = () => {
       <TouchableOpacity onPress={() => router.push("/screens/landingPage/register-page")}>
         <Text>Register</Text>
       </TouchableOpacity>
+      
+      <TouchableOpacity style={{marginTop: 50}}>
+        <Text>Continue as guest</Text>
+      </TouchableOpacity>
     </View>
   );
 };
