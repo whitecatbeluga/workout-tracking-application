@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { BarChart } from "react-native-chart-kit";
-import PostCard from "./postCard";
+import PostCard from "./post-card";
 import { useState } from "react";
 
 const screenWidth = Dimensions.get("window").width;
