@@ -23,7 +23,7 @@ export const login = createAsyncThunk(
       const axiosError = error as AxiosError;
       const response = axiosError.response?.data as ApiError;
       AsyncStorage.removeItem("loggedIn");
-      return thunkApi.rejectWithValue(response.message);
+      return thunkApi.rejectWithValue(response);
     }
   }
 );
@@ -78,7 +78,7 @@ interface InitialState {
     | Loading.Pending
     | Loading.Fulfilled
     | Loading.Rejected;
-  error: string | null;
+  error: string | null | Record<string, string>;
   access_token: string | null;
   user: User | null;
   message: string | null;
@@ -119,7 +119,24 @@ const authSlice = createSlice({
     });
     builder.addCase(login.rejected, (state, action) => {
       state.loading = Loading.Rejected;
-      state.error = action.payload as string;
+      const payload = action.payload as string | ApiError;
+
+      if (typeof payload === "string") {
+        state.error = payload;
+      } else if (payload?.errors?.length) {
+        const fieldErrors: Record<string, string> = {};
+        payload.errors.forEach((err) => {
+          const match = err.match(/^(\w+)\s+(.*)$/);
+          if (match) {
+            const field = match[1].toLowerCase();
+            const message = match[0];
+            fieldErrors[field] = message;
+          }
+        });
+        state.error = fieldErrors;
+      } else {
+        state.error = payload.message;
+      }
     });
 
     /**
@@ -168,7 +185,6 @@ const authSlice = createSlice({
       state.access_token = null;
       state.user = null;
       state.error = null;
-      console.log("Logout successful");
     });
     builder.addCase(logout.rejected, (state) => {
       state.loading = Loading.Rejected;
