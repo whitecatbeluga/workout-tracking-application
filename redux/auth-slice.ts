@@ -61,11 +61,8 @@ export const refreshToken = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
   try {
-    console.log("test1");
     const response = await axiosIntance.post("/auth/logout");
-    console.log("response", response);
     await AsyncStorage.removeItem("loggedIn");
-    console.log("test2");
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError;

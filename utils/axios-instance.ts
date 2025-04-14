@@ -30,9 +30,7 @@ export const setupAxiosInstance = (store: Store<RootState>) => {
       return response;
     },
     async (error) => {
-      console.log("error in axios", error);
       const previousRequest = error.config;
-      console.log("error.response", error.response);
       if (
         error.response?.status === 403 &&
         error.response?.data?.message !== "PermissionError"

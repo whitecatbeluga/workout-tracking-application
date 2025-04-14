@@ -91,9 +91,7 @@ const HomeScreen = () => {
       if (await isLoggedIn) {
         await appDispatch(refreshToken());
       }
-      console.log("isLoggedIn", isLoggedIn);
     };
-    console.log("hi");
     void verifyRefreshToken();
   }, []);
 
