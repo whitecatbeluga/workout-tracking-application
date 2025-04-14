@@ -20,7 +20,6 @@ import { login } from "@/redux/auth-slice";
 
 const LoginPage = () => {
   const router = useRouter();
-
   const dispatch = useAppDispatch();
 
   const { loading, error, access_token } = useAppSelector(
@@ -46,6 +45,13 @@ const LoginPage = () => {
     }
   }, [access_token]);
 
+  const isFieldError = (field: string): string | null => {
+    if (typeof error === "object" && error !== null && error[field]) {
+      return error[field];
+    }
+    return null;
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -58,6 +64,13 @@ const LoginPage = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={{ width: "100%", paddingHorizontal: 30 }}>
+            {typeof error === "string" && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {/* Email Field */}
             <View style={styles.inputContainer}>
               <Ionicons
                 style={styles.icon}
@@ -73,7 +86,12 @@ const LoginPage = () => {
                 keyboardType="email-address"
                 placeholder="Email"
               />
+              {isFieldError("email") && (
+                <Text style={styles.errorText}>{isFieldError("email")}</Text>
+              )}
             </View>
+
+            {/* Password Field */}
             <View style={styles.inputContainer}>
               <Ionicons
                 style={styles.icon}
@@ -89,6 +107,9 @@ const LoginPage = () => {
                 secureTextEntry
                 placeholder="Password"
               />
+              {isFieldError("password") && (
+                <Text style={styles.errorText}>{isFieldError("password")}</Text>
+              )}
               <View style={styles.forgotPasswordContainer}>
                 <TouchableOpacity>
                   <Text style={styles.forgotPasswordText}>
@@ -97,10 +118,12 @@ const LoginPage = () => {
                 </TouchableOpacity>
               </View>
             </View>
+
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginText}>Sign In</Text>
             </TouchableOpacity>
           </View>
+
           <View style={{ top: 100 }}>
             <Text style={{ fontFamily: "Inter_400Regular", color: "#868686" }}>
               Don't have an account yet?{" "}
@@ -128,6 +151,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F4F4F4",
+  },
+  errorContainer: {
+    backgroundColor: "#f8d7da",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+    width: "100%",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#721c24",
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
   },
   text: {
     fontFamily: "Inter_600SemiBold",
