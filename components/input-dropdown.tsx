@@ -26,6 +26,7 @@ const InputDropdown = ({
         style={[styles.dropdown, isFocus && { borderColor: "blue" }]}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
+        containerStyle={{ borderRadius: 6, elevation: 0, marginTop: 5 }}
         inputSearchStyle={styles.inputSearchStyle}
         iconStyle={styles.iconStyle}
         data={data}

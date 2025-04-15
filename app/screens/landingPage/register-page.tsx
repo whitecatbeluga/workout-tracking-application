@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
+import { View, Text, StyleSheet, TextInput } from "react-native";
+// import { TextInput } from "react-native-gesture-handler";
 
 // dropdown
 import InputDropdown from "@/components/input-dropdown";
@@ -36,6 +36,7 @@ const Input = ({
   icon,
   suffixIcon,
   placeholder,
+  autoCapitalize,
   onChangeText,
   keyboardType,
   secureTextEntry,
@@ -46,6 +47,7 @@ const Input = ({
   value: any;
   icon: any;
   placeholder: string;
+  autoCapitalize?: any;
   onChangeText: (text: string) => void;
   keyboardType?: any;
   secureTextEntry?: boolean;
@@ -85,6 +87,7 @@ const Input = ({
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
       />
 
       {isSuffix && (
@@ -186,7 +189,8 @@ const Step1 = ({
         icon="mail"
         placeholder="Email"
         onChangeText={onChangeText("email")}
-        keyboardType={"email"}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <Input
         value={formData.password}
@@ -197,6 +201,7 @@ const Step1 = ({
         isSuffix={true}
         showPassword={showPassword}
         toggleShowPassword={toggleShowPassword}
+        autoCapitalize="none"
       />
     </View>
   );
@@ -355,6 +360,17 @@ const RegisterPage = () => {
     });
   };
 
+  const [isValid, setIsValid] = useState(false);
+  const [errors, setErrors] = useState(true);
+
+  const onNextStep = () => {
+    if (!isValid) {
+      setErrors(true);
+    } else {
+      setErrors(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ProgressSteps
@@ -369,6 +385,8 @@ const RegisterPage = () => {
         activeStepNumColor="#006A71"
       >
         <ProgressStep
+          onNext={onNextStep}
+          errors={errors}
           label="Account Information"
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
