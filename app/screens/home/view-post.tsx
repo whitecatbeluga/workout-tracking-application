@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import PostCard from "./post-card";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheetComments from "./components/comments-bottom-sheet";
 
 const ViewPostScreen = () => {
   const {
@@ -26,87 +28,139 @@ const ViewPostScreen = () => {
     typeof value === "string" ? value : value?.[0] || "";
 
   const [liked, setLiked] = useState(isLiked === "true");
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Handle open comments
+  const handleOpenComments = () => {
+    bottomSheetRef.current?.expand();
+  };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <PostCard
-        name={toString(name)}
-        fullName={toString(fullName)}
-        email={toString(email)}
-        date={toString(date)}
-        postTitle={toString(postTitle)}
-        description={toString(description)}
-        time={toString(time)}
-        volume={toString(volume)}
-        sets={toString(sets)}
-        records={toString(records)}
-        profilePicture={profilePicture}
-        postedPicture={postedPicture}
-        likes={toString(likes)}
-        comments={toString(comments)}
-        liked={liked}
-        onLikePress={() => setLiked(!liked)}
-      />
-      <View style={{ paddingHorizontal: 16 }}>
-        <Text style={styles.workoutTitle}>Workout</Text>
-        <Text style={styles.workoutName}>Standing Military Press (Barbell)</Text>
-        <View style={styles.setWeightRepsContainer}>
-          <Text style={styles.setText}>SET</Text>
-          <Text style={styles.setText}>WEIGHT & REPS</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <PostCard
+          name={toString(name)}
+          fullName={toString(fullName)}
+          email={toString(email)}
+          date={toString(date)}
+          postTitle={toString(postTitle)}
+          description={toString(description)}
+          time={toString(time)}
+          volume={toString(volume)}
+          sets={toString(sets)}
+          records={toString(records)}
+          profilePicture={profilePicture}
+          postedPicture={postedPicture}
+          likes={toString(likes)}
+          comments={toString(comments)}
+          liked={liked}
+          onLikePress={() => setLiked(!liked)}
+          onCommentPress={handleOpenComments}
+        />
+        <View style={{ paddingHorizontal: 16 }}>
+          <Text style={styles.workoutTitle}>Workout</Text>
+          <Text style={styles.workoutName}>
+            Standing Military Press (Barbell)
+          </Text>
+          <View style={styles.setWeightRepsContainer}>
+            <Text style={styles.setText}>SET</Text>
+            <Text style={styles.setText}>WEIGHT & REPS</Text>
+          </View>
         </View>
-      </View>
-      <View style={{ flexDirection: "row", gap: 42, paddingHorizontal: 20, paddingVertical: 8 }}>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>1</Text>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>20.41kg x 8 reps</Text>
-      </View>
-      <View style={{ backgroundColor: "#9ACBD0", paddingVertical: 8 }}>
-        <View style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}>
-          <Text style={{ fontFamily: "Inter_400Regular" }}>2</Text>
-          <Text style={{ fontFamily: "Inter_400Regular" }}>20.41kg x 8 reps</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 42,
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ fontFamily: "Inter_400Regular" }}>1</Text>
+          <Text style={{ fontFamily: "Inter_400Regular" }}>
+            20.41kg x 8 reps
+          </Text>
         </View>
-      </View>
-      <View style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20, paddingVertical: 8 }}>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>3</Text>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>20.41kg x 8 reps</Text>
-      </View>
-      <View style={{ backgroundColor: "#9ACBD0", paddingVertical: 8, marginBottom: 30 }}>
-        <View style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}>
-          <Text style={{ fontFamily: "Inter_400Regular" }}>4</Text>
-          <Text style={{ fontFamily: "Inter_400Regular" }}>20.41kg x 8 reps</Text>
+        <View style={{ backgroundColor: "#9ACBD0", paddingVertical: 8 }}>
+          <View
+            style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}
+          >
+            <Text style={{ fontFamily: "Inter_400Regular" }}>2</Text>
+            <Text style={{ fontFamily: "Inter_400Regular" }}>
+              20.41kg x 8 reps
+            </Text>
+          </View>
         </View>
-      </View>
-
-      {/* Second workout */}
-      <View style={{ paddingHorizontal: 16 }}>
-        <Text style={styles.workoutName}>Knee Raise Parallel Bars</Text>
-        <View style={styles.setWeightRepsContainer}>
-          <Text style={styles.setText}>SET</Text>
-          <Text style={styles.setText}>WEIGHT & REPS</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 40,
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ fontFamily: "Inter_400Regular" }}>3</Text>
+          <Text style={{ fontFamily: "Inter_400Regular" }}>
+            20.41kg x 8 reps
+          </Text>
         </View>
-      </View>
-      <View style={{ flexDirection: "row", gap: 42, paddingHorizontal: 20, paddingVertical: 8 }}>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>1</Text>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
-      </View>
-      <View style={{ backgroundColor: "#9ACBD0", paddingVertical: 8 }}>
-        <View style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}>
-          <Text style={{ fontFamily: "Inter_400Regular" }}>2</Text>
+        <View
+          style={{
+            backgroundColor: "#9ACBD0",
+            paddingVertical: 8,
+            marginBottom: 30,
+          }}
+        >
+          <View
+            style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}
+          >
+            <Text style={{ fontFamily: "Inter_400Regular" }}>4</Text>
+            <Text style={{ fontFamily: "Inter_400Regular" }}>
+              20.41kg x 8 reps
+            </Text>
+          </View>
+        </View>
+        {/* Second workout */}
+        <View style={{ paddingHorizontal: 16 }}>
+          <Text style={styles.workoutName}>Knee Raise Parallel Bars</Text>
+          <View style={styles.setWeightRepsContainer}>
+            <Text style={styles.setText}>SET</Text>
+            <Text style={styles.setText}>WEIGHT & REPS</Text>
+          </View>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 42,
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+          }}
+        >
+          <Text style={{ fontFamily: "Inter_400Regular" }}>1</Text>
           <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
         </View>
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
-          gap: 40,
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-          marginBottom: 30,
-        }}
-      >
-        <Text style={{ fontFamily: "Inter_400Regular" }}>3</Text>
-        <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
-      </View>
-    </ScrollView>
+        <View style={{ backgroundColor: "#9ACBD0", paddingVertical: 8 }}>
+          <View
+            style={{ flexDirection: "row", gap: 40, paddingHorizontal: 20 }}
+          >
+            <Text style={{ fontFamily: "Inter_400Regular" }}>2</Text>
+            <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
+          </View>
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 40,
+            paddingHorizontal: 20,
+            paddingVertical: 8,
+            marginBottom: 30,
+          }}
+        >
+          <Text style={{ fontFamily: "Inter_400Regular" }}>3</Text>
+          <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
+        </View>
+      </ScrollView>
+      <BottomSheetComments title="sample" ref={bottomSheetRef} />
+    </View>
   );
 };
 
