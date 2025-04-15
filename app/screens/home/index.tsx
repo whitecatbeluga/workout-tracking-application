@@ -16,6 +16,8 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { refreshToken } from "@/redux/auth-slice";
+import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheetComments from "./components/comments-bottom-sheet";
 
 type PostItem = {
   id: string;
@@ -83,6 +85,7 @@ const HomeScreen = () => {
   );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [seeAllButton, setSeeAllButton] = useState(false);
+  const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -114,6 +117,11 @@ const HomeScreen = () => {
     }
 
     offset.current = currentOffset;
+  };
+
+  // Handle open comments
+  const handleOpenComments = () => {
+    bottomSheetRef.current?.expand();
   };
 
   return (
@@ -323,7 +331,7 @@ const HomeScreen = () => {
                   <TouchableOpacity>
                     <Text style={styles.likesText}>{item.likes}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={handleOpenComments}>
                     <Text style={styles.likesText}>{item.comments}</Text>
                   </TouchableOpacity>
                 </View>
@@ -341,7 +349,7 @@ const HomeScreen = () => {
                       color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={handleOpenComments}>
                     <Ionicons
                       style={styles.icons}
                       name="chatbubble-outline"
@@ -363,6 +371,7 @@ const HomeScreen = () => {
           />
         </View>
       ) : null}
+      <BottomSheetComments title="sample" ref={bottomSheetRef} />
     </View>
   );
 };
