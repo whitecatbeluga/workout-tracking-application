@@ -1,5 +1,5 @@
 import { View, StyleSheet } from "react-native";
-import { StreakList } from "./streak-list";
+import StreakList from "./streak-list";
 import StreakHeader from "./streak-header";
 
 const Streak = () => {
