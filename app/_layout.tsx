@@ -61,6 +61,10 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
             <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="screens/workout"
+              options={{ headerShown: false }}
+            />
           </Stack>
         </GestureHandlerRootView>
         <StatusBar style="auto" />
