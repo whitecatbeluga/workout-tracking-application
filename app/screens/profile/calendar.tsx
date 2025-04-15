@@ -5,7 +5,6 @@ import Streak from "../streak";
 const CalendarScreen = () => {
   return (
     <View style={styles.container}>
-      <Text>Calendar Screen</Text>
       <Streak />
     </View>
   );
