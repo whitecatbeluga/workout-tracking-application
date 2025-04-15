@@ -8,6 +8,7 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import { forwardRef, useCallback, useMemo, useRef } from "react";
 import { Card as WorkoutCard } from "./workouts";
+import Badge from "@/components/badge";
 
 type CardProps = {
   card: any;
@@ -82,12 +83,48 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
   );
 };
 
+const ExerciseCard = ({ card }: { card: any }) => {
+  return (
+    <View
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        padding: 14,
+        elevation: 1,
+      }}
+    >
+      <View style={{ gap: 8 }}>
+        <View style={{ gap: 4 }}>
+          <Text style={{ color: "#323232", fontWeight: "bold", fontSize: 24 }}>
+            {card.name}
+          </Text>
+          <Badge
+            backgroundColor="#48A6A7"
+            label={
+              card.with_out_equipment ? "Without Equipment" : "With Equipment"
+            }
+          />
+        </View>
+        <View style={{ flexDirection: "row", gap: 4 }}>
+          <Text style={{ color: "#323232", fontWeight: "bold", fontSize: 14 }}>
+            Exercise Category:
+          </Text>
+          <Text style={{ fontSize: 14 }}>{card.category}</Text>
+        </View>
+        <Text style={{ fontWeight: "medium", fontSize: 14 }}>{card.desc}</Text>
+      </View>
+      <View style={{ flexDirection: "column", gap: 8 }}></View>
+    </View>
+  );
+};
+
 interface Props {
   title: string;
 }
 
 type RefType = BottomSheet | null;
 
+// workout bottom sheet
 const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
   const snapPoints = useMemo(() => ["25%", "50%", "100%"], []);
 
@@ -114,7 +151,11 @@ const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
     >
       <BottomSheetScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20, backgroundColor: "#F4F4F4" }}
+        contentContainerStyle={{
+          padding: 20,
+          gap: 20,
+          backgroundColor: "#F4F4F4",
+        }}
       >
         {workoutCardDetails.map((card, index) => (
           <WorkoutCard key={index} card={card} isEditable={false} />
@@ -124,6 +165,7 @@ const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
   );
 });
 
+// exercises bottom sheet
 const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
   const snapPoints = useMemo(() => ["25%", "50%", "85%"], []);
 
@@ -138,6 +180,7 @@ const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose={true}
+      handleStyle={{ backgroundColor: "#F4F4F4", borderRadius: 50 }}
       backdropComponent={(props) => (
         <BottomSheetBackdrop
           {...props}
@@ -147,9 +190,18 @@ const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
         />
       )}
     >
-      <BottomSheetView style={{}}>
-        <Text>See exercise</Text>
-      </BottomSheetView>
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 20,
+          gap: 20,
+          backgroundColor: "#F4F4F4",
+        }}
+      >
+        {dummyExercises.map((card, index) => (
+          <ExerciseCard key={index} card={card} />
+        ))}
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 });
@@ -194,10 +246,30 @@ const RoutinesScreen = () => {
 export default RoutinesScreen;
 
 const dummyExercises = [
-  { name: "Push Up", desc: "A basic upper body exercise" },
-  { name: "Squat", desc: "A lower body strength exercise" },
-  { name: "Plank", desc: "A core stability exercise" },
-  { name: "Pull Up", desc: "An upper body pulling exercise" },
+  {
+    name: "Calf Press (Machine)",
+    desc: "A comprehensive workout targeting all major muscle groups. A comprehensive workout targeting all major muscle groups.",
+    category: "Upper Body",
+    with_out_equipment: true,
+  },
+  {
+    name: "Floor Press",
+    desc: "A comprehensive workout targeting all major muscle groups. A comprehensive workout targeting all major muscle groups.",
+    category: "Lower Body",
+    with_out_equipment: false,
+  },
+  {
+    name: "Glue Kickback",
+    desc: "A comprehensive workout targeting all major muscle groups. A comprehensive workout targeting all major muscle groups.",
+    category: "Core",
+    with_out_equipment: true,
+  },
+  {
+    name: "Pull Up",
+    desc: "A comprehensive workout targeting all major muscle groups. A comprehensive workout targeting all major muscle groups.",
+    category: "Upper Body",
+    with_out_equipment: false,
+  },
 ];
 
 const workoutCardDetails = [

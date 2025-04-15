@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput } from "react-native";
 // import { TextInput } from "react-native-gesture-handler";
 
@@ -65,7 +65,7 @@ const Input = ({
       }}
     >
       <Ionicons
-        style={{ position: "absolute", left: 11, top: 11, zIndex: 1 }}
+        style={{ position: "absolute", left: 11, top: 13, zIndex: 1 }}
         name={icon}
         size={24}
         color="#6F7A88"
@@ -75,8 +75,10 @@ const Input = ({
           backgroundColor: "white",
           borderColor: "#CBD5E1",
           borderWidth: 1,
+          height: 50,
           paddingHorizontal: 8,
           paddingLeft: 40,
+          paddingRight: 40,
           borderRadius: 10,
           fontSize: 16,
           marginBottom: 16,
@@ -92,7 +94,7 @@ const Input = ({
 
       {isSuffix && (
         <Ionicons
-          style={{ position: "absolute", right: 11, top: 11, zIndex: 1 }}
+          style={{ position: "absolute", right: 11, top: 13, zIndex: 1 }}
           name={
             typeof showPassword === "boolean"
               ? showPassword
@@ -248,10 +250,11 @@ const Step2 = ({
         ]}
       />
       <Input
-        value={formData.age}
+        value={formData.age?.toString() ?? ""}
         icon="analytics"
         placeholder="Age"
-        onChangeText={onChangeText("age")}
+        onChangeText={(text) => onChangeText("age")(text)}
+        keyboardType="numeric"
       />
     </View>
   );
@@ -265,29 +268,38 @@ const Step3 = ({
   formData: RegisterFormData;
   onChangeText: (name: keyof RegisterFormData) => (text: string) => void;
 }) => {
+  useEffect(() => {
+    const { height, weight } = formData;
+    if (height && weight) {
+      const bmiValue = (weight * 10000) / (height * height);
+      onChangeText("bmi")(bmiValue.toFixed(2));
+    }
+  }, [formData.height, formData.weight]);
+
   return (
     <View>
       <Header desc="What's your physical details?" />
 
       <Input
-        value={formData.height}
+        value={formData.height?.toString() ?? ""}
         icon="man"
         placeholder="Height (cm)"
-        onChangeText={onChangeText("height")}
+        onChangeText={(text) => onChangeText("height")(text)}
         keyboardType="numeric"
       />
+
       <Input
-        value={formData.weight}
+        value={formData.weight?.toString() ?? ""}
         icon="scale"
         placeholder="Weight (kg)"
-        onChangeText={onChangeText("weight")}
+        onChangeText={(text) => onChangeText("weight")(text)}
         keyboardType="numeric"
       />
       <Input
-        value={formData.activity_level}
+        value={formData.activity_level?.toString() ?? ""}
         icon="heart-circle"
         placeholder="Activity level"
-        onChangeText={onChangeText("activity_level")}
+        onChangeText={(text) => onChangeText("activity_level")(text)}
       />
 
       <InputDropdown
@@ -354,22 +366,16 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState<RegisterFormData>(initialFormData);
 
   const onChangeText = (name: keyof RegisterFormData) => (text: string) => {
-    setFormData({
-      ...formData,
-      [name]: text,
-    });
+    const numericFields = ["height", "weight", "age", "activity_level", "bmi"];
+    const value = numericFields.includes(name) ? Number(text) : text;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const [isValid, setIsValid] = useState(false);
-  const [errors, setErrors] = useState(true);
-
-  const onNextStep = () => {
-    if (!isValid) {
-      setErrors(true);
-    } else {
-      setErrors(false);
-    }
-  };
+  console.log(formData);
 
   return (
     <View style={{ flex: 1 }}>
@@ -385,8 +391,6 @@ const RegisterPage = () => {
         activeStepNumColor="#006A71"
       >
         <ProgressStep
-          onNext={onNextStep}
-          errors={errors}
           label="Account Information"
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
