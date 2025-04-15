@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { CalendarList } from "react-native-calendars";
-import { styles } from "./index";
-
-export const StreakList = () => {
+const StreakList = () => {
   const [currentDate, setcurrentDate] = useState("");
 
   useEffect(() => {
@@ -56,3 +54,16 @@ export const StreakList = () => {
     </View>
   );
 };
+
+export default StreakList;
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  calendarContainer: {
+    flex: 10,
+    paddingBottom: 50,
+  },
+});
