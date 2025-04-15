@@ -39,7 +39,7 @@ const ProgressRing = ({ graphData, ySuffixLabel }: ProgressRingProps) => {
           labels: graphData.labels,
           data: graphData.datasets[0]?.data || [],
         }}
-        width={screenWidth - 275}
+        width={screenWidth - 270}
         height={150}
         strokeWidth={12}
         chartConfig={chartConfig}

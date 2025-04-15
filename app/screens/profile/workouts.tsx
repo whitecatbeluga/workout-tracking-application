@@ -10,15 +10,19 @@ import { ScrollView, TextInput } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
+  BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import Input from "@/components/input-text";
+import { WorkoutFormData } from "@/custom-types/workout-type";
 
-type CardWorkoutInfoProps = {
+const CardWorkoutInfo = ({
+  label,
+  value,
+}: {
   label: string;
   value: string | number;
-};
-
-const CardWorkoutInfo = ({ label, value }: CardWorkoutInfoProps) => {
+}) => {
   return (
     <View>
       <Text style={{ fontSize: 24, fontWeight: "bold", color: "#323232" }}>
@@ -31,21 +35,18 @@ const CardWorkoutInfo = ({ label, value }: CardWorkoutInfoProps) => {
   );
 };
 
-type CardProps = {
-  card: any;
-  handleOpenBottomSheet?: () => void;
-  isEditable: boolean;
-};
-
 export const Card = ({
   card,
   handleOpenBottomSheet,
   isEditable,
-}: CardProps) => {
+}: {
+  card: any;
+  handleOpenBottomSheet?: () => void;
+  isEditable: boolean;
+}) => {
   return (
     <View
       style={{
-        marginTop: 20,
         backgroundColor: "#fff",
         borderRadius: 8,
         padding: 14,
@@ -85,23 +86,46 @@ export const Card = ({
         ))}
       </View>
       {isEditable && handleOpenBottomSheet && (
-        <EditButton handleOpenBottomSheet={handleOpenBottomSheet} />
+        <OpenEditWorkout handleOpenBottomSheet={handleOpenBottomSheet} />
       )}
     </View>
   );
 };
 
-type EditButtonProps = {
+const OpenEditWorkout = ({
+  handleOpenBottomSheet,
+}: {
   handleOpenBottomSheet: () => void;
-};
-
-const EditButton = ({ handleOpenBottomSheet }: EditButtonProps) => {
+}) => {
   return (
     <TouchableOpacity onPress={handleOpenBottomSheet}>
       <View
         style={{
           backgroundColor: "#48A6A7",
           padding: 10,
+          paddingHorizontal: 24,
+          borderRadius: 6,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text style={{ color: "white", fontWeight: "bold" }}>Edit Workout</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const EditWorkout = ({
+  handleEditWorkout,
+}: {
+  handleEditWorkout: () => void;
+}) => {
+  return (
+    <TouchableOpacity onPress={handleEditWorkout}>
+      <View
+        style={{
+          backgroundColor: "#006A71",
+          padding: 16,
           paddingHorizontal: 24,
           borderRadius: 6,
           alignItems: "center",
@@ -127,6 +151,22 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
     console.log("handleSheetChanges", index);
   }, []);
 
+  const [formData, setFormData] = useState<WorkoutFormData>({
+    name: "",
+    description: "",
+    duration: 0,
+    intensity: 0,
+    volume: 0,
+    set: 0,
+  });
+
+  const onChangeText = (name: keyof WorkoutFormData) => (text: string) => {
+    setFormData({
+      ...formData,
+      [name]: text,
+    });
+  };
+
   return (
     <BottomSheet
       ref={ref}
@@ -134,6 +174,7 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose={true}
+      handleStyle={{ backgroundColor: "#F4F4F4", borderRadius: 50 }}
       backdropComponent={(props) => (
         <BottomSheetBackdrop
           {...props}
@@ -143,9 +184,63 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
         />
       )}
     >
-      <BottomSheetView style={{}}>
-        <Text>Awesome 🎉</Text>
-      </BottomSheetView>
+      <BottomSheetScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          padding: 20,
+          flex: 1,
+          backgroundColor: "#F4F4F4",
+        }}
+      >
+        <View style={{ marginVertical: 12, alignItems: "center" }}>
+          <Text style={{ fontSize: 22, fontWeight: "bold" }}>
+            Edit this Workout
+          </Text>
+        </View>
+        <Input
+          value={formData.name}
+          icon="bicycle"
+          placeholder="Workout name"
+          onChangeText={onChangeText("name")}
+        />
+        <Input
+          value={formData.description}
+          icon="document-text"
+          placeholder="Workout description"
+          onChangeText={onChangeText("description")}
+          multiline={true}
+          numberOfLines={4}
+        />
+        <Input
+          value={formData.duration}
+          icon="alarm"
+          placeholder="Workout duration"
+          onChangeText={onChangeText("duration")}
+          keyboardType="numeric"
+        />
+        <Input
+          value={formData.intensity}
+          icon="heart-circle"
+          placeholder="Workout intensity"
+          onChangeText={onChangeText("intensity")}
+          keyboardType="numeric"
+        />
+        <Input
+          value={formData.volume}
+          icon="book"
+          placeholder="Workout volume"
+          onChangeText={onChangeText("volume")}
+          keyboardType="numeric"
+        />
+        <Input
+          value={formData.set}
+          icon="list"
+          placeholder="Workout sets"
+          onChangeText={onChangeText("set")}
+          keyboardType="numeric"
+        />
+        <EditWorkout handleEditWorkout={() => {}} />
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 });
@@ -173,7 +268,7 @@ const WorkoutsCard = () => {
           }}
         >
           <Ionicons
-            style={{ position: "absolute", left: 11, top: 11, zIndex: 1 }}
+            style={{ position: "absolute", left: 11, top: 13, zIndex: 1 }}
             name="search"
             size={24}
             color="#6F7A88"
@@ -181,6 +276,7 @@ const WorkoutsCard = () => {
           <TextInput
             style={{
               backgroundColor: "white",
+              height: 50,
               borderColor: "#CBD5E1",
               borderWidth: 1,
               paddingHorizontal: 8,
@@ -188,6 +284,7 @@ const WorkoutsCard = () => {
               borderRadius: 10,
               fontSize: 16,
             }}
+            inputMode="search"
             placeholder="Search exercises..."
             placeholderTextColor="#94A3B8"
             value={text}
@@ -195,20 +292,23 @@ const WorkoutsCard = () => {
           />
         </View>
 
-        {/* workout cards */}
-        {workoutCardDetails.map((card, index) => (
-          <Card
-            key={index}
-            card={card}
-            handleOpenBottomSheet={handleOpenBottomSheet}
-            isEditable={true}
-          />
-        ))}
+        <View style={{ gap: 20, marginTop: 20 }}>
+          {/* workout cards */}
+          {workoutCardDetails.map((card, index) => (
+            <Card
+              key={index}
+              card={card}
+              handleOpenBottomSheet={handleOpenBottomSheet}
+              isEditable={true}
+            />
+          ))}
+        </View>
       </ScrollView>
       <EditWorkoutBottomSheet title="Sample" ref={bottomSheetRef} />
     </View>
   );
 };
+
 export default WorkoutsCard;
 
 const workoutCardDetails = [
