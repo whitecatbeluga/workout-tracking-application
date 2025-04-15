@@ -4,16 +4,18 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { CustomBtn, BtnTitle } from "@/components/custom-btn";
 import { createWorkout } from "@/redux/slices/workout-slice";
 import { WorkoutFormData } from "@/custom-types/workout-type";
+import { useRouter } from "expo-router";
 
 const AddWorkout = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const [workoutData, setWorkoutData] = useState<WorkoutFormData>({
     name: "",
     description: "",
     duration: 0,
     intensity: 0,
-    volumn: 0,
+    volume: 0,
     set: 0,
     exerciseIds: [],
   });
@@ -40,17 +42,20 @@ const AddWorkout = () => {
     };
 
     try {
-      await dispatch(createWorkout(dataToSubmit)).unwrap();
-      setWorkoutData({
-        name: "",
-        description: "",
-        duration: 0,
-        intensity: 0,
-        volumn: 0,
-        set: 0,
-        exerciseIds: [],
-      });
-      setExerciseInput("");
+      const result = await dispatch(createWorkout(dataToSubmit));
+      if (result.type === "workout/createWorkout/fulfilled") {
+        setWorkoutData({
+          name: "",
+          description: "",
+          duration: 0,
+          intensity: 0,
+          volume: 0,
+          set: 0,
+          exerciseIds: [],
+        });
+        setExerciseInput("");
+        router.push("/screens/workout");
+      }
     } catch (error: any) {
       const message =
         typeof error === "string"
@@ -99,9 +104,9 @@ const AddWorkout = () => {
       <TextInput
         style={styles.input}
         placeholder="Volume"
-        value={workoutData.volumn.toString()}
+        value={workoutData.volume.toString()}
         keyboardType="numeric"
-        onChangeText={(value) => handleInputChange("volumn", value)}
+        onChangeText={(value) => handleInputChange("volume", value)}
       />
 
       <TextInput
