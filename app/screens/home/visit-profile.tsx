@@ -75,94 +75,98 @@ const VisitProfile = () => {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.profileContainer}>
-        <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-          <Image style={styles.profilePicture} source={profilePicture} />
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileContainer}>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <Image style={styles.profilePicture} source={profilePicture} />
+            <View>
+              <Text style={styles.name}>{fullName}</Text>
+              <Text style={styles.email}>{email}</Text>
+            </View>
+          </View>
           <View>
-            <Text style={styles.name}>{fullName}</Text>
-            <Text style={styles.email}>{email}</Text>
+            <Text style={styles.fcount}>123</Text>
+            <Text style={styles.ftext}>Followers</Text>
+          </View>
+          <View>
+            <Text style={styles.fcount}>52</Text>
+            <Text style={styles.ftext}>Following</Text>
           </View>
         </View>
-        <View>
-          <Text style={styles.fcount}>123</Text>
-          <Text style={styles.ftext}>Followers</Text>
-        </View>
-        <View>
-          <Text style={styles.fcount}>52</Text>
-          <Text style={styles.ftext}>Following</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: 14 }}>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalTitle}>Total Exercises</Text>
-          <View
-            style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
-          >
-            <Text style={styles.totalCount}>14</Text>
-            <Text style={styles.totalName}>Exercises</Text>
-          </View>
-        </View>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalTitle}>Total Exercises</Text>
-          <View
-            style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
-          >
-            <Text style={styles.totalCount}>12</Text>
-            <Text style={styles.totalName}>Workouts</Text>
-          </View>
-        </View>
-      </View>
-      <View style={styles.followButtonContainer}>
-        <TouchableOpacity
-          style={!following ? styles.followButton : styles.followingButton}
-          onPress={() => setFollowing(!following)}
+        <View
+          style={{ flexDirection: "row", justifyContent: "center", gap: 14 }}
         >
-          <Text style={!following ? styles.followText : styles.followingText}>
-            {!following ? "Follow" : "Following"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.barChartContainer}>
-        <BarChart
-          data={data}
-          width={screenWidth - 32}
-          height={220}
-          chartConfig={chartConfig}
-          yAxisLabel=""
-          yAxisSuffix="h"
-          style={{
-            marginHorizontal: 16,
-            borderRadius: 16,
-          }}
-        />
-      </View>
-      <View>
-        <View style={{ paddingHorizontal: 16 }}>
-          <Text style={styles.recentWorkoutText}>Recent Workouts</Text>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalTitle}>Total Exercises</Text>
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
+            >
+              <Text style={styles.totalCount}>14</Text>
+              <Text style={styles.totalName}>Exercises</Text>
+            </View>
+          </View>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalTitle}>Total Exercises</Text>
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
+            >
+              <Text style={styles.totalCount}>12</Text>
+              <Text style={styles.totalName}>Workouts</Text>
+            </View>
+          </View>
         </View>
-        <PostCard
-          name={toString(name)}
-          fullName={toString(fullName)}
-          email={toString(fullName)}
-          date={toString(date)}
-          postTitle={toString(postTitle)}
-          description={toString(description)}
-          time={toString(time)}
-          volume={toString(volume)}
-          sets={toString(sets)}
-          records={toString(records)}
-          profilePicture={profilePicture}
-          postedPicture={postedPicture}
-          likes={toString(likes)}
-          comments={toString(comments)}
-          liked={liked}
-          onLikePress={() => setLiked(!liked)}
-          onCommentPress={handleOpenComments}
-        />
-      </View>
+        <View style={styles.followButtonContainer}>
+          <TouchableOpacity
+            style={!following ? styles.followButton : styles.followingButton}
+            onPress={() => setFollowing(!following)}
+          >
+            <Text style={!following ? styles.followText : styles.followingText}>
+              {!following ? "Follow" : "Following"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.barChartContainer}>
+          <BarChart
+            data={data}
+            width={screenWidth - 32}
+            height={220}
+            chartConfig={chartConfig}
+            yAxisLabel=""
+            yAxisSuffix="h"
+            style={{
+              marginHorizontal: 16,
+              borderRadius: 16,
+            }}
+          />
+        </View>
+        <View>
+          <View style={{ paddingHorizontal: 16 }}>
+            <Text style={styles.recentWorkoutText}>Recent Workouts</Text>
+          </View>
+          <PostCard
+            name={toString(name)}
+            fullName={toString(fullName)}
+            email={toString(fullName)}
+            date={toString(date)}
+            postTitle={toString(postTitle)}
+            description={toString(description)}
+            time={toString(time)}
+            volume={toString(volume)}
+            sets={toString(sets)}
+            records={toString(records)}
+            profilePicture={profilePicture}
+            postedPicture={postedPicture}
+            likes={toString(likes)}
+            comments={toString(comments)}
+            liked={liked}
+            onLikePress={() => setLiked(!liked)}
+            onCommentPress={handleOpenComments}
+          />
+        </View>
+      </ScrollView>
       <BottomSheetComments title="sample" ref={bottomSheetRef} />
-    </ScrollView>
+    </View>
   );
 };
 
