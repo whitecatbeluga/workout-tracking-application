@@ -47,7 +47,7 @@ const BottomSheetComments = forwardRef<RefType, Props>((props, ref) => {
         }}
       >
         <View>
-          <Text>Text</Text>
+          <Text>Comments here</Text>
         </View>
       </BottomSheetScrollView>
     </BottomSheet>
