@@ -18,6 +18,7 @@ export const login = createAsyncThunk(
         withCredentials: true,
       });
       await AsyncStorage.setItem("loggedIn", "true");
+      await AsyncStorage.setItem("token", response.data.access_token);
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
