@@ -12,7 +12,7 @@ export interface Workout {
   description: string;
   duration: number;
   intensity: number;
-  volumn: number;
+  volume: number;
   set: number;
   exercises: Exercise[];
 }
@@ -23,7 +23,7 @@ export interface WorkoutFormData {
   description: string;
   duration: number;
   intensity: number;
-  volumn: number;
+  volume: number;
   set: number;
   exerciseIds: number[];
 }
