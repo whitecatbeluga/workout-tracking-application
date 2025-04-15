@@ -10,7 +10,9 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { BarChart } from "react-native-chart-kit";
 import PostCard from "./post-card";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheetComments from "./components/comments-bottom-sheet";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -65,6 +67,12 @@ const VisitProfile = () => {
 
   const [liked, setLiked] = useState(isLiked === "true");
   const [following, setFollowing] = useState(false);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Handle open comments
+  const handleOpenComments = () => {
+    bottomSheetRef.current?.expand();
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -88,14 +96,18 @@ const VisitProfile = () => {
       <View style={{ flexDirection: "row", justifyContent: "center", gap: 14 }}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalTitle}>Total Exercises</Text>
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}>
+          <View
+            style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
+          >
             <Text style={styles.totalCount}>14</Text>
             <Text style={styles.totalName}>Exercises</Text>
           </View>
         </View>
         <View style={styles.totalContainer}>
           <Text style={styles.totalTitle}>Total Exercises</Text>
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}>
+          <View
+            style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
+          >
             <Text style={styles.totalCount}>12</Text>
             <Text style={styles.totalName}>Workouts</Text>
           </View>
@@ -146,8 +158,10 @@ const VisitProfile = () => {
           comments={toString(comments)}
           liked={liked}
           onLikePress={() => setLiked(!liked)}
+          onCommentPress={handleOpenComments}
         />
       </View>
+      <BottomSheetComments title="sample" ref={bottomSheetRef} />
     </ScrollView>
   );
 };
