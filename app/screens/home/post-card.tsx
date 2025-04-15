@@ -20,6 +20,7 @@ interface PostCardProps {
   comments: string;
   liked: boolean;
   onLikePress?: () => void;
+  onCommentPress?: () => void;
 }
 
 const PostCard = ({
@@ -39,6 +40,7 @@ const PostCard = ({
   comments,
   liked,
   onLikePress,
+  onCommentPress,
 }: PostCardProps) => {
   return (
     <View>
@@ -104,7 +106,7 @@ const PostCard = ({
         <TouchableOpacity>
           <Text style={styles.likesText}>{likes}</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onCommentPress}>
           <Text style={styles.likesText}>{comments}</Text>
         </TouchableOpacity>
       </View>
@@ -118,11 +120,21 @@ const PostCard = ({
             color={liked ? "#48A6A7" : "#606060"}
           />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons style={styles.icons} name="chatbubble-outline" size={24} color="#606060" />
+        <TouchableOpacity onPress={onCommentPress}>
+          <Ionicons
+            style={styles.icons}
+            name="chatbubble-outline"
+            size={24}
+            color="#606060"
+          />
         </TouchableOpacity>
         <TouchableOpacity>
-          <Ionicons style={styles.icons} name="share-outline" size={24} color="#606060" />
+          <Ionicons
+            style={styles.icons}
+            name="share-outline"
+            size={24}
+            color="#606060"
+          />
         </TouchableOpacity>
       </View>
     </View>
