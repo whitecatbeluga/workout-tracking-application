@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-export const StreakHeader = () => {
+const StreakHeader = () => {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.streakContainer}>
@@ -22,6 +22,8 @@ export const StreakHeader = () => {
     </View>
   );
 };
+
+export default StreakHeader;
 
 export const styles = StyleSheet.create({
   container: {
