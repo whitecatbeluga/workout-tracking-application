@@ -50,7 +50,7 @@ export default InputDropdown;
 
 const styles = StyleSheet.create({
   dropdown: {
-    height: 50,
+    height: 54,
     backgroundColor: "white",
     borderColor: "#CBD5E1",
     borderWidth: 1,
