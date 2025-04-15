@@ -52,6 +52,8 @@ const LoginPage = () => {
     return null;
   };
 
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -100,13 +102,23 @@ const LoginPage = () => {
                 color="#6F7A88"
               />
               <TextInput
-                style={styles.input}
+                style={styles.inputPassword}
                 value={formData.password}
                 onChangeText={(text) => handleInputChange("password", text)}
                 autoCapitalize="none"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 placeholder="Password"
               />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword((prev) => !prev)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={24}
+                  color="#6F7A88"
+                />
+              </TouchableOpacity>
               {isFieldError("password") && (
                 <Text style={styles.errorText}>{isFieldError("password")}</Text>
               )}
@@ -178,6 +190,19 @@ const styles = StyleSheet.create({
     paddingLeft: 35,
     borderWidth: 0.5,
     borderColor: "#CBD5E1",
+    height: 50,
+  },
+  inputPassword: {
+    backgroundColor: "#FFFFFF",
+    width: "100%",
+    borderRadius: 8,
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    paddingLeft: 35,
+    borderWidth: 0.5,
+    borderColor: "#CBD5E1",
+    paddingRight: 35,
+    height: 50,
   },
   loginButton: {
     backgroundColor: "#48A6A7",
@@ -208,11 +233,16 @@ const styles = StyleSheet.create({
   },
   icon: {
     position: "absolute",
-    top: 25,
+    top: 28,
     left: 8,
     zIndex: 1,
   },
   registerButton: {
     color: "#48A6A7",
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 10,
+    top: 29,
   },
 });
