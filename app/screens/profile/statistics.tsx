@@ -20,13 +20,19 @@ const Header = ({ title, isFilter }: HeaderProps) => {
           gap: 10,
         }}
       >
-        <Text style={{ fontWeight: "bold", fontSize: 18 }}>{title}</Text>
+        <Text style={{ fontFamily: "Inter_700Bold", fontSize: 18 }}>
+          {title}
+        </Text>
         {isFilter && (
           <TouchableOpacity
             style={{ flexDirection: "row", alignItems: "center", gap: 5 }}
           >
             <Text
-              style={{ fontWeight: "bold", fontSize: 16, color: "#006A71" }}
+              style={{
+                fontFamily: "Inter_700Bold",
+                fontSize: 16,
+                color: "#006A71",
+              }}
             >
               Filter
             </Text>
@@ -45,6 +51,7 @@ const StatisticsScreen = () => {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
+        overScrollMode="never"
       >
         {/* workout frequency cards*/}
         <Header title="Workout Frequency" isFilter={true} />
@@ -105,7 +112,11 @@ const StatisticsScreen = () => {
               }}
             >
               <Text
-                style={{ fontSize: 14, fontWeight: "600", color: "#626262" }}
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Inter_600SemiBold",
+                  color: "#626262",
+                }}
               >
                 Workout Summary
               </Text>
@@ -143,8 +154,8 @@ const StatisticsScreen = () => {
 
                       <Text
                         style={{
-                          fontSize: 14,
-                          fontWeight: "500",
+                          fontSize: 12,
+                          fontFamily: "Inter_500Medium",
                           color: "#626262",
                         }}
                       >
@@ -153,7 +164,7 @@ const StatisticsScreen = () => {
                       <Text
                         style={{
                           fontSize: 14,
-                          fontWeight: "700",
+                          fontFamily: "Inter_700Bold",
                           color: "#323232",
                         }}
                       >
@@ -240,7 +251,11 @@ const StatisticsScreen = () => {
               }}
             >
               <Text
-                style={{ fontSize: 14, fontWeight: "600", color: "#626262" }}
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Inter_600SemiBold",
+                  color: "#626262",
+                }}
               >
                 Most Used Routines
               </Text>
@@ -255,9 +270,11 @@ const StatisticsScreen = () => {
                     borderBottomColor: "#606060",
                   }}
                 >
-                  <Text style={{ fontWeight: "bold" }}>Routine Name</Text>
-                  <Text style={{ fontWeight: "bold" }}>Time Used</Text>
-                  <Text style={{ fontWeight: "bold" }}>Last Used</Text>
+                  <Text style={{ fontFamily: "Inter_700Bold" }}>
+                    Routine Name
+                  </Text>
+                  <Text style={{ fontFamily: "Inter_700Bold" }}>Time Used</Text>
+                  <Text style={{ fontFamily: "Inter_700Bold" }}>Last Used</Text>
                 </View>
                 <View>
                   {routineUsageData.map((routine, index) => (
@@ -272,7 +289,7 @@ const StatisticsScreen = () => {
                       <Text
                         style={{
                           fontSize: 14,
-                          fontWeight: "500",
+                          fontFamily: "Inter_500Medium",
                           color: "#323232",
                         }}
                       >
@@ -289,7 +306,7 @@ const StatisticsScreen = () => {
                         <Text
                           style={{
                             fontSize: 14,
-                            fontWeight: "400",
+                            fontFamily: "Inter_400Regular",
                             color: "#626262",
                           }}
                         >
@@ -298,7 +315,7 @@ const StatisticsScreen = () => {
                         <Text
                           style={{
                             fontSize: 14,
-                            fontWeight: "400",
+                            fontFamily: "Inter_400Regular",
                             color: "#626262",
                           }}
                         >

@@ -141,6 +141,7 @@ const HomeScreen = () => {
           <View style={{ flexGrow: 1, paddingBottom: 80 }}>
             <FlatList
               data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]} // replace with real data
+              overScrollMode="never"
               numColumns={2}
               keyExtractor={(item, index) => index.toString()}
               onScroll={onScroll}
@@ -163,6 +164,7 @@ const HomeScreen = () => {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContainer}
             showsHorizontalScrollIndicator={false}
+            overScrollMode="never"
           >
             {[1, 2, 3, 4, 5, 6].map((item, index) => (
               <TouchableOpacity key={index} style={styles.card}>
@@ -443,7 +445,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   buttonText: {
-    fontWeight: "600",
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
   },
@@ -453,6 +454,7 @@ const styles = StyleSheet.create({
   },
   activeText: {
     color: "#FFFFFF",
+    fontFamily: "Inter_600SemiBold",
   },
   profileImage: {
     height: 50,

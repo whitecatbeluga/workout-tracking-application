@@ -90,6 +90,7 @@ const WorkoutPage = () => {
           onScroll={onScroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          overScrollMode="never"
         >
           <View style={{ gap: 10, flexDirection: "column", width: "100%" }}>
             <WorkoutHeader />
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   routineTxt: {
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     fontSize: 20,
   },
   newRoutineSearch: {
@@ -267,7 +268,7 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
 const overlayStyles = StyleSheet.create({
   workoutTitle: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     marginBottom: 8,
   },
   workoutDescription: {

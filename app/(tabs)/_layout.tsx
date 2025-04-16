@@ -122,7 +122,13 @@ const TabLayout = () => {
             tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
           }}
         />
-        <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarLabelStyle: { fontFamily: "Inter_700Bold" },
+          }}
+        />
       </Tabs>
     </TabVisibilityContext.Provider>
   );
