@@ -129,7 +129,7 @@ export const Card = ({
           style={{
             fontSize: 12,
             color: "#626262",
-            fontWeight: "medium",
+            fontFamily: "Inter_500Medium",
           }}
         >
           {collapsed ? "View Exercises" : "Hide Exercises"}

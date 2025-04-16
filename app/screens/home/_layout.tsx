@@ -25,6 +25,17 @@ export default function HomeLayout() {
           },
         })}
       />
+      <Stack.Screen
+        name="routine-screen"
+        options={({ route }: { route: any }) => ({
+          title: route.params?.name ?? "Routine",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        })}
+      />
     </Stack>
   );
 }

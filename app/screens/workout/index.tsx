@@ -289,7 +289,7 @@ const overlayStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
     marginBottom: 12,
   },
   exerciseCard: {
@@ -305,7 +305,7 @@ const overlayStyles = StyleSheet.create({
   },
   exerciseName: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
   exerciseCategory: {
