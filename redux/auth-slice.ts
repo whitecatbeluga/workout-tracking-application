@@ -117,6 +117,8 @@ const authSlice = createSlice({
       state.access_token = action.payload.access_token;
       state.user = action.payload.user;
       state.error = null;
+
+      console.log("auth-slice-user", action.payload.user);
     });
     builder.addCase(login.rejected, (state, action) => {
       state.loading = Loading.Rejected;
@@ -162,8 +164,6 @@ const authSlice = createSlice({
      */
     builder.addCase(refreshToken.pending, (state) => {
       state.loading = Loading.Pending;
-      state.access_token = null;
-      state.user = null;
       state.error = null;
     });
     builder.addCase(refreshToken.fulfilled, (state, action) => {
