@@ -224,6 +224,7 @@ const HomeScreen = () => {
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingVertical: 16 }}
             showsVerticalScrollIndicator={false}
+            overScrollMode="never"
             renderItem={({ item }) => (
               <View style={{ paddingVertical: 6 }}>
                 <TouchableOpacity
