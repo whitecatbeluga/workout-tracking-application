@@ -117,7 +117,7 @@ const Header = ({ desc }: { desc: string }) => {
       <Text
         style={{
           fontSize: 28,
-          fontWeight: "bold",
+          fontFamily: "Inter_700Bold",
           letterSpacing: -0.6,
           color: "#323232",
         }}
@@ -158,7 +158,14 @@ const ReviewInfo = ({
         <Ionicons name={icon} size={16} color="#6F7A88" />
         <Text style={{ fontSize: 14, color: "#6b7280" }}>{label}</Text>
       </View>
-      <Text style={{ fontSize: 16, fontWeight: "600" }}>{data}</Text>
+      <Text
+        style={{
+          fontSize: 16,
+          fontFamily: "Inter_600SemiBold",
+        }}
+      >
+        {data}
+      </Text>
     </View>
   );
 };

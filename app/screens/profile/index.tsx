@@ -1,5 +1,14 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  ScrollView,
+} from "react-native";
+import React, { useRef, useState } from "react";
 import { Href, useRouter } from "expo-router";
 
 // imported components
@@ -8,13 +17,12 @@ import BottomSheetFilter from "./components/drawer-filter";
 import DashboardButtons from "./components/dashboard-buttons";
 import ImageView from "react-native-image-viewing";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
 import Styles from "@/app/screens/profile/styles";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { ScrollView } from "react-native-gesture-handler";
 import WorkoutCard from "./components/workout-card";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { logout } from "@/redux/auth-slice";
+import { useTabVisibility } from "@/app/(tabs)/_layout";
 
 const routeNames: {
   routeName: string;
@@ -100,12 +108,28 @@ const ProfilePage = () => {
     { count: 12, label: "Total Workouts", unit: "workouts" },
   ];
 
+  // To hide bottom nav
+  const offset = useRef(0);
+  const { setTabVisible } = useTabVisibility();
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentOffset = event.nativeEvent.contentOffset.y;
+    const direction = currentOffset > offset.current ? "down" : "up";
+
+    if (Math.abs(currentOffset - offset.current) > 10) {
+      setTabVisible(direction !== "down");
+    }
+
+    offset.current = currentOffset;
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        overScrollMode="never"
       >
         {/* profile avatar and info */}
         <View
@@ -133,10 +157,10 @@ const ProfilePage = () => {
               backgroundColor="rgba(0, 0, 0, 0.5)"
             />
             <View style={{ flexDirection: "column" }}>
-              <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+              <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold" }}>
                 John Smith Doe
               </Text>
-              <Text style={{ fontSize: 14, fontWeight: "regular" }}>
+              <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular" }}>
                 john@email.com
               </Text>
             </View>
@@ -183,7 +207,7 @@ const ProfilePage = () => {
           }}
         >
           <View>
-            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+            <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold" }}>
               Graph Progress
             </Text>
           </View>
@@ -195,7 +219,7 @@ const ProfilePage = () => {
               style={{
                 color: "#006A71",
                 fontSize: 14,
-                fontWeight: "bold",
+                fontFamily: "Inter_700Bold",
               }}
             >
               Last 3 Months
@@ -263,10 +287,10 @@ const styles = StyleSheet.create({
   buttonContainer: {
     alignItems: "center",
     marginTop: 20,
-    marginBottom: 100,
+    marginBottom: 80,
   },
   button: {
-    backgroundColor: "gray",
+    backgroundColor: "#D9D9D9",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -275,8 +299,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
-    color: "#fff",
+    color: "#000000",
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
   },
 });

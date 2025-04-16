@@ -52,7 +52,7 @@ export default WorkoutCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "white",
     padding: 16,
     borderRadius: 12,
     width: "90%",
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     marginBottom: 4,
   },
   desc: {
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   subHeading: {
     marginTop: 10,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     fontSize: 14,
   },
   exercise: {

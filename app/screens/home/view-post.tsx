@@ -37,7 +37,11 @@ const ViewPostScreen = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        overScrollMode="never"
+      >
         <PostCard
           name={toString(name)}
           fullName={toString(fullName)}

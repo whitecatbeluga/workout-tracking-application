@@ -19,6 +19,7 @@ const chartConfig = {
   },
   propsForLabels: {
     fontSize: 12,
+    fontFamily: "Inter_500Medium",
   },
   decimalPlaces: 0,
 };

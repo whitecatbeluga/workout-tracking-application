@@ -1,8 +1,21 @@
-import React, { useState, useMemo, useContext, createContext, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useContext,
+  createContext,
+  useRef,
+  useEffect,
+} from "react";
 import { Tabs } from "expo-router";
 import { TabBar } from "@/components/tab-bar";
 import { Ionicons } from "@expo/vector-icons"; // Importing icons from Expo
-import { Image, View, StyleSheet, Animated, TouchableOpacity } from "react-native"; // Importing Image and View for styling
+import {
+  Image,
+  View,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+} from "react-native"; // Importing Image and View for styling
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 
 const TabVisibilityContext = createContext({
@@ -43,7 +56,10 @@ const CustomTabBar = (props: BottomTabBarProps) => {
 
 const TabLayout = () => {
   const [isTabVisible, setTabVisible] = useState(true);
-  const contextValue = useMemo(() => ({ isTabVisible, setTabVisible }), [isTabVisible]);
+  const contextValue = useMemo(
+    () => ({ isTabVisible, setTabVisible }),
+    [isTabVisible]
+  );
 
   return (
     <TabVisibilityContext.Provider value={contextValue}>
@@ -101,12 +117,18 @@ const TabLayout = () => {
         <Tabs.Screen
           name="workout"
           options={{
-            headerShown: false,
+            title: "Workout",
             tabBarLabel: "Workout",
             tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
           }}
         />
-        <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarLabelStyle: { fontFamily: "Inter_700Bold" },
+          }}
+        />
       </Tabs>
     </TabVisibilityContext.Provider>
   );

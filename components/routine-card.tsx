@@ -22,7 +22,7 @@ const RoutineCard = ({ title, style }: RoutineCardProps) => {
       {/* You can add more card content here if needed */}
       <View style={styles.addExerciseBtn}>
         <CustomBtn onPress={addExerciseHandler} buttonStyle={styles.dottedBtn}>
-          <Icon name="plus" iconLibrary="AntDesign" color="black" size={24}/>
+          <Icon name="plus" iconLibrary="AntDesign" color="black" size={24} />
           <BtnTitle
             title="Start new routine"
             textStyle={{ fontSize: 14, color: "black" }}
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 13,
-    fontWeight: "semibold",
+    fontFamily: "Inter_600SemiBold",
   },
   addExerciseBtn: {
     marginTop: 27,
