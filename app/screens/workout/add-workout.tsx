@@ -54,7 +54,7 @@ const AddWorkout = () => {
           exerciseIds: [],
         });
         setExerciseInput("");
-        router.push("/screens/workout");
+        router.replace("/(tabs)/workout");
       }
     } catch (error: any) {
       const message =
