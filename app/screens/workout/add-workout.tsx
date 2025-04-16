@@ -68,7 +68,11 @@ const AddWorkout = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      overScrollMode="never"
+    >
       <Text style={styles.heading}>Workout</Text>
 
       <TextInput
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 22,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     marginBottom: 20,
     textAlign: "center",
   },

@@ -21,7 +21,13 @@ const WorkoutCard = ({ card }: any) => {
         elevation: 1,
       }}
     >
-      <Text style={{ fontSize: 14, fontWeight: "600", color: "#626262" }}>
+      <Text
+        style={{
+          fontSize: 12,
+          fontFamily: "Inter_600SemiBold",
+          color: "#626262",
+        }}
+      >
         {card.label}
       </Text>
       <View
@@ -34,7 +40,7 @@ const WorkoutCard = ({ card }: any) => {
         <Text
           style={{
             fontSize: 32,
-            fontWeight: "700",
+            fontFamily: "Inter_700Bold",
             color: "#323232",
           }}
         >
@@ -43,7 +49,7 @@ const WorkoutCard = ({ card }: any) => {
         <Text
           style={{
             fontSize: 14,
-            fontWeight: "500",
+            fontFamily: "Inter_500Medium",
             color: "#626262",
           }}
         >
@@ -57,7 +63,9 @@ const WorkoutCard = ({ card }: any) => {
             size={20}
             color="#006A71"
           />
-          <Text style={{ color: "#006A71" }}>{card.recentCount}</Text>
+          <Text style={{ color: "#006A71", fontFamily: "Inter_500Medium" }}>
+            {card.recentCount}
+          </Text>
         </View>
       )}
     </View>

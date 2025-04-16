@@ -11,7 +11,6 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
-  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import Input from "@/components/input-text";
 import { WorkoutFormData } from "@/custom-types/workout-type";
@@ -26,10 +25,18 @@ const CardWorkoutInfo = ({
 }) => {
   return (
     <View>
-      <Text style={{ fontSize: 24, fontWeight: "bold", color: "#323232" }}>
+      <Text
+        style={{ fontSize: 24, fontFamily: "Inter_700Bold", color: "#323232" }}
+      >
         {value} {label === "Duration" ? "mins" : ""}
       </Text>
-      <Text style={{ fontSize: 12, color: "#626262", fontWeight: "medium" }}>
+      <Text
+        style={{
+          fontSize: 12,
+          color: "#626262",
+          fontFamily: "Inter_500Medium",
+        }}
+      >
         {label}
       </Text>
     </View>
@@ -58,10 +65,16 @@ export const Card = ({
       }}
     >
       <View style={{ gap: 8 }}>
-        <Text style={{ textAlign: "center", fontWeight: "bold", fontSize: 14 }}>
+        <Text
+          style={{
+            textAlign: "center",
+            fontFamily: "Inter_700Bold",
+            fontSize: 14,
+          }}
+        >
           {card.name}
         </Text>
-        <Text style={{ fontWeight: "medium", fontSize: 12 }}>
+        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12 }}>
           {card.description}
         </Text>
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
@@ -85,7 +98,11 @@ export const Card = ({
         {card.exercises.map((e: any) => (
           <Text
             key={e.id}
-            style={{ fontSize: 12, color: "#626262", fontWeight: "medium" }}
+            style={{
+              fontSize: 12,
+              color: "#626262",
+              fontFamily: "Inter_500Medium",
+            }}
           >
             {e.exercise.name} ({e.exercise.category})
           </Text>
@@ -142,7 +159,9 @@ const OpenEditWorkout = ({
           justifyContent: "center",
         }}
       >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Edit Workout</Text>
+        <Text style={{ color: "white", fontFamily: "Inter_700Bold" }}>
+          Edit Workout
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -165,7 +184,9 @@ const EditWorkout = ({
           justifyContent: "center",
         }}
       >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Edit Workout</Text>
+        <Text style={{ color: "white", fontFamily: "Inter_700Bold" }}>
+          Edit Workout
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -225,9 +246,10 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
           flex: 1,
           backgroundColor: "#F4F4F4",
         }}
+        overScrollMode="never"
       >
         <View style={{ marginVertical: 12, alignItems: "center" }}>
-          <Text style={{ fontSize: 22, fontWeight: "bold" }}>
+          <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold" }}>
             Edit this Workout
           </Text>
         </View>
@@ -293,6 +315,7 @@ const WorkoutsCard = () => {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
+        overScrollMode="never"
       >
         {/* search input */}
         <View
@@ -317,6 +340,7 @@ const WorkoutsCard = () => {
               paddingLeft: 40,
               borderRadius: 10,
               fontSize: 16,
+              fontFamily: "Inter_400Regular",
             }}
             inputMode="search"
             placeholder="Search exercises..."

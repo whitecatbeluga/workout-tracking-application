@@ -62,6 +62,7 @@ const Input = ({
           borderRadius: 10,
           fontSize: 16,
           marginBottom: 16,
+          fontFamily: "Inter_400Regular",
         }}
         placeholder={placeholder}
         placeholderTextColor="#94A3B8"

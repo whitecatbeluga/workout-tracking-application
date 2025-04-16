@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     marginBottom: 4,
   },
   desc: {
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   subHeading: {
     marginTop: 10,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     fontSize: 14,
   },
   exercise: {

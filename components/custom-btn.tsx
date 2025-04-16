@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 19,
   },
   icon: {
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,

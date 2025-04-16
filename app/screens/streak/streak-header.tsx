@@ -52,9 +52,11 @@ export const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: 18,
+    fontFamily: "Inter_400Regular",
   },
   streakLabel: {
     color: "#808080",
     fontSize: 16,
+    fontFamily: "Inter_400Regular",
   },
 });
