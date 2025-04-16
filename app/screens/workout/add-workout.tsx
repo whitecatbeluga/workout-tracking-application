@@ -56,7 +56,9 @@ const AddWorkout = () => {
         setExerciseInput("");
         router.replace("/(tabs)/workout");
       }
+      console.log("result", result);
     } catch (error: any) {
+      console.log("error", error);
       const message =
         typeof error === "string"
           ? error
