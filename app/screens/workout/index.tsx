@@ -24,7 +24,9 @@ import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { getWorkout } from "@/redux/slices/workout-slice";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import WorkoutCard from "./workout-card";
+import { Ionicons } from "@expo/vector-icons";
+// import WorkoutCard from "./workout-card";
+import { Card as WorkoutCard } from "../profile/workouts";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
@@ -89,11 +91,13 @@ const WorkoutPage = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <WorkoutHeader />
+          <View style={{ gap: 10, flexDirection: "column", width: "100%" }}>
+            <WorkoutHeader />
 
-          <View style={styles.routine}>
-            <Text style={styles.routineTxt}>Routines</Text>
-            <AntDesign name="addfolder" size={30} color="#48A6A7" />
+            <View style={styles.routine}>
+              <Text style={styles.routineTxt}>Routines</Text>
+              <Ionicons name="folder-open" size={28} color="#48A6A7" />
+            </View>
           </View>
 
           <View style={styles.newRoutineSearch}>
@@ -115,16 +119,7 @@ const WorkoutPage = () => {
 
           <View style={styles.cardList}>
             {workout?.map((item) => (
-              <WorkoutCard
-                key={item.id}
-                id={item.id!}
-                name={item.name}
-                description={item.description}
-                duration={item.duration}
-                intensity={item.intensity}
-                exercises={item.exercises}
-                onMenuPress={openWorkoutMenu}
-              />
+              <WorkoutCard key={item.id} card={item} isEditable={false} />
             ))}
           </View>
         </ScrollView>
@@ -143,22 +138,20 @@ export default WorkoutPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   scrollContent: {
     alignItems: "center",
-    paddingBottom: 20,
+    padding: 20,
   },
   routine: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "90%",
-    marginTop: 30,
     alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
   },
   routineTxt: {
     fontWeight: "bold",
-    fontSize: 15,
+    fontSize: 20,
   },
   newRoutineSearch: {
     marginTop: 10,

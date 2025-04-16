@@ -14,7 +14,6 @@ export default Workout;
 
 const styles = StyleSheet.create({
   container: {
-    marginTop:65,
     flex: 1,
   },
 });

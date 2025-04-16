@@ -52,7 +52,7 @@ export default WorkoutCard;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "white",
     padding: 16,
     borderRadius: 12,
     width: "90%",

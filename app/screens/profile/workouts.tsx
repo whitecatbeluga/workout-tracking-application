@@ -15,6 +15,7 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import Input from "@/components/input-text";
 import { WorkoutFormData } from "@/custom-types/workout-type";
+import Collapsible from "react-native-collapsible";
 
 const CardWorkoutInfo = ({
   label,
@@ -44,14 +45,16 @@ export const Card = ({
   handleOpenBottomSheet?: () => void;
   isEditable: boolean;
 }) => {
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
     <View
       style={{
         backgroundColor: "#fff",
         borderRadius: 8,
         padding: 14,
-        gap: 16,
         elevation: 1,
+        width: "100%",
       }}
     >
       <View style={{ gap: 8 }}>
@@ -72,19 +75,49 @@ export const Card = ({
           <CardWorkoutInfo label={"Volume"} value={card.volume} />
 
           {/* sets */}
-          <CardWorkoutInfo label={"Sets"} value={card.sets} />
+          <CardWorkoutInfo label={"Sets"} value={card.sets || card.set} />
         </View>
       </View>
-      <View style={{ flexDirection: "column", gap: 8 }}>
-        {card.exercises.map((exercise: string, index: any) => (
+      <Collapsible
+        collapsed={collapsed}
+        style={{ flexDirection: "column", gap: 8, paddingTop: 10 }}
+      >
+        {card.exercises.map((e: any) => (
           <Text
-            key={index}
+            key={e.id}
             style={{ fontSize: 12, color: "#626262", fontWeight: "medium" }}
           >
-            {exercise}
+            {e.exercise.name} ({e.exercise.category})
           </Text>
         ))}
-      </View>
+      </Collapsible>
+      <TouchableOpacity
+        style={{
+          paddingTop: 20,
+          flexDirection: "row",
+          gap: 3,
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+        onPress={() => setCollapsed(!collapsed)}
+      >
+        {collapsed ? (
+          <Ionicons name="chevron-down" size={16} color="#323232" />
+        ) : (
+          <Ionicons name="chevron-up" size={16} color="#323232" />
+        )}
+
+        <Text
+          style={{
+            fontSize: 12,
+            color: "#626262",
+            fontWeight: "medium",
+          }}
+        >
+          {collapsed ? "View Exercises" : "Hide Exercises"}
+        </Text>
+      </TouchableOpacity>
       {isEditable && handleOpenBottomSheet && (
         <OpenEditWorkout handleOpenBottomSheet={handleOpenBottomSheet} />
       )}
@@ -158,6 +191,7 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
     intensity: 0,
     volume: 0,
     set: 0,
+    exerciseIds: [],
   });
 
   const onChangeText = (name: keyof WorkoutFormData) => (text: string) => {
