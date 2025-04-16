@@ -7,6 +7,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import React, {
   forwardRef,
@@ -17,7 +18,6 @@ import React, {
   useState,
 } from "react";
 import WorkoutHeader from "./workout-header";
-import { AntDesign } from "@expo/vector-icons";
 import { BtnTitle, CustomBtn, Icon } from "@/components/custom-btn";
 import SearchInput from "@/components/search-input";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
@@ -25,16 +25,65 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { getWorkout } from "@/redux/slices/workout-slice";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { Ionicons } from "@expo/vector-icons";
-// import WorkoutCard from "./workout-card";
-import { Card as WorkoutCard } from "../profile/workouts";
+import WorkoutCard, { CardWorkoutInfo } from "@/components/workout-card";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { getExercise } from "@/redux/slices/exercise-slice";
 import { WorkoutExercise } from "@/custom-types/workout-type";
+import ExerciseCard from "@/components/exercise-card";
+import Input from "@/components/input-text";
 
 const { height: screenHeight } = Dimensions.get("window");
+
+const ActionButtons = () => {
+  const buttonDetails = [
+    { label: "Edit Workout", icon: "create", color: "green", onpress: "" },
+    {
+      label: "Delete Workout",
+      icon: "close-circle",
+      color: "red",
+      onpress: "",
+    },
+  ];
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        gap: 5,
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      {buttonDetails.map((item, index) => (
+        <TouchableOpacity
+          key={index}
+          style={{
+            width: "48%",
+            borderRadius: 8,
+            display: "flex",
+            flexDirection: "row",
+            gap: 5,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "white",
+            paddingVertical: 14,
+          }}
+        >
+          <Ionicons
+            name={item.icon as keyof typeof Ionicons.glyphMap}
+            size={22}
+            color={item.color}
+          />
+
+          <Text style={{ color: item.color }}>{item.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
 const WorkoutPage = () => {
   const offset = useRef(0);
@@ -92,35 +141,35 @@ const WorkoutPage = () => {
           showsVerticalScrollIndicator={false}
           overScrollMode="never"
         >
-          <View style={{ gap: 10, flexDirection: "column", width: "100%" }}>
+          <View style={{ gap: 20, flexDirection: "column", width: "100%" }}>
             <WorkoutHeader />
 
             <View style={styles.routine}>
               <Text style={styles.routineTxt}>Routines</Text>
-              <Ionicons name="folder-open" size={28} color="#48A6A7" />
+              <View style={styles.routineIcon}>
+                <Ionicons name="add" size={28} color="#48A6A7" />
+                <Ionicons name="folder-open" size={28} color="#48A6A7" />
+              </View>
             </View>
           </View>
 
           <View style={styles.newRoutineSearch}>
-            <CustomBtn
-              onPress={handlePress}
-              buttonStyle={{ width: "46%", borderRadius: 10 }}
-            >
-              <Icon name="profile" iconLibrary="AntDesign" />
-              <BtnTitle title="New Routine" textStyle={{ fontSize: 15 }} />
-            </CustomBtn>
-
-            <SearchInput
+            <Input
+              value={""}
+              icon="search-circle"
               placeholder="Explore"
-              value=""
-              onChangeText={handleSearchChange}
-              containerStyle={{ width: "46%" }}
+              onChangeText={(value) => {}}
             />
           </View>
 
           <View style={styles.cardList}>
             {workout?.map((item) => (
-              <WorkoutCard key={item.id} card={item} isEditable={false} />
+              <WorkoutCard
+                handleOpenWorkoutMenu={openWorkoutMenu}
+                key={item.id}
+                card={item}
+                isEditable={false}
+              />
             ))}
           </View>
         </ScrollView>
@@ -154,12 +203,14 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     fontSize: 20,
   },
+  routineIcon: {
+    flexDirection: "row",
+    gap: 10,
+    alignContent: "center",
+  },
   newRoutineSearch: {
     marginTop: 10,
-    width: "90%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    width: "100%",
   },
   cardList: {
     gap: 10,
@@ -201,36 +252,46 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
           />
         )}
       >
-        <View
+        <BottomSheetView
           style={{
-            paddingHorizontal: 20,
-            paddingTop: 20,
             backgroundColor: "#F4F4F4",
+            paddingHorizontal: 20,
+            gap: 20,
           }}
         >
-          {workoutDetails ? (
-            <>
-              <Text style={overlayStyles.workoutTitle}>
-                {workoutDetails.name}
-              </Text>
-              <Text style={overlayStyles.workoutDescription}>
-                {workoutDetails.description}
-              </Text>
-              <Text style={overlayStyles.workoutDuration}>
-                Duration: {workoutDetails.duration}
-              </Text>
-              <Text style={overlayStyles.workoutIntensity}>
-                Intensity: {workoutDetails.intensity}
-              </Text>
+          <ActionButtons />
 
-              <Text style={[overlayStyles.sectionTitle, { marginTop: 20 }]}>
-                Exercise Details
-              </Text>
-            </>
-          ) : (
-            <Text>Loading workout details...</Text>
-          )}
-        </View>
+          <View>
+            {workoutDetails ? (
+              <View style={{ gap: 10 }}>
+                <View style={{ gap: 5 }}>
+                  <Text style={{ fontWeight: "bold", fontSize: 22 }}>
+                    {workoutDetails.name}
+                  </Text>
+                  <Text style={{ fontWeight: "medium", fontSize: 14 }}>
+                    {workoutDetails.description}
+                  </Text>
+                  <Text style={{ fontSize: 14 }}>
+                    Duration: {workoutDetails.duration}
+                  </Text>
+                  <Text style={{ fontSize: 14 }}>
+                    Intensity: {workoutDetails.intensity}
+                  </Text>
+                  <Text style={{ fontSize: 14 }}>
+                    Volume: {workoutDetails.intensity}
+                  </Text>
+                  <Text style={{ fontSize: 14 }}>
+                    Set: {workoutDetails.intensity}
+                  </Text>
+                </View>
+
+                <Text style={overlayStyles.sectionTitle}>Exercise Details</Text>
+              </View>
+            ) : (
+              <Text>Loading workout details...</Text>
+            )}
+          </View>
+        </BottomSheetView>
 
         <BottomSheetScrollView
           bounces={false}
@@ -239,25 +300,12 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
             paddingHorizontal: 20,
             paddingBottom: 30,
             backgroundColor: "#F4F4F4",
+            gap: 20,
           }}
           showsVerticalScrollIndicator={false}
         >
           {workoutDetails?.exercises?.map((item: WorkoutExercise) => (
-            <View key={item.id} style={overlayStyles.exerciseCard}>
-              <Text style={overlayStyles.exerciseName}>
-                {item.exercise.name}
-              </Text>
-              <Text style={overlayStyles.exerciseCategory}>
-                Category: {item.exercise.category}
-              </Text>
-              <Text style={overlayStyles.exerciseDescription}>
-                {item.exercise.description}
-              </Text>
-              <Text style={overlayStyles.exerciseEquipment}>
-                Equipment Required:{" "}
-                {item.exercise.with_out_equipment ? "No" : "Yes"}
-              </Text>
-            </View>
+            <ExerciseCard key={item.id} card={item} />
           ))}
         </BottomSheetScrollView>
       </BottomSheet>
@@ -289,7 +337,7 @@ const overlayStyles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
     marginBottom: 12,
   },
   exerciseCard: {
@@ -305,7 +353,7 @@ const overlayStyles = StyleSheet.create({
   },
   exerciseName: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
   exerciseCategory: {

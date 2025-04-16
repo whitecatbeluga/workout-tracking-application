@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput } from "react-native";
+import Input from "@/components/input-text";
 // import { TextInput } from "react-native-gesture-handler";
 
 // dropdown
@@ -29,86 +30,6 @@ const initialFormData: RegisterFormData = {
   bmi: 0,
   activity_level: 0,
   user_type: "",
-};
-
-const Input = ({
-  value,
-  icon,
-  suffixIcon,
-  placeholder,
-  autoCapitalize,
-  onChangeText,
-  keyboardType,
-  secureTextEntry,
-  isSuffix,
-  showPassword,
-  toggleShowPassword,
-}: {
-  value: any;
-  icon: any;
-  placeholder: string;
-  autoCapitalize?: any;
-  onChangeText: (text: string) => void;
-  keyboardType?: any;
-  secureTextEntry?: boolean;
-  isSuffix?: boolean;
-  suffixIcon?: any;
-  passwordToggle?: boolean;
-  showPassword?: boolean;
-  toggleShowPassword?: () => void;
-}) => {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-      }}
-    >
-      <Ionicons
-        style={{ position: "absolute", left: 11, top: 13, zIndex: 1 }}
-        name={icon}
-        size={24}
-        color="#6F7A88"
-      />
-      <TextInput
-        style={{
-          backgroundColor: "white",
-          borderColor: "#CBD5E1",
-          borderWidth: 1,
-          height: 50,
-          paddingHorizontal: 8,
-          paddingLeft: 40,
-          paddingRight: 40,
-          borderRadius: 10,
-          fontSize: 16,
-          marginBottom: 16,
-        }}
-        placeholder={placeholder}
-        placeholderTextColor="#94A3B8"
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-      />
-
-      {isSuffix && (
-        <Ionicons
-          style={{ position: "absolute", right: 11, top: 13, zIndex: 1 }}
-          name={
-            typeof showPassword === "boolean"
-              ? showPassword
-                ? "eye-off"
-                : "eye"
-              : suffixIcon
-          }
-          size={24}
-          color="#6F7A88"
-          onPress={toggleShowPassword}
-        />
-      )}
-    </View>
-  );
 };
 
 const Header = ({ desc }: { desc: string }) => {
