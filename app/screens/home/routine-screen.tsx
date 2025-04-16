@@ -1,5 +1,12 @@
 import React from "react";
-import { FlatList, StyleSheet, Text, View, Image } from "react-native";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
 const routines = {
@@ -66,6 +73,9 @@ const RoutineScreen = () => {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => <Text style={styles.exercise}>{item}</Text>}
       />
+      <TouchableOpacity style={styles.startButton}>
+        <Text style={styles.startButtonText}>Start Workout</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -94,5 +104,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginVertical: 8,
     fontFamily: "Inter_400Regular",
+  },
+  startButton: {
+    backgroundColor: "#48A6A7",
+    elevation: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    padding: 16,
+  },
+  startButtonText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 16,
+    color: "#FFFFFF",
   },
 });
