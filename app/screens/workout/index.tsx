@@ -29,6 +29,8 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
+import { getExercise } from "@/redux/slices/exercise-slice";
+import { WorkoutExercise } from "@/custom-types/workout-type";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -178,10 +180,10 @@ interface BottomSheetProps {
 
 const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
   ({ workoutDetails }, ref) => {
-    const snapPoints = useMemo(() => [screenHeight * 0.65, "95%"], []);
+    const snapPoints = useMemo(() => [screenHeight * 0.65, "90%"], []);
 
     const handleSheetChanges = useCallback((index: number) => {
-      console.log("BottomSheet index:", index);
+      // console.log("BottomSheet index:", index);
     }, []);
 
     return (
@@ -191,7 +193,11 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
         enablePanDownToClose={true}
-        handleStyle={{ backgroundColor: "#F4F4F4", borderRadius: 50 }}
+        handleStyle={{
+          backgroundColor: "#F4F4F4",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
         backdropComponent={(props) => (
           <BottomSheetBackdrop
             {...props}
@@ -201,38 +207,65 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
           />
         )}
       >
-        {workoutDetails ? (
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              padding: 20,
-              backgroundColor: "#F4F4F4",
-            }}
-          >
-            <Text style={overlayStyles.workoutTitle}>
-              {workoutDetails.name}
-            </Text>
-            <Text style={overlayStyles.workoutDescription}>
-              {workoutDetails.description}
-            </Text>
-            <Text style={overlayStyles.workoutDuration}>
-              Duration: {workoutDetails.duration}
-            </Text>
-            <Text style={overlayStyles.workoutIntensity}>
-              Intensity: {workoutDetails.intensity}
-            </Text>
-            <Text style={overlayStyles.workoutExercises}>
-              Exercises:{" "}
-              {Array.isArray(workoutDetails.exercises)
-                ? workoutDetails.exercises.join(", ")
-                : "None"}
-            </Text>
-          </BottomSheetScrollView>
-        ) : (
-          <View style={{ padding: 20 }}>
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 20,
+            backgroundColor: "#F4F4F4",
+          }}
+        >
+          {workoutDetails ? (
+            <>
+              <Text style={overlayStyles.workoutTitle}>
+                {workoutDetails.name}
+              </Text>
+              <Text style={overlayStyles.workoutDescription}>
+                {workoutDetails.description}
+              </Text>
+              <Text style={overlayStyles.workoutDuration}>
+                Duration: {workoutDetails.duration}
+              </Text>
+              <Text style={overlayStyles.workoutIntensity}>
+                Intensity: {workoutDetails.intensity}
+              </Text>
+
+              <Text style={[overlayStyles.sectionTitle, { marginTop: 20 }]}>
+                Exercise Details
+              </Text>
+            </>
+          ) : (
             <Text>Loading workout details...</Text>
-          </View>
-        )}
+          )}
+        </View>
+
+        <BottomSheetScrollView
+          bounces={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            backgroundColor: "#F4F4F4",
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {workoutDetails?.exercises?.map((item: WorkoutExercise) => (
+            <View key={item.id} style={overlayStyles.exerciseCard}>
+              <Text style={overlayStyles.exerciseName}>
+                {item.exercise.name}
+              </Text>
+              <Text style={overlayStyles.exerciseCategory}>
+                Category: {item.exercise.category}
+              </Text>
+              <Text style={overlayStyles.exerciseDescription}>
+                {item.exercise.description}
+              </Text>
+              <Text style={overlayStyles.exerciseEquipment}>
+                Equipment Required:{" "}
+                {item.exercise.with_out_equipment ? "No" : "Yes"}
+              </Text>
+            </View>
+          ))}
+        </BottomSheetScrollView>
       </BottomSheet>
     );
   }
@@ -240,7 +273,7 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
 
 const overlayStyles = StyleSheet.create({
   workoutTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     marginBottom: 8,
   },
@@ -249,16 +282,50 @@ const overlayStyles = StyleSheet.create({
     marginBottom: 8,
   },
   workoutDuration: {
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 4,
   },
   workoutIntensity: {
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 4,
   },
   workoutExercises: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  exerciseCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exerciseName: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  exerciseCategory: {
     fontSize: 14,
-    marginTop: 10,
-    fontStyle: "italic",
+    color: "#666",
+    marginBottom: 4,
+  },
+  exerciseDescription: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 4,
+  },
+  exerciseEquipment: {
+    fontSize: 14,
+    color: "#333",
   },
 });
