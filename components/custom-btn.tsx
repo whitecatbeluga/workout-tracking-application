@@ -85,18 +85,20 @@ export { CustomBtn, Icon, BtnTitle };
 const styles = StyleSheet.create({
   btn: {
     height: 48,
+    display: "flex",
     backgroundColor: "#48A6A7",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
+    gap: 8,
   },
   txt: {
     color: "#FFFFFF",
     fontSize: 19,
-    marginLeft: 10,
   },
   icon: {
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,

@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
-  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { forwardRef, useCallback, useMemo, useRef } from "react";
 import { Card as WorkoutCard } from "./workouts";
@@ -37,7 +36,11 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
           }}
         >
           <Text
-            style={{ textAlign: "center", fontWeight: "bold", fontSize: 14 }}
+            style={{
+              textAlign: "center",
+              fontFamily: "Inter_700Bold",
+              fontSize: 14,
+            }}
           >
             {card.name}
           </Text>
@@ -45,7 +48,9 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
             <Ionicons name="ellipsis-horizontal" size={24} color="#323232" />
           </TouchableOpacity>
         </View>
-        <Text style={{ fontWeight: "medium", fontSize: 12 }}>{card.desc}</Text>
+        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12 }}>
+          {card.desc}
+        </Text>
       </View>
       <View style={{ flexDirection: "row", width: "100%", gap: 10 }}>
         <TouchableOpacity
@@ -59,7 +64,13 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
           }}
           onPress={handleWorkoutSheet}
         >
-          <Text style={{ fontWeight: "bold", fontSize: 16, color: "#626262" }}>
+          <Text
+            style={{
+              fontFamily: "Inter_700Bold",
+              fontSize: 16,
+              color: "#626262",
+            }}
+          >
             See Workouts
           </Text>
         </TouchableOpacity>
@@ -74,7 +85,13 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
           }}
           onPress={handleExerciseSheet}
         >
-          <Text style={{ fontWeight: "bold", fontSize: 16, color: "white" }}>
+          <Text
+            style={{
+              fontFamily: "Inter_700Bold",
+              fontSize: 16,
+              color: "white",
+            }}
+          >
             See Exercises
           </Text>
         </TouchableOpacity>
@@ -95,7 +112,13 @@ const ExerciseCard = ({ card }: { card: any }) => {
     >
       <View style={{ gap: 8 }}>
         <View style={{ gap: 4 }}>
-          <Text style={{ color: "#323232", fontWeight: "bold", fontSize: 24 }}>
+          <Text
+            style={{
+              color: "#323232",
+              fontFamily: "Inter_700Bold",
+              fontSize: 24,
+            }}
+          >
             {card.name}
           </Text>
           <Badge
@@ -106,12 +129,20 @@ const ExerciseCard = ({ card }: { card: any }) => {
           />
         </View>
         <View style={{ flexDirection: "row", gap: 4 }}>
-          <Text style={{ color: "#323232", fontWeight: "bold", fontSize: 14 }}>
+          <Text
+            style={{
+              color: "#323232",
+              fontFamily: "Inter_700Bold",
+              fontSize: 14,
+            }}
+          >
             Exercise Category:
           </Text>
           <Text style={{ fontSize: 14 }}>{card.category}</Text>
         </View>
-        <Text style={{ fontWeight: "medium", fontSize: 14 }}>{card.desc}</Text>
+        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14 }}>
+          {card.desc}
+        </Text>
       </View>
       <View style={{ flexDirection: "column", gap: 8 }}></View>
     </View>
@@ -156,6 +187,7 @@ const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
           gap: 20,
           backgroundColor: "#F4F4F4",
         }}
+        overScrollMode="never"
       >
         {workoutCardDetails.map((card, index) => (
           <WorkoutCard key={index} card={card} isEditable={false} />
@@ -197,6 +229,7 @@ const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
           gap: 20,
           backgroundColor: "#F4F4F4",
         }}
+        overScrollMode="never"
       >
         {dummyExercises.map((card, index) => (
           <ExerciseCard key={index} card={card} />
@@ -224,8 +257,15 @@ const RoutinesScreen = () => {
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
         showsVerticalScrollIndicator={false}
+        overScrollMode="never"
       >
-        <Text style={{ fontWeight: "bold", fontSize: 24, color: "#323232" }}>
+        <Text
+          style={{
+            fontFamily: "Inter_700Bold",
+            fontSize: 24,
+            color: "#323232",
+          }}
+        >
           Your Routines
         </Text>
         {dummyRoutines.map((card, index) => (

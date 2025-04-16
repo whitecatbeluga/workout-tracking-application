@@ -64,6 +64,8 @@ const LoginPage = () => {
         <ScrollView
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
         >
           <View style={{ width: "100%", paddingHorizontal: 30 }}>
             {typeof error === "string" && (

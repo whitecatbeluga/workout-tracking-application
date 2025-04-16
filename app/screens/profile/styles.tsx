@@ -9,16 +9,17 @@ const Styles = StyleSheet.create({
   },
   profileName: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold"
   },
   profileInfo: {
     fontSize: 12,
     color: "gray",
+    fontFamily: "Inter_400Regular",
   },
   profileInfoCount: {
     fontSize: 20,
     color: "black",
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
   },
 
   // bar tabs
@@ -42,11 +43,11 @@ const Styles = StyleSheet.create({
   },
   tabText: {
     color: "#333",
-    fontWeight: "500",
+    fontFamily: "Inter_500Medium",
   },
   tabTextActive: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: "Inter_700Bold",
   },
 
   // drawer or bottom sheet
@@ -82,7 +83,7 @@ const Styles = StyleSheet.create({
   },
   dashboardButtonText: {
     color: "#323232",
-    fontWeight: "500",
+    fontFamily: "Inter_500Medium",
   },
 
   // statistics

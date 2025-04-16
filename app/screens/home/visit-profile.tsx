@@ -76,7 +76,7 @@ const VisitProfile = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false} overScrollMode="never">
         <View style={styles.profileContainer}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
             <Image style={styles.profilePicture} source={profilePicture} />
