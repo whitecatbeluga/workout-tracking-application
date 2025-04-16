@@ -15,6 +15,7 @@ import Styles from "./screens/profile/styles";
 import { store } from "@/redux/store";
 import { Provider } from "react-redux";
 import { setupAxiosInstance } from "@/utils/axios-instance";
+import Toast from "react-native-toast-message";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -68,6 +69,7 @@ export default function RootLayout() {
           </Stack>
         </GestureHandlerRootView>
         <StatusBar style="auto" />
+        <Toast />
       </Provider>
     </>
   );

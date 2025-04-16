@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { Text, TextInput, StyleSheet, ScrollView } from "react-native";
+import { Text, TextInput, StyleSheet, ScrollView, View } from "react-native";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { CustomBtn, BtnTitle } from "@/components/custom-btn";
 import { createWorkout } from "@/redux/slices/workout-slice";
 import { WorkoutFormData } from "@/custom-types/workout-type";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
+import Input from "@/components/input-text";
+import { Ionicons } from "@expo/vector-icons";
 
 const AddWorkout = () => {
   const dispatch = useAppDispatch();
@@ -54,6 +57,11 @@ const AddWorkout = () => {
           exerciseIds: [],
         });
         setExerciseInput("");
+        Toast.show({
+          type: "success",
+          text1: "Successfully Created!",
+          text2: "Happy Workout!",
+        });
         router.replace("/(tabs)/workout");
       }
     } catch (error: any) {
@@ -68,57 +76,73 @@ const AddWorkout = () => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-      overScrollMode="never"
-    >
-      <Text style={styles.heading}>Workout</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={{ marginBottom: 16 }}>
+        <Text
+          style={{
+            fontSize: 28,
+            fontWeight: "bold",
+            letterSpacing: -0.6,
+            color: "#323232",
+          }}
+        >
+          What's your workout?
+        </Text>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Workout Name"
+      <Input
         value={workoutData.name}
-        onChangeText={(value) => handleInputChange("name", value)}
+        icon="bicycle"
+        placeholder="Workout name"
+        onChangeText={(value) => {
+          handleInputChange("name", value);
+        }}
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Description"
+      <Input
         value={workoutData.description}
-        onChangeText={(value) => handleInputChange("description", value)}
+        icon="document-text"
+        placeholder="Workout description"
+        onChangeText={(value) => {
+          handleInputChange("description", value);
+        }}
+        multiline={true}
+        numberOfLines={4}
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Duration (min)"
-        value={workoutData.duration.toString()}
+      <Input
+        value={workoutData.duration}
+        icon="alarm"
+        placeholder="Workout duration"
+        onChangeText={(value) => {
+          handleInputChange("duration", value);
+        }}
         keyboardType="numeric"
-        onChangeText={(value) => handleInputChange("duration", value)}
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Intensity"
-        value={workoutData.intensity.toString()}
+      <Input
+        value={workoutData.intensity}
+        icon="heart-circle"
+        placeholder="Workout intensity"
+        onChangeText={(value) => {
+          handleInputChange("intensity", value);
+        }}
         keyboardType="numeric"
-        onChangeText={(value) => handleInputChange("intensity", value)}
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Volume"
-        value={workoutData.volume.toString()}
+      <Input
+        value={workoutData.volume}
+        icon="book"
+        placeholder="Workout volume"
+        onChangeText={(value) => {
+          handleInputChange("volume", value);
+        }}
         keyboardType="numeric"
-        onChangeText={(value) => handleInputChange("volume", value)}
       />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Sets"
-        value={workoutData.set.toString()}
+      <Input
+        value={workoutData.set}
+        icon="list"
+        placeholder="Workout sets"
+        onChangeText={(value) => {
+          handleInputChange("set", value);
+        }}
         keyboardType="numeric"
-        onChangeText={(value) => handleInputChange("set", value)}
       />
 
       <TextInput
@@ -128,7 +152,11 @@ const AddWorkout = () => {
         onChangeText={setExerciseInput}
       />
 
-      <CustomBtn onPress={handleSubmit}>
+      <CustomBtn
+        onPress={handleSubmit}
+        buttonStyle={{ marginTop: 18, borderRadius: 8 }}
+      >
+        <Ionicons name="add-circle" size={26} color="white" />
         <BtnTitle title="Create Workout" />
       </CustomBtn>
     </ScrollView>
