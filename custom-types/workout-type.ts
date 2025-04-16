@@ -27,3 +27,16 @@ export interface WorkoutFormData {
   set: number;
   exerciseIds: number[];
 }
+
+export interface WorkoutExercise {
+  id: number;
+  exerciseId: number;
+  workoutId: number;
+  exercise: {
+    id: number;
+    name: string;
+    description: string;
+    category: string;
+    with_out_equipment: boolean;
+  };
+}
