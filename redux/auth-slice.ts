@@ -20,11 +20,12 @@ export const login = createAsyncThunk(
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
-
+      console.log("response", response);
       await AsyncStorage.setItem("loggedIn", "true");
       await AsyncStorage.setItem("token", response.data.access_token);
       return response.data;
     } catch (error) {
+      console.log("error", error);
       const axiosError = error as AxiosError;
       const response = axiosError.response?.data as ApiError;
       await AsyncStorage.removeItem("loggedIn");
@@ -63,35 +64,41 @@ export const refreshToken = createAsyncThunk(
     }
   }
 );
-
 export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
   try {
     const token = await getAuthToken();
 
     if (!token) {
+      console.log("No token found");
       return thunkApi.rejectWithValue("No token available for logout");
     }
 
-    // await axios.post(
-    //   `${API_URL}/logout`,
-    //   {},
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${token}`,
-    //     },
-    //   }
-    // );
+    const response = await axios.post(
+      `${API_URL}/auth/logout`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    console.log("Logout success response:", response.data);
+
     await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("loggedIn");
 
     return true;
   } catch (error) {
     const axiosError = error as AxiosError;
+    console.error("Logout failed:", axiosError);
 
     if (axiosError.response && axiosError.response.data) {
       const responseData = axiosError.response.data as ApiError;
+      console.log("Logout backend error message:", responseData.message);
       return thunkApi.rejectWithValue(responseData.message);
     } else {
+      console.log("Unknown logout error:", axiosError.message);
       return thunkApi.rejectWithValue(
         axiosError.message || "Logout failed unexpectedly"
       );
