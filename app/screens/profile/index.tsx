@@ -71,8 +71,14 @@ const ProfilePage = () => {
 
   const handleLogout = async () => {
     try {
-      await appDispatch(logout());
-      router.replace("/screens/landingPage/login-page");
+      const res = await appDispatch(logout());
+
+      if (res.type == "auth/logout/fulfilled") {
+        router.replace("/screens/landingPage/login-page");
+      }
+      if (res.type === "auth/logout/rejected") {
+        console.log("logout failed.", res);
+      }
     } catch (err) {
       console.error("Logout error:", err);
     }

@@ -1,7 +1,7 @@
 import { ApiError } from "@/custom-types/api-error-type";
 import { Exercise } from "@/custom-types/exercise-type";
 import { Loading } from "@/custom-types/loading-type";
-import { axiosIntance } from "@/utils/axios-instance";
+import { axiosInstance } from "@/utils/axios-instance";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 
@@ -9,7 +9,7 @@ export const getExercise = createAsyncThunk(
   "exercise/getExercise",
   async (_, thunkApi) => {
     try {
-      const response = await axiosIntance.get("exercise", {});
+      const response = await axiosInstance.get("exercise", {});
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;

@@ -303,7 +303,6 @@ const RegisterPage = () => {
     }));
   };
 
-  console.log(formData);
 
   return (
     <View style={{ flex: 1 }}>

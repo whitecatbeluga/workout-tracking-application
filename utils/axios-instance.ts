@@ -4,29 +4,28 @@ import { type Store } from "@reduxjs/toolkit";
 import Constants from "expo-constants";
 import { refreshUserToken } from "../services/api";
 import { setAccessToken } from "@/redux/auth-slice";
-// import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
-export let axiosIntance: AxiosInstance;
+export let axiosInstance: AxiosInstance;
 
-// Set up the instance with Redux integration
 export const setupAxiosInstance = async (
   store: Store<RootState>,
   onTokenRefresh?: (token: string | null) => void
 ) => {
-  // const token = await AsyncStorage.getItem("token");
-  const token = store.getState().auth.access_token;
-  axiosIntance = axios.create({
+  const state = store.getState();
+  const access_token = state.auth.access_token;
+
+  axiosInstance = axios.create({
     baseURL: API_URL,
     headers: {
       "Content-Type": "application/json",
-      // Authorization: token ? `Bearer ${token}` : "",
+      ...(access_token && { Authorization: `Bearer ${access_token}` }),
     },
     withCredentials: true,
   });
 
-  axiosIntance.interceptors.response.use(
+  axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
       const previousRequest = error.config;
@@ -36,8 +35,21 @@ export const setupAxiosInstance = async (
       ) {
         try {
           const tokenResponse = await refreshUserToken();
-          onTokenRefresh?.(tokenResponse.data.access_token);
-          return await axiosIntance(previousRequest);
+          const newToken = tokenResponse.data.access_token;
+
+          // Update redux auth state
+          store.dispatch(setAccessToken(newToken));
+
+          // Set new token in Axios
+          axiosInstance.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${newToken}`;
+
+          onTokenRefresh?.(newToken);
+
+          // Retry original request
+          previousRequest.headers["Authorization"] = `Bearer ${newToken}`;
+          return await axiosInstance(previousRequest);
         } catch (error) {
           onTokenRefresh?.(null);
         }

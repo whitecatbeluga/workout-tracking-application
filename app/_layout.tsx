@@ -16,9 +16,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setupAxiosInstance } from "@/utils/axios-instance";
 import Toast from "react-native-toast-message";
-import { setAccessToken } from "@/redux/auth-action";
 import { refreshToken } from "@/redux/auth-slice";
 
 SplashScreen.preventAutoHideAsync();
@@ -36,10 +34,6 @@ export default function Layout() {
   }, [loaded]);
 
   useEffect(() => {
-    setupAxiosInstance(store, (token) => {
-      store.dispatch(setAccessToken(token));
-    });
-
     const verifyRefreshToken = async () => {
       const isLoggedIn = await AsyncStorage.getItem("loggedIn");
       if (isLoggedIn != null) {
