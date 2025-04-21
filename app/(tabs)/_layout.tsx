@@ -6,7 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { TabBar } from "@/components/tab-bar";
 import { Ionicons } from "@expo/vector-icons"; // Importing icons from Expo
 import {
@@ -62,6 +62,7 @@ const TabLayout = () => {
     () => ({ isTabVisible, setTabVisible }),
     [isTabVisible]
   );
+  const router = useRouter();
 
   return (
     <TabVisibilityContext.Provider value={contextValue}>
@@ -94,7 +95,7 @@ const TabLayout = () => {
             headerRight: () => (
               <React.Fragment>
                 {/* Search Icon */}
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/screens/home/search")}>
                   <Ionicons
                     name="search-outline"
                     size={24}
@@ -104,7 +105,7 @@ const TabLayout = () => {
                 </TouchableOpacity>
 
                 {/* Bell Icon */}
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push("/screens/home/notifications")}>
                   <Ionicons
                     name="notifications-outline"
                     size={24}

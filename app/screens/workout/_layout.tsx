@@ -5,7 +5,14 @@ export default function Workout() {
     <Stack>
       <Stack.Screen
         name="add-workout"
-        options={{ title: "Add Empty Workout" }}
+        options={{
+          title: "Add Empty Workout",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+          headerTitleAlign: "center",
+        }}
       />
     </Stack>
   );
