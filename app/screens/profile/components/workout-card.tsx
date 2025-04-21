@@ -11,14 +11,8 @@ const WorkoutCard = ({ card }: any) => {
         backgroundColor: "white",
         borderRadius: 8,
         width: card.length > 2 ? "31.5%" : "48.5%",
-        shadowColor: "#000",
-        shadowOffset: {
-          width: 0,
-          height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 1,
+        borderColor: "#CBD5E1",
+        borderWidth: 1,
       }}
     >
       <Text
