@@ -67,16 +67,22 @@ const VisitProfile = () => {
 
   const [liked, setLiked] = useState(isLiked === "true");
   const [following, setFollowing] = useState(false);
+  const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
-  const handleOpenComments = () => {
+  const handleOpenSheet = (type: "likes" | "comments") => {
+    setSheetType(type);
     bottomSheetRef.current?.expand();
   };
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false} overScrollMode="never">
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        overScrollMode="never"
+      >
         <View style={styles.profileContainer}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
             <Image style={styles.profilePicture} source={profilePicture} />
@@ -161,11 +167,16 @@ const VisitProfile = () => {
             comments={toString(comments)}
             liked={liked}
             onLikePress={() => setLiked(!liked)}
-            onCommentPress={handleOpenComments}
+            onCheckLikes={() => handleOpenSheet("likes")}
+            onCommentPress={() => handleOpenSheet("comments")}
           />
         </View>
       </ScrollView>
-      <BottomSheetComments title="sample" ref={bottomSheetRef} />
+      <BottomSheetComments
+        title="sample"
+        type={sheetType}
+        ref={bottomSheetRef}
+      />
     </View>
   );
 };

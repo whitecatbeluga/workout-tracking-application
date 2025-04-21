@@ -124,6 +124,7 @@ const HomeScreen = () => {
   );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [seeAllButton, setSeeAllButton] = useState(false);
+  const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
@@ -159,7 +160,8 @@ const HomeScreen = () => {
   };
 
   // Handle open comments
-  const handleOpenComments = () => {
+  const handleOpenSheet = (type: "likes" | "comments") => {
+    setSheetType(type);
     bottomSheetRef.current?.expand();
   };
 
@@ -397,10 +399,10 @@ const HomeScreen = () => {
                 </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
                     <Text style={styles.likesText}>{item.likes}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleOpenComments}>
+                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
                     <Text style={styles.likesText}>{item.comments}</Text>
                   </TouchableOpacity>
                 </View>
@@ -418,7 +420,7 @@ const HomeScreen = () => {
                       color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleOpenComments}>
+                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
                     <Ionicons
                       style={styles.icons}
                       name="chatbubble-outline"
@@ -440,7 +442,11 @@ const HomeScreen = () => {
           />
         </View>
       ) : null}
-      <BottomSheetComments title="sample" ref={bottomSheetRef} />
+      <BottomSheetComments
+        title="sample"
+        type={sheetType}
+        ref={bottomSheetRef}
+      />
     </View>
   );
 };

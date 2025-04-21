@@ -7,6 +7,7 @@ import BottomSheet, {
 
 interface Props {
   title: string;
+  type: "comments" | "likes";
 }
 
 type RefType = BottomSheet | null;
@@ -47,7 +48,15 @@ const BottomSheetComments = forwardRef<RefType, Props>((props, ref) => {
         }}
       >
         <View>
-          <Text>Comments here</Text>
+          {props.type === "comments" ? (
+            <View>
+              <Text>Comments here</Text>
+            </View>
+          ) : (
+            <View>
+              <Text>Likes here</Text>
+            </View>
+          )}
         </View>
       </BottomSheetScrollView>
     </BottomSheet>
