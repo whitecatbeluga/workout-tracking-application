@@ -36,6 +36,15 @@ export default function HomeLayout() {
           },
         })}
       />
+      <Stack.Screen name="search-screen" />
+      <Stack.Screen
+        name="notifications"
+        options={{
+          title: "Notifications",
+          headerTitleAlign: "center",
+          headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+        }}
+      />
     </Stack>
   );
 }
