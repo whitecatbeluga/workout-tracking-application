@@ -62,9 +62,7 @@ const TabLayout = () => {
     () => ({ isTabVisible, setTabVisible }),
     [isTabVisible]
   );
-  useEffect(() => {
-    console.log("COMPONENT user", user);
-  }, [user]);
+
   return (
     <TabVisibilityContext.Provider value={contextValue}>
       <Tabs

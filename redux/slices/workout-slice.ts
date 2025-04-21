@@ -1,7 +1,7 @@
 import { ApiError } from "@/custom-types/api-error-type";
 import { Loading } from "@/custom-types/loading-type";
 import { Workout, WorkoutFormData } from "@/custom-types/workout-type";
-import axios from "axios"; // Import axios directly
+import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { getAuthToken } from "@/services/get-token";
