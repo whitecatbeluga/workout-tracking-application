@@ -9,6 +9,8 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LoginFormData } from "@/custom-types/form-data-type";
@@ -17,6 +19,10 @@ import { ScrollView } from "react-native-gesture-handler";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { login } from "@/redux/auth-slice";
+
+import Input from "@/components/input-text";
+
+const screenWidth = Dimensions.get("window").width;
 
 const LoginPage = () => {
   const router = useRouter();
@@ -67,63 +73,55 @@ const LoginPage = () => {
           showsVerticalScrollIndicator={false}
           overScrollMode="never"
         >
-          <View style={{ width: "100%", paddingHorizontal: 30 }}>
+          <View
+            style={{
+              width: "100%",
+            }}
+          >
             {typeof error === "string" && (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
-            {/* Email Field */}
-            <View style={styles.inputContainer}>
-              <Ionicons
-                style={styles.icon}
-                name="person"
-                size={24}
-                color="#6F7A88"
-              />
-              <TextInput
-                style={styles.input}
+            <Text style={styles.header}>Workout Tracking Application</Text>
+
+            <View style={{ gap: 10 }}>
+              {/* Email Field */}
+              <Input
                 value={formData.email}
-                onChangeText={(text) => handleInputChange("email", text)}
-                autoCapitalize="none"
-                keyboardType="email-address"
+                icon="mail"
                 placeholder="Email"
+                onChangeText={(text) => handleInputChange("email", text)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={isFieldError("email")}
               />
-              {isFieldError("email") && (
-                <Text style={styles.errorText}>{isFieldError("email")}</Text>
-              )}
+
+              {/* Password Field */}
+              <Input
+                value={formData.password}
+                icon="lock-closed"
+                placeholder="Password"
+                onChangeText={(text) => handleInputChange("password", text)}
+                secureTextEntry={!showPassword}
+                isSuffix={true}
+                showPassword={showPassword}
+                toggleShowPassword={() => setShowPassword((prev) => !prev)}
+                autoCapitalize="none"
+                error={isFieldError("password")}
+              />
             </View>
 
-            {/* Password Field */}
-            <View style={styles.inputContainer}>
-              <Ionicons
-                style={styles.icon}
-                name="lock-closed"
-                size={24}
-                color="#6F7A88"
-              />
-              <TextInput
-                style={styles.inputPassword}
-                value={formData.password}
-                onChangeText={(text) => handleInputChange("password", text)}
-                autoCapitalize="none"
-                secureTextEntry={!showPassword}
-                placeholder="Password"
-              />
+            {/* Login Button */}
+            <View style={{ gap: 10 }}>
               <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword((prev) => !prev)}
+                style={styles.loginButton}
+                onPress={handleLogin}
               >
-                <Ionicons
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={24}
-                  color="#6F7A88"
-                />
+                <Text style={styles.loginText}>Login</Text>
               </TouchableOpacity>
-              {isFieldError("password") && (
-                <Text style={styles.errorText}>{isFieldError("password")}</Text>
-              )}
+
               <View style={styles.forgotPasswordContainer}>
                 <TouchableOpacity>
                   <Text style={styles.forgotPasswordText}>
@@ -132,13 +130,15 @@ const LoginPage = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginText}>Sign In</Text>
-            </TouchableOpacity>
           </View>
 
-          <View style={{ top: 100 }}>
+          <View style={styles.lineContainer}>
+            <View style={styles.line} />
+            <Text style={styles.lineText}>or</Text>
+            <View style={styles.line} />
+          </View>
+
+          <View>
             <Text style={{ fontFamily: "Inter_400Regular", color: "#868686" }}>
               Don't have an account yet?{" "}
               <Text
@@ -164,7 +164,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "white",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  header: {
+    marginBottom: 30,
+    fontSize: 40,
+    fontFamily: "Inter_800ExtraBold",
+    letterSpacing: -2,
+    color: "#323232",
+    textAlign: "center",
   },
   errorContainer: {
     backgroundColor: "#f8d7da",
@@ -207,12 +217,11 @@ const styles = StyleSheet.create({
     height: 50,
   },
   loginButton: {
-    backgroundColor: "#48A6A7",
+    backgroundColor: "#006A71",
     alignItems: "center",
     paddingVertical: 10,
     borderRadius: 8,
-    marginTop: 30,
-    elevation: 1,
+    marginTop: 20,
     width: "100%",
   },
   loginText: {
@@ -226,10 +235,10 @@ const styles = StyleSheet.create({
   forgotPasswordContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 20,
   },
   forgotPasswordText: {
-    fontSize: 12,
+    fontSize: 14,
+    color: "#868686",
     fontFamily: "Inter_400Regular",
     textDecorationLine: "underline",
   },
@@ -246,5 +255,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 10,
     top: 29,
+  },
+
+  lineContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 40,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  lineText: {
+    marginHorizontal: 10,
+    color: "#555",
+    fontWeight: "500",
   },
 });
