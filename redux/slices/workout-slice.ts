@@ -1,15 +1,24 @@
 import { ApiError } from "@/custom-types/api-error-type";
 import { Loading } from "@/custom-types/loading-type";
 import { Workout, WorkoutFormData } from "@/custom-types/workout-type";
-import { axiosIntance } from "@/utils/axios-instance";
+import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
+import { getAuthToken } from "@/services/get-token";
+
+import Constants from "expo-constants";
+
+// Get the API URL from expo config
+const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
 export const getWorkout = createAsyncThunk(
   "workout/getWorkout",
   async (_, thunkApi) => {
+    const token = await getAuthToken();
     try {
-      const response = await axiosIntance.get("workout", {});
+      const response = await axios.get(`${API_URL}/workout`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
@@ -18,14 +27,16 @@ export const getWorkout = createAsyncThunk(
     }
   }
 );
-
 export const createWorkout = createAsyncThunk(
   "workout/createWorkout",
   async (data: WorkoutFormData, thunkApi) => {
+    const token = await getAuthToken(); // Get the auth token
+
     try {
-      const response = await axiosIntance.post("workout", data, {
+      const response = await axios.post(`${API_URL}/workout`, data, {
         headers: {
           "Content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       return response.data;

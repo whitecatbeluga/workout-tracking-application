@@ -1,29 +1,33 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { AxiosError } from "axios";
+
 import { LoginFormData, RegisterFormData } from "@/custom-types/form-data-type";
 import { Loading } from "@/custom-types/loading-type";
 import { User } from "@/custom-types/user-type";
-import { axiosIntance } from "@/utils/axios-instance";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AxiosError } from "axios";
 import { ApiError } from "@/custom-types/api-error-type";
 import { refreshUserToken } from "@/services/api";
+import Constants from "expo-constants";
+import { getAuthToken } from "@/services/get-token";
+
+const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
 export const login = createAsyncThunk(
   "auth/login",
   async (data: LoginFormData, thunkApi) => {
     try {
-      const response = await axiosIntance.post(`/auth/login`, data, {
+      const response = await axios.post(`${API_URL}/auth/login`, data, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
+
       await AsyncStorage.setItem("loggedIn", "true");
       await AsyncStorage.setItem("token", response.data.access_token);
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
       const response = axiosError.response?.data as ApiError;
-      AsyncStorage.removeItem("loggedIn");
+      await AsyncStorage.removeItem("loggedIn");
       return thunkApi.rejectWithValue(response);
     }
   }
@@ -33,13 +37,13 @@ export const register = createAsyncThunk(
   "auth/register",
   async (data: RegisterFormData, thunkApi) => {
     try {
-      const response = await axiosIntance.post("/auth/register", data);
+      const response = await axios.post(`${API_URL}/auth/register`, data);
       await AsyncStorage.setItem("loggedIn", "true");
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
       const response = axiosError.response?.data as ApiError;
-      AsyncStorage.removeItem("loggedIn");
+      await AsyncStorage.removeItem("loggedIn");
       return thunkApi.rejectWithValue(response.message);
     }
   }
@@ -54,7 +58,7 @@ export const refreshToken = createAsyncThunk(
     } catch (error) {
       const axiosError = error as AxiosError;
       const response = axiosError.response?.data as ApiError;
-      AsyncStorage.removeItem("loggedIn");
+      await AsyncStorage.removeItem("loggedIn");
       return thunkApi.rejectWithValue(response.message);
     }
   }
@@ -62,23 +66,42 @@ export const refreshToken = createAsyncThunk(
 
 export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
   try {
-    const response = await axiosIntance.post("/auth/logout");
+    const token = await getAuthToken();
+
+    if (!token) {
+      return thunkApi.rejectWithValue("No token available for logout");
+    }
+
+    // await axios.post(
+    //   `${API_URL}/logout`,
+    //   {},
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${token}`,
+    //     },
+    //   }
+    // );
+    await AsyncStorage.removeItem("token");
     await AsyncStorage.removeItem("loggedIn");
-    return response.data;
+
+    return true;
   } catch (error) {
     const axiosError = error as AxiosError;
-    const response = axiosError.response?.data as ApiError;
-    AsyncStorage.removeItem("loggedIn");
-    return thunkApi.rejectWithValue(response.message);
+
+    if (axiosError.response && axiosError.response.data) {
+      const responseData = axiosError.response.data as ApiError;
+      return thunkApi.rejectWithValue(responseData.message);
+    } else {
+      return thunkApi.rejectWithValue(
+        axiosError.message || "Logout failed unexpectedly"
+      );
+    }
   }
 });
 
+// State
 interface InitialState {
-  loading:
-    | Loading.Idle
-    | Loading.Pending
-    | Loading.Fulfilled
-    | Loading.Rejected;
+  loading: Loading;
   error: string | null | Record<string, string>;
   access_token: string | null;
   user: User | null;
@@ -93,6 +116,7 @@ const initialState: InitialState = {
   message: null,
 };
 
+// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -105,91 +129,83 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    /**
-     * Login
-     */
-    builder.addCase(login.pending, (state) => {
-      state.loading = Loading.Pending;
-      state.error = null;
-    });
-    builder.addCase(login.fulfilled, (state, action) => {
-      state.loading = Loading.Fulfilled;
-      state.access_token = action.payload.access_token;
-      state.user = action.payload.user;
-      state.error = null;
-    });
-    builder.addCase(login.rejected, (state, action) => {
-      state.loading = Loading.Rejected;
-      const payload = action.payload as string | ApiError;
+    builder
+      // Login
+      .addCase(login.pending, (state) => {
+        state.loading = Loading.Pending;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.loading = Loading.Fulfilled;
+        state.access_token = action.payload.access_token;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = Loading.Rejected;
+        const payload = action.payload as string | ApiError;
 
-      if (typeof payload === "string") {
-        state.error = payload;
-      } else if (payload?.errors?.length) {
-        const fieldErrors: Record<string, string> = {};
-        payload.errors.forEach((err) => {
-          const match = err.match(/^(\w+)\s+(.*)$/);
-          if (match) {
-            const field = match[1].toLowerCase();
-            const message = match[0];
-            fieldErrors[field] = message;
-          }
-        });
-        state.error = fieldErrors;
-      } else {
-        state.error = payload.message;
-      }
-    });
+        if (typeof payload === "string") {
+          state.error = payload;
+        } else if (payload?.errors?.length) {
+          const fieldErrors: Record<string, string> = {};
+          payload.errors.forEach((err) => {
+            const match = err.match(/^(\w+)\s+(.*)$/);
+            if (match) {
+              const field = match[1].toLowerCase();
+              fieldErrors[field] = match[0];
+            }
+          });
+          state.error = fieldErrors;
+        } else {
+          state.error = payload?.message ?? "An error occurred";
+        }
+      })
 
-    /**
-     * Register
-     */
-    builder.addCase(register.pending, (state) => {
-      state.loading = Loading.Pending;
-      state.error = null;
-    });
-    builder.addCase(register.fulfilled, (state, action) => {
-      state.loading = Loading.Fulfilled;
-      state.access_token = action.payload.access_token;
-      state.user = action.payload.user;
-    });
-    builder.addCase(register.rejected, (state, action) => {
-      state.loading = Loading.Rejected;
-      state.error = action.payload as string;
-    });
+      // Register
+      .addCase(register.pending, (state) => {
+        state.loading = Loading.Pending;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.loading = Loading.Fulfilled;
+        state.access_token = action.payload.access_token;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.loading = Loading.Rejected;
+        state.error = action.payload as string;
+      })
 
-    /**
-     * Refresh Token
-     */
-    builder.addCase(refreshToken.pending, (state) => {
-      state.loading = Loading.Pending;
-      state.access_token = null;
-      state.user = null;
-      state.error = null;
-    });
-    builder.addCase(refreshToken.fulfilled, (state, action) => {
-      state.loading = Loading.Fulfilled;
-      state.access_token = action.payload.access_token;
-      state.user = action.payload.user;
-    });
-    builder.addCase(refreshToken.rejected, (state) => {
-      state.loading = Loading.Rejected;
-    });
+      // Refresh Token
+      .addCase(refreshToken.pending, (state) => {
+        state.loading = Loading.Pending;
+        state.error = null;
+      })
+      .addCase(refreshToken.fulfilled, (state, action) => {
+        state.loading = Loading.Fulfilled;
+        state.access_token = action.payload.access_token;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(refreshToken.rejected, (state) => {
+        state.loading = Loading.Rejected;
+      })
 
-    /**
-     * Logout
-     */
-    builder.addCase(logout.pending, (state) => {
-      state.loading = Loading.Pending;
-    });
-    builder.addCase(logout.fulfilled, (state) => {
-      state.loading = Loading.Fulfilled;
-      state.access_token = null;
-      state.user = null;
-      state.error = null;
-    });
-    builder.addCase(logout.rejected, (state) => {
-      state.loading = Loading.Rejected;
-    });
+      // Logout
+      .addCase(logout.pending, (state) => {
+        state.loading = Loading.Pending;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.loading = Loading.Fulfilled;
+        state.access_token = null;
+        state.user = null;
+        state.error = null;
+      })
+      .addCase(logout.rejected, (state) => {
+        state.loading = Loading.Rejected;
+      });
   },
 });
 
