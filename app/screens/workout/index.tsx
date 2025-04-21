@@ -19,8 +19,6 @@ import React, {
   useState,
 } from "react";
 import WorkoutHeader from "./workout-header";
-import { BtnTitle, CustomBtn, Icon } from "@/components/custom-btn";
-import SearchInput from "@/components/search-input";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { getWorkout } from "@/redux/slices/workout-slice";
@@ -32,25 +30,13 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { getExercise } from "@/redux/slices/exercise-slice";
 import { WorkoutExercise } from "@/custom-types/workout-type";
 import ExerciseCard from "@/components/exercise-card";
 import Input from "@/components/input-text";
 import { Loading } from "@/custom-types/loading-type";
+import { SkeletonLoader } from "@/components/workout-skeleton";
 
 const { height: screenHeight } = Dimensions.get("window");
-
-const SkeletonLoader = () => {
-  return (
-    <View style={skeletonStyles.container}>
-      <View style={skeletonStyles.avatar} />
-      <View style={skeletonStyles.textContainer}>
-        <View style={skeletonStyles.title} />
-        <View style={skeletonStyles.subtitle} />
-      </View>
-    </View>
-  );
-};
 
 const ActionButtons = () => {
   const buttonDetails = [
@@ -319,40 +305,5 @@ const overlayStyles = StyleSheet.create({
     fontSize: 20,
     fontFamily: "Inter_600SemiBold",
     marginBottom: 12,
-  },
-});
-
-const skeletonStyles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 12,
-    width: "100%",
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#E0E0E0",
-  },
-  textContainer: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  title: {
-    width: "80%",
-    height: 16,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  subtitle: {
-    width: "60%",
-    height: 12,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 8,
   },
 });
