@@ -70,7 +70,7 @@ export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
       return thunkApi.rejectWithValue("No token available for logout");
     }
 
-    const response = await axios.post(
+    await axios.post(
       `${API_URL}/auth/logout`,
       {},
       {
