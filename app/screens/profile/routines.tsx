@@ -6,8 +6,9 @@ import BottomSheet, {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { forwardRef, useCallback, useMemo, useRef } from "react";
-import { Card as WorkoutCard } from "./workouts";
+import WorkoutCard from "./components/workout-card";
 import Badge from "@/components/badge";
+import ExerciseCard from "@/components/exercise-card";
 
 type CardProps = {
   card: any;
@@ -96,55 +97,6 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
-  );
-};
-
-const ExerciseCard = ({ card }: { card: any }) => {
-  return (
-    <View
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: 8,
-        padding: 14,
-        elevation: 1,
-      }}
-    >
-      <View style={{ gap: 8 }}>
-        <View style={{ gap: 4 }}>
-          <Text
-            style={{
-              color: "#323232",
-              fontFamily: "Inter_700Bold",
-              fontSize: 24,
-            }}
-          >
-            {card.name}
-          </Text>
-          <Badge
-            backgroundColor="#48A6A7"
-            label={
-              card.with_out_equipment ? "Without Equipment" : "With Equipment"
-            }
-          />
-        </View>
-        <View style={{ flexDirection: "row", gap: 4 }}>
-          <Text
-            style={{
-              color: "#323232",
-              fontFamily: "Inter_700Bold",
-              fontSize: 14,
-            }}
-          >
-            Exercise Category:
-          </Text>
-          <Text style={{ fontSize: 14 }}>{card.category}</Text>
-        </View>
-        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 14 }}>
-          {card.desc}
-        </Text>
-      </View>
-      <View style={{ flexDirection: "column", gap: 8 }}></View>
     </View>
   );
 };

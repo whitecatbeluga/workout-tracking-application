@@ -28,10 +28,12 @@ const ViewPostScreen = () => {
     typeof value === "string" ? value : value?.[0] || "";
 
   const [liked, setLiked] = useState(isLiked === "true");
+  const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
-  const handleOpenComments = () => {
+  const handleOpenSheet = (type: "likes" | "comments") => {
+    setSheetType(type);
     bottomSheetRef.current?.expand();
   };
 
@@ -59,7 +61,8 @@ const ViewPostScreen = () => {
           comments={toString(comments)}
           liked={liked}
           onLikePress={() => setLiked(!liked)}
-          onCommentPress={handleOpenComments}
+          onCheckLikes={() => handleOpenSheet("likes")}
+          onCommentPress={() => handleOpenSheet("comments")}
         />
         <View style={{ paddingHorizontal: 16 }}>
           <Text style={styles.workoutTitle}>Workout</Text>
@@ -163,7 +166,11 @@ const ViewPostScreen = () => {
           <Text style={{ fontFamily: "Inter_400Regular" }}>15 reps</Text>
         </View>
       </ScrollView>
-      <BottomSheetComments title="sample" ref={bottomSheetRef} />
+      <BottomSheetComments
+        title="sample"
+        type={sheetType}
+        ref={bottomSheetRef}
+      />
     </View>
   );
 };

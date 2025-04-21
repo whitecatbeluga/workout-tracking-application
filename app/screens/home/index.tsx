@@ -77,6 +77,45 @@ const data: PostItem[] = [
   },
 ];
 
+const routines = [
+  {
+    id: 1,
+    name: "Push (Chest, Shoulders, Triceps)",
+    image: require("../../../assets/images/push-day.jpg"),
+    imageKey: "push",
+  },
+  {
+    id: 2,
+    name: "Pull (Back, Biceps)",
+    image: require("../../../assets/images/Pull day.png"),
+    imageKey: "pull",
+  },
+  {
+    id: 3,
+    name: "Legs (Quads, Hamstrings, Glutes)",
+    image: require("../../../assets/images/leg-day.jpg"),
+    imageKey: "legs",
+  },
+  {
+    id: 4,
+    name: "Core Focus",
+    image: require("../../../assets/images/core-focus.jpg"),
+    imageKey: "core",
+  },
+  {
+    id: 5,
+    name: "HIIT Session",
+    image: require("../../../assets/images/hiit-session.webp"),
+    imageKey: "hiit",
+  },
+  {
+    id: 6,
+    name: "Stretch & Recovery",
+    image: require("../../../assets/images/stretch-recovery.webp"),
+    imageKey: "stretch",
+  },
+];
+
 const HomeScreen = () => {
   const appDispatch = useAppDispatch();
 
@@ -85,6 +124,7 @@ const HomeScreen = () => {
   );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [seeAllButton, setSeeAllButton] = useState(false);
+  const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
@@ -120,14 +160,19 @@ const HomeScreen = () => {
   };
 
   // Handle open comments
-  const handleOpenComments = () => {
+  const handleOpenSheet = (type: "likes" | "comments") => {
+    setSheetType(type);
     bottomSheetRef.current?.expand();
+  };
+
+  const handleSeeAllPressed = () => {
+    setSeeAllButton((prevState) => !prevState);
   };
 
   return (
     <View>
       <TouchableOpacity
-        onPress={() => setSeeAllButton(!seeAllButton)}
+        onPress={handleSeeAllPressed}
         style={{ alignItems: "flex-end", marginRight: 10, marginTop: 10 }}
       >
         <Text style={styles.seeAllText}>
@@ -140,19 +185,30 @@ const HomeScreen = () => {
           // Vertical scroll grid view (2 columns)
           <View style={{ flexGrow: 1, paddingBottom: 80 }}>
             <FlatList
-              data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]} // replace with real data
+              data={routines}
               overScrollMode="never"
               numColumns={2}
-              keyExtractor={(item, index) => index.toString()}
+              keyExtractor={(item) => item.id.toString()}
               onScroll={onScroll}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.gridCard}>
-                  <Image
-                    style={styles.gridCardImg}
-                    source={require("../../../assets/images/Pull day.png")}
-                  />
+                <TouchableOpacity
+                  style={styles.gridCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/screens/home/routine-screen",
+                      params: {
+                        id: item.id,
+                        name: item.name,
+                        image: item.image,
+                        imageKey: item.imageKey,
+                      },
+                    })
+                  }
+                >
+                  <Image style={styles.gridCardImg} source={item.image} />
+                  <Text style={styles.cardTitleSmall}>{item.name}</Text>
                 </TouchableOpacity>
               )}
             />
@@ -166,12 +222,24 @@ const HomeScreen = () => {
             showsHorizontalScrollIndicator={false}
             overScrollMode="never"
           >
-            {[1, 2, 3, 4, 5, 6].map((item, index) => (
-              <TouchableOpacity key={index} style={styles.card}>
-                <Image
-                  style={styles.cardImg}
-                  source={require("../../../assets/images/Pull day.png")}
-                />
+            {routines.map((routine) => (
+              <TouchableOpacity
+                key={routine.id}
+                style={styles.card}
+                onPress={() =>
+                  router.push({
+                    pathname: "/screens/home/routine-screen",
+                    params: {
+                      id: routine.id,
+                      name: routine.name,
+                      image: routine.image,
+                      imageKey: routine.imageKey,
+                    },
+                  })
+                }
+              >
+                <Image style={styles.cardImg} source={routine.image} />
+                <Text style={styles.cardTitle}>{routine.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -331,10 +399,10 @@ const HomeScreen = () => {
                 </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
                     <Text style={styles.likesText}>{item.likes}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleOpenComments}>
+                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
                     <Text style={styles.likesText}>{item.comments}</Text>
                   </TouchableOpacity>
                 </View>
@@ -352,7 +420,7 @@ const HomeScreen = () => {
                       color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleOpenComments}>
+                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
                     <Ionicons
                       style={styles.icons}
                       name="chatbubble-outline"
@@ -374,7 +442,11 @@ const HomeScreen = () => {
           />
         </View>
       ) : null}
-      <BottomSheetComments title="sample" ref={bottomSheetRef} />
+      <BottomSheetComments
+        title="sample"
+        type={sheetType}
+        ref={bottomSheetRef}
+      />
     </View>
   );
 };
@@ -408,15 +480,38 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 12,
   },
+  cardTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    position: "absolute",
+    color: "#000000",
+    backgroundColor: "rgba(221, 220, 220, 0.8)",
+    textAlign: "center",
+    padding: 6,
+    borderRadius: 10,
+  },
+  cardTitleSmall: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    position: "absolute",
+    color: "#000000",
+    backgroundColor: "rgba(221, 220, 220, 0.8)",
+    textAlign: "center",
+    padding: 6,
+    borderRadius: 10,
+    width: 130,
+    top: 45,
+  },
   gridCard: {
     flex: 1,
     alignItems: "center",
     gap: 50,
     marginVertical: 10,
+    elevation: 1,
   },
   gridCardImg: {
-    width: 140,
-    height: 140,
+    width: 150,
+    height: 150,
     borderRadius: 12,
   },
   buttonContainer: {

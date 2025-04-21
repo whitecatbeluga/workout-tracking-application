@@ -15,157 +15,13 @@ import BottomSheet, {
 import Input from "@/components/input-text";
 import { WorkoutFormData } from "@/custom-types/workout-type";
 import Collapsible from "react-native-collapsible";
+import WorkoutCard from "./components/workout-card";
 
-const CardWorkoutInfo = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) => {
-  return (
-    <View>
-      <Text
-        style={{ fontSize: 24, fontFamily: "Inter_700Bold", color: "#323232" }}
-      >
-        {value} {label === "Duration" ? "mins" : ""}
-      </Text>
-      <Text
-        style={{
-          fontSize: 12,
-          color: "#626262",
-          fontFamily: "Inter_500Medium",
-        }}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-};
+interface Props {
+  title: string;
+}
 
-export const Card = ({
-  card,
-  handleOpenBottomSheet,
-  isEditable,
-}: {
-  card: any;
-  handleOpenBottomSheet?: () => void;
-  isEditable: boolean;
-}) => {
-  const [collapsed, setCollapsed] = useState(true);
-
-  return (
-    <View
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: 8,
-        padding: 14,
-        elevation: 1,
-        width: "100%",
-      }}
-    >
-      <View style={{ gap: 8 }}>
-        <Text
-          style={{
-            textAlign: "center",
-            fontFamily: "Inter_700Bold",
-            fontSize: 14,
-          }}
-        >
-          {card.name}
-        </Text>
-        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12 }}>
-          {card.description}
-        </Text>
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          {/* duration */}
-          <CardWorkoutInfo label={"Duration"} value={card.duration} />
-
-          {/* intensity */}
-          <CardWorkoutInfo label={"Intensity"} value={card.intensity} />
-
-          {/* volume */}
-          <CardWorkoutInfo label={"Volume"} value={card.volume} />
-
-          {/* sets */}
-          <CardWorkoutInfo label={"Sets"} value={card.sets || card.set} />
-        </View>
-      </View>
-      <Collapsible
-        collapsed={collapsed}
-        style={{ flexDirection: "column", gap: 8, paddingTop: 10 }}
-      >
-        {card.exercises.map((e: any) => (
-          <Text
-            key={e.id}
-            style={{
-              fontSize: 12,
-              color: "#626262",
-              fontFamily: "Inter_500Medium",
-            }}
-          >
-            {e.exercise.name} ({e.exercise.category})
-          </Text>
-        ))}
-      </Collapsible>
-      <TouchableOpacity
-        style={{
-          paddingTop: 20,
-          flexDirection: "row",
-          gap: 3,
-          alignItems: "center",
-          justifyContent: "center",
-          width: "100%",
-        }}
-        onPress={() => setCollapsed(!collapsed)}
-      >
-        {collapsed ? (
-          <Ionicons name="chevron-down" size={16} color="#323232" />
-        ) : (
-          <Ionicons name="chevron-up" size={16} color="#323232" />
-        )}
-
-        <Text
-          style={{
-            fontSize: 12,
-            color: "#626262",
-            fontWeight: "medium",
-          }}
-        >
-          {collapsed ? "View Exercises" : "Hide Exercises"}
-        </Text>
-      </TouchableOpacity>
-      {isEditable && handleOpenBottomSheet && (
-        <OpenEditWorkout handleOpenBottomSheet={handleOpenBottomSheet} />
-      )}
-    </View>
-  );
-};
-
-const OpenEditWorkout = ({
-  handleOpenBottomSheet,
-}: {
-  handleOpenBottomSheet: () => void;
-}) => {
-  return (
-    <TouchableOpacity onPress={handleOpenBottomSheet}>
-      <View
-        style={{
-          backgroundColor: "#48A6A7",
-          padding: 10,
-          paddingHorizontal: 24,
-          borderRadius: 6,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text style={{ color: "white", fontFamily: "Inter_700Bold" }}>
-          Edit Workout
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
+type RefType = BottomSheet | null;
 
 const EditWorkout = ({
   handleEditWorkout,
@@ -191,12 +47,6 @@ const EditWorkout = ({
     </TouchableOpacity>
   );
 };
-
-interface Props {
-  title: string;
-}
-
-type RefType = BottomSheet | null;
 
 const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
   const snapPoints = useMemo(() => ["25%", "50%", "85%"], []);
@@ -301,7 +151,7 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
   );
 });
 
-const WorkoutsCard = () => {
+const WorkoutsScreen = () => {
   const [text, setText] = useState("");
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -353,7 +203,7 @@ const WorkoutsCard = () => {
         <View style={{ gap: 20, marginTop: 20 }}>
           {/* workout cards */}
           {workoutCardDetails.map((card, index) => (
-            <Card
+            <WorkoutCard
               key={index}
               card={card}
               handleOpenBottomSheet={handleOpenBottomSheet}
@@ -367,7 +217,7 @@ const WorkoutsCard = () => {
   );
 };
 
-export default WorkoutsCard;
+export default WorkoutsScreen;
 
 const workoutCardDetails = [
   {

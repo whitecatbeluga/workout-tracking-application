@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
 } from "react-native"; // Importing Image and View for styling
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const TabVisibilityContext = createContext({
   isTabVisible: true,
@@ -56,6 +57,7 @@ const CustomTabBar = (props: BottomTabBarProps) => {
 
 const TabLayout = () => {
   const [isTabVisible, setTabVisible] = useState(true);
+  const user = useAppSelector((state) => state.auth.user);
   const contextValue = useMemo(
     () => ({ isTabVisible, setTabVisible }),
     [isTabVisible]
@@ -71,7 +73,7 @@ const TabLayout = () => {
         <Tabs.Screen
           name="index"
           options={{
-            headerTitle: "John Doe Smith",
+            headerTitle: user?.first_name,
             headerTitleStyle: {
               fontSize: 16,
               fontFamily: "Inter_600SemiBold",

@@ -20,6 +20,7 @@ interface PostCardProps {
   comments: string;
   liked: boolean;
   onLikePress?: () => void;
+  onCheckLikes?: () => void;
   onCommentPress?: () => void;
 }
 
@@ -40,6 +41,7 @@ const PostCard = ({
   comments,
   liked,
   onLikePress,
+  onCheckLikes,
   onCommentPress,
 }: PostCardProps) => {
   return (
@@ -103,7 +105,7 @@ const PostCard = ({
         <Image style={styles.postedPicture} source={postedPicture} />
       </View>
       <View style={styles.likesContainer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onCheckLikes}>
           <Text style={styles.likesText}>{likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
