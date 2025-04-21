@@ -46,64 +46,90 @@ const PostCard = ({
 }: PostCardProps) => {
   return (
     <View>
-      <View style={{ padding: 20 }}>
-        <TouchableOpacity
-          style={styles.profilePicContainer}
-          onPress={() =>
-            router.push({
-              pathname: "/screens/home/visit-profile",
-              params: {
-                name: name,
-                fullName: fullName,
-                email: email,
-                postTitle: postTitle,
-                description: description,
-                time: time,
-                volume: volume,
-                likes: likes,
-                comments: comments,
-                date: date,
-                profilePicture: profilePicture,
-                postedPicture: postedPicture,
-                sets: sets,
-                records: records,
-                isLiked: liked.toString(),
-              },
-            })
-          }
-        >
-          <Image style={styles.profileImage} source={profilePicture} />
-          <View>
-            <Text style={styles.name}>{name}</Text>
-            <Text style={styles.active}>{date}</Text>
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: "/screens/home/view-post",
+            params: {
+              name: name,
+              fullName: fullName,
+              email: email,
+              postTitle: postTitle,
+              description: description,
+              time: time,
+              volume: volume,
+              likes: likes,
+              comments: comments,
+              date: date,
+              profilePicture: profilePicture,
+              postedPicture: postedPicture,
+              sets: sets,
+              records: records,
+              isLiked: liked.toString(),
+            },
+          })
+        }
+      >
+        <View style={{ padding: 20 }}>
+          <TouchableOpacity
+            style={styles.profilePicContainer}
+            onPress={() =>
+              router.push({
+                pathname: "/screens/home/visit-profile",
+                params: {
+                  name: name,
+                  fullName: fullName,
+                  email: email,
+                  postTitle: postTitle,
+                  description: description,
+                  time: time,
+                  volume: volume,
+                  likes: likes,
+                  comments: comments,
+                  date: date,
+                  profilePicture: profilePicture,
+                  postedPicture: postedPicture,
+                  sets: sets,
+                  records: records,
+                  isLiked: liked.toString(),
+                },
+              })
+            }
+          >
+            <Image style={styles.profileImage} source={profilePicture} />
+            <View>
+              <Text style={styles.name}>{name}</Text>
+              <Text style={styles.active}>{date}</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={{ marginVertical: 10 }}>
+            <Text style={styles.postTitle}>{postTitle}</Text>
+            <Text style={styles.postDescription}>{description}</Text>
           </View>
-        </TouchableOpacity>
-        <View style={{ marginVertical: 10 }}>
-          <Text style={styles.postTitle}>{postTitle}</Text>
-          <Text style={styles.postDescription}>{description}</Text>
+          <View style={{ flexDirection: "row", gap: 46 }}>
+            <View>
+              <Text style={styles.tvsr}>Time</Text>
+              <Text>{time}</Text>
+            </View>
+            <View>
+              <Text style={styles.tvsr}>Volume</Text>
+              <Text>{volume}</Text>
+            </View>
+            <View>
+              <Text style={styles.tvsr}>Sets</Text>
+              <Text>{sets}</Text>
+            </View>
+            <View>
+              <Text style={styles.tvsr}>Records</Text>
+              <Text>{records}</Text>
+            </View>
+          </View>
         </View>
-        <View style={{ flexDirection: "row", gap: 46 }}>
-          <View>
-            <Text style={styles.tvsr}>Time</Text>
-            <Text>{time}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Volume</Text>
-            <Text>{volume}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Sets</Text>
-            <Text>{sets}</Text>
-          </View>
-          <View>
-            <Text style={styles.tvsr}>Records</Text>
-            <Text>{records}</Text>
-          </View>
+        <View>
+          <Image style={styles.postedPicture} source={postedPicture} />
         </View>
-      </View>
-      <View>
-        <Image style={styles.postedPicture} source={postedPicture} />
-      </View>
+      </TouchableOpacity>
+
       <View style={styles.likesContainer}>
         <TouchableOpacity onPress={onCheckLikes}>
           <Text style={styles.likesText}>{likes}</Text>

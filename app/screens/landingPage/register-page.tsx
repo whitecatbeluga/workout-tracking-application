@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput } from "react-native";
+import { View, Text } from "react-native";
 import Input from "@/components/input-text";
 // import { TextInput } from "react-native-gesture-handler";
 
@@ -8,7 +8,7 @@ import InputDropdown from "@/components/input-dropdown";
 
 // stepper
 import { ProgressSteps, ProgressStep } from "react-native-progress-steps";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 // redux
 // import { useDispatch, useSelector } from "react-redux";
@@ -113,6 +113,7 @@ const Step1 = ({
         icon="person"
         placeholder="Username"
         onChangeText={onChangeText("user_name")}
+        autoCapitalize="none"
       />
       <Input
         value={formData.email}
@@ -292,6 +293,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState<RegisterFormData>(initialFormData);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const onChangeText = (name: keyof RegisterFormData) => (text: string) => {
     const numericFields = ["height", "weight", "age", "activity_level", "bmi"];
@@ -303,9 +305,39 @@ const RegisterPage = () => {
     }));
   };
 
+  const isStepValid = (step: number) => {
+    console.log("Current step: ", currentStep);
+    switch (step) {
+      case 0:
+        return (
+          formData.user_name.trim() != "" &&
+          formData.email.trim() != "" &&
+          formData.password.trim() != ""
+        );
+      case 1:
+        return (
+          formData.first_name.trim() != "" &&
+          formData.last_name.trim() != "" &&
+          formData.address.trim() != "" &&
+          formData.gender.trim() != "" &&
+          formData.age > 0
+        );
+      case 2:
+        return (
+          formData.height > 0 &&
+          formData.weight > 0 &&
+          formData.activity_level > 0 &&
+          formData.user_type.trim() !== ""
+        );
+      case 3:
+        return true;
+      default:
+        return false;
+    }
+  };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ProgressSteps
         labelColor="black"
         progressBarColor="#48A6A7"
@@ -322,6 +354,9 @@ const RegisterPage = () => {
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
+          buttonNextDisabled={!isStepValid(0)}
+          onNext={() => setCurrentStep((prev) => prev + 1)}
+          onPrevious={() => setCurrentStep((prev) => prev - 1)}
         >
           <Step1 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
@@ -330,6 +365,9 @@ const RegisterPage = () => {
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
+          buttonNextDisabled={!isStepValid(1)}
+          onNext={() => setCurrentStep((prev) => prev + 1)}
+          onPrevious={() => setCurrentStep((prev) => prev - 1)}
         >
           <Step2 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
@@ -338,6 +376,9 @@ const RegisterPage = () => {
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
+          buttonNextDisabled={!isStepValid(2)}
+          onNext={() => setCurrentStep((prev) => prev + 1)}
+          onPrevious={() => setCurrentStep((prev) => prev - 1)}
         >
           <Step3 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>

@@ -77,7 +77,7 @@ const VisitProfile = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
