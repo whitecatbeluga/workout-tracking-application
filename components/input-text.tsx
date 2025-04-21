@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 
 type InputProps = {
   value: any;
@@ -15,6 +15,7 @@ type InputProps = {
   suffixIcon?: any;
   passwordToggle?: boolean;
   showPassword?: boolean;
+  error?: any;
   toggleShowPassword?: () => void;
 };
 
@@ -29,6 +30,7 @@ const Input = ({
   secureTextEntry,
   isSuffix,
   showPassword,
+  error,
   toggleShowPassword,
   multiline,
   numberOfLines,
@@ -89,6 +91,19 @@ const Input = ({
           color="#6F7A88"
           onPress={toggleShowPassword}
         />
+      )}
+
+      {error && (
+        <Text
+          style={{
+            top: -10,
+            color: "#721c24",
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+          }}
+        >
+          {error}
+        </Text>
       )}
     </View>
   );
