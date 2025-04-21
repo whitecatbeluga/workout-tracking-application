@@ -23,6 +23,7 @@ import WorkoutCard from "./components/workout-card";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { logout } from "@/redux/auth-slice";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const routeNames: {
   routeName: string;
@@ -58,6 +59,7 @@ const routeNames: {
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
+  const user = useAppSelector((state) => state.auth.user);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const appDispatch = useAppDispatch();
@@ -69,8 +71,14 @@ const ProfilePage = () => {
 
   const handleLogout = async () => {
     try {
-      await appDispatch(logout());
-      router.replace("/screens/landingPage/login-page");
+      const res = await appDispatch(logout());
+
+      if (res.type == "auth/logout/fulfilled") {
+        router.replace("/screens/landingPage/login-page");
+      }
+      if (res.type === "auth/logout/rejected") {
+        console.log("logout failed.", res);
+      }
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -158,10 +166,10 @@ const ProfilePage = () => {
             />
             <View style={{ flexDirection: "column" }}>
               <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold" }}>
-                John Smith Doe
+                {user?.first_name + " " + user?.last_name}
               </Text>
               <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular" }}>
-                john@email.com
+                {user?.email}
               </Text>
             </View>
           </View>
