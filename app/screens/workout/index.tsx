@@ -35,6 +35,7 @@ import ExerciseCard from "@/components/exercise-card";
 import Input from "@/components/input-text";
 import { Loading } from "@/custom-types/loading-type";
 import { SkeletonLoader } from "@/components/workout-skeleton";
+import { useRouter } from "expo-router";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -100,6 +101,7 @@ const WorkoutPage = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const workoutRef = useRef<BottomSheet>(null);
+  const router = useRouter();
 
   useEffect(() => {
     dispatch(getWorkout());
@@ -156,19 +158,25 @@ const WorkoutPage = () => {
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
                 <View style={styles.routineIcon}>
-                  <Ionicons name="add" size={28} color="#48A6A7" />
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push("/screens/workout/create-routine")
+                    }
+                  >
+                    <Ionicons name="add" size={28} color="#48A6A7" />
+                  </TouchableOpacity>
                   <Ionicons name="folder-open" size={28} color="#48A6A7" />
                 </View>
               </View>
-            </View>
 
-            <View style={styles.newRoutineSearch}>
-              <Input
-                value={""}
-                icon="search-circle"
-                placeholder="Explore"
-                onChangeText={(value) => {}}
-              />
+              <View style={styles.newRoutineSearch}>
+                <Input
+                  value={""}
+                  icon="search-circle"
+                  placeholder="Explore"
+                  onChangeText={(value) => {}}
+                />
+              </View>
             </View>
           </View>
           <View style={styles.cardList}>
