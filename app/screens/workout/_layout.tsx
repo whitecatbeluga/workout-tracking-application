@@ -51,6 +51,32 @@ export default function Workout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="add-exercise"
+        options={{
+          title: "Add Exercise",
+          headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+          headerTitleAlign: "center",
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity>
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+              >
+                Create
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Stack>
   );
 }

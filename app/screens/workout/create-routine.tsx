@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
+import { useRouter } from "expo-router";
 
 const CreateRoutine = () => {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <TextInput placeholder="Routine Title" style={styles.routineTitleInput} />
@@ -18,7 +21,10 @@ const CreateRoutine = () => {
         >
           Get started by adding an exercise to your routine.
         </Text>
-        <TouchableOpacity style={styles.addExerciseButton}>
+        <TouchableOpacity
+          style={styles.addExerciseButton}
+          onPress={() => router.push("/screens/workout/add-exercise")}
+        >
           <Ionicons name="add-outline" size={20} color="#FFFFFF" />
           <Text
             style={{
