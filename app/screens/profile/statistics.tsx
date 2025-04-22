@@ -46,7 +46,7 @@ const Header = ({ title, isFilter }: HeaderProps) => {
 
 const StatisticsScreen = () => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
@@ -101,14 +101,8 @@ const StatisticsScreen = () => {
                 borderRadius: 8,
                 width: "100%",
 
-                shadowColor: "#000",
-                shadowOffset: {
-                  width: 0,
-                  height: 2,
-                },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 1,
+                borderColor: "#CBD5E1",
+                borderWidth: 1,
               }}
             >
               <Text
@@ -240,14 +234,8 @@ const StatisticsScreen = () => {
                 borderRadius: 8,
                 width: "100%",
 
-                shadowColor: "#000",
-                shadowOffset: {
-                  width: 0,
-                  height: 2,
-                },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 1,
+                borderColor: "#CBD5E1",
+                borderWidth: 1,
               }}
             >
               <Text
