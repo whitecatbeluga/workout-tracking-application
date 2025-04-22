@@ -6,7 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { TabBar } from "@/components/tab-bar";
 import { Ionicons } from "@expo/vector-icons"; // Importing icons from Expo
 import {
@@ -63,6 +63,8 @@ const TabLayout = () => {
     [isTabVisible]
   );
 
+  const router = useRouter();
+
   return (
     <TabVisibilityContext.Provider value={contextValue}>
       <Tabs
@@ -75,8 +77,8 @@ const TabLayout = () => {
           options={{
             headerTitle: user?.first_name,
             headerTitleStyle: {
-              fontSize: 16,
-              fontFamily: "Inter_600SemiBold",
+              fontSize: 18,
+              fontFamily: "Inter_400Regular",
             },
             tabBarLabel: "Home",
             tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
@@ -94,7 +96,9 @@ const TabLayout = () => {
             headerRight: () => (
               <React.Fragment>
                 {/* Search Icon */}
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/screens/home/search")}
+                >
                   <Ionicons
                     name="search-outline"
                     size={24}
@@ -104,7 +108,9 @@ const TabLayout = () => {
                 </TouchableOpacity>
 
                 {/* Bell Icon */}
-                <TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/screens/home/notifications")}
+                >
                   <Ionicons
                     name="notifications-outline"
                     size={24}
@@ -122,13 +128,37 @@ const TabLayout = () => {
             title: "Workout",
             tabBarLabel: "Workout",
             tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerTitleStyle: {
+              fontSize: 18,
+              fontFamily: "Inter_400Regular",
+            },
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",
-            tabBarLabelStyle: { fontFamily: "Inter_700Bold" },
+            tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerTitleStyle: {
+              fontSize: 18,
+              fontFamily: "Inter_400Regular",
+            },
+            headerRight: () => (
+              <React.Fragment>
+                {/* Bell Icon */}
+                <TouchableOpacity>
+                  <Ionicons
+                    name="settings-outline"
+                    size={24}
+                    color="black"
+                    style={{ marginRight: 20 }}
+                    onPress={() => router.push("/screens/profile/settings")}
+                  />
+                </TouchableOpacity>
+              </React.Fragment>
+            ),
           }}
         />
       </Tabs>

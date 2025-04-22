@@ -42,7 +42,12 @@ const Input = ({
       }}
     >
       <Ionicons
-        style={{ position: "absolute", left: 11, top: 13, zIndex: 1 }}
+        style={{
+          position: "absolute",
+          left: 11,
+          top: 13,
+          zIndex: 1,
+        }}
         name={icon}
         size={24}
         color="#6F7A88"

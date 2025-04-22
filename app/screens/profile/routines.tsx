@@ -5,10 +5,15 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { forwardRef, useCallback, useMemo, useRef } from "react";
-import WorkoutCard from "./components/workout-card";
+import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
+// import WorkoutCard from "./components/workout-card";
 import Badge from "@/components/badge";
 import ExerciseCard from "@/components/exercise-card";
+import WorkoutCard from "@/components/workout-card";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { getWorkout } from "@/redux/slices/workout-slice";
+import { WorkoutExercise } from "@/custom-types/workout-type";
 
 type CardProps = {
   card: any;
@@ -25,7 +30,8 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
         borderRadius: 8,
         padding: 14,
         gap: 16,
-        elevation: 1,
+        borderColor: "#CBD5E1",
+        borderWidth: 1,
       }}
     >
       <View style={{ gap: 8 }}>
@@ -56,7 +62,8 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
       <View style={{ flexDirection: "row", width: "100%", gap: 10 }}>
         <TouchableOpacity
           style={{
-            width: "48.5%",
+            width: "100%",
+            // width: "48.5%",
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: 24,
@@ -75,7 +82,7 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
             See Workouts
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={{
             width: "48.5%",
             alignItems: "center",
@@ -95,7 +102,7 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
           >
             See Exercises
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -103,13 +110,14 @@ const Card = ({ card, handleWorkoutSheet, handleExerciseSheet }: CardProps) => {
 
 interface Props {
   title: string;
+  workouts?: any | null;
 }
 
 type RefType = BottomSheet | null;
 
 // workout bottom sheet
 const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
-  const snapPoints = useMemo(() => ["25%", "50%", "100%"], []);
+  const snapPoints = useMemo(() => ["25%", "50%", "85%"], []);
 
   const handleSheetChanges = useCallback((index: number) => {
     console.log("handleSheetChanges", index);
@@ -141,8 +149,8 @@ const SeeWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
         }}
         overScrollMode="never"
       >
-        {workoutCardDetails.map((card, index) => (
-          <WorkoutCard key={index} card={card} isEditable={false} />
+        {props.workouts?.map((item: WorkoutExercise) => (
+          <WorkoutCard key={item.id} card={item} isEditable={false} />
         ))}
       </BottomSheetScrollView>
     </BottomSheet>
@@ -183,8 +191,8 @@ const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
         }}
         overScrollMode="never"
       >
-        {dummyExercises.map((card, index) => (
-          <ExerciseCard key={index} card={card} />
+        {props.workouts?.exercises?.map((item: WorkoutExercise) => (
+          <ExerciseCard key={item.id} card={item} />
         ))}
       </BottomSheetScrollView>
     </BottomSheet>
@@ -192,6 +200,13 @@ const SeeExercisesBottomSheet = forwardRef<RefType, Props>((props, ref) => {
 });
 
 const RoutinesScreen = () => {
+  const dispatch = useAppDispatch();
+  const workouts = useAppSelector((state) => state.workout.workout);
+
+  useEffect(() => {
+    dispatch(getWorkout());
+  }, []);
+
   const workoutRef = useRef<BottomSheet>(null);
   const exerciseRef = useRef<BottomSheet>(null);
 
@@ -204,7 +219,7 @@ const RoutinesScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
@@ -229,8 +244,16 @@ const RoutinesScreen = () => {
           />
         ))}
       </ScrollView>
-      <SeeWorkoutBottomSheet title="Sample" ref={workoutRef} />
-      <SeeExercisesBottomSheet title="Sample" ref={exerciseRef} />
+      <SeeWorkoutBottomSheet
+        title="Sample"
+        workouts={workouts}
+        ref={workoutRef}
+      />
+      <SeeExercisesBottomSheet
+        title="Sample"
+        workouts={workouts}
+        ref={exerciseRef}
+      />
     </View>
   );
 };
