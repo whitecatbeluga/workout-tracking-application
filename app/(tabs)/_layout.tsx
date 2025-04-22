@@ -62,7 +62,6 @@ const TabLayout = () => {
     () => ({ isTabVisible, setTabVisible }),
     [isTabVisible]
   );
-  const router = useRouter();
 
   const router = useRouter();
 
@@ -97,7 +96,9 @@ const TabLayout = () => {
             headerRight: () => (
               <React.Fragment>
                 {/* Search Icon */}
-                <TouchableOpacity onPress={() => router.push("/screens/home/search")}>
+                <TouchableOpacity
+                  onPress={() => router.push("/screens/home/search")}
+                >
                   <Ionicons
                     name="search-outline"
                     size={24}
@@ -107,7 +108,9 @@ const TabLayout = () => {
                 </TouchableOpacity>
 
                 {/* Bell Icon */}
-                <TouchableOpacity onPress={() => router.push("/screens/home/notifications")}>
+                <TouchableOpacity
+                  onPress={() => router.push("/screens/home/notifications")}
+                >
                   <Ionicons
                     name="notifications-outline"
                     size={24}

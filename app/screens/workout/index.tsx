@@ -136,29 +136,8 @@ const WorkoutPage = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1 }}>
-        <View style={{ padding: 20, paddingBottom: 0 }}>
-          <View style={{ gap: 20, flexDirection: "column", width: "100%" }}>
-            <WorkoutHeader />
-
-            <View style={styles.routine}>
-              <Text style={styles.routineTxt}>Routines</Text>
-              <View style={styles.routineIcon}>
-                <Ionicons name="add" size={28} color="#48A6A7" />
-                <Ionicons name="folder-open" size={28} color="#48A6A7" />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.newRoutineSearch}>
-            <Input
-              value={""}
-              icon="search-circle"
-              placeholder="Explore"
-              onChangeText={(value) => {}}
-            />
-          </View>
-        </View>
         <ScrollView
+          stickyHeaderIndices={[0]}
           scrollEventThrottle={16}
           onScroll={onScroll}
           contentContainerStyle={styles.scrollContent}
@@ -168,6 +147,30 @@ const WorkoutPage = () => {
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
         >
+          <View
+            style={{ paddingTop: 20, width: "100%", backgroundColor: "white" }}
+          >
+            <View style={{ gap: 20, flexDirection: "column", width: "100%" }}>
+              <WorkoutHeader />
+
+              <View style={styles.routine}>
+                <Text style={styles.routineTxt}>Routines</Text>
+                <View style={styles.routineIcon}>
+                  <Ionicons name="add" size={28} color="#48A6A7" />
+                  <Ionicons name="folder-open" size={28} color="#48A6A7" />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.newRoutineSearch}>
+              <Input
+                value={""}
+                icon="search-circle"
+                placeholder="Explore"
+                onChangeText={(value) => {}}
+              />
+            </View>
+          </View>
           <View style={styles.cardList}>
             {loading == Loading.Pending ? (
               <>
