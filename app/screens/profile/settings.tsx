@@ -1,26 +1,26 @@
-import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { logout } from "@/redux/auth-slice";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 
 const SettingsScreen = () => {
   const user = useAppSelector((state) => state.auth.user);
 
-  const appDispatch = useAppDispatch();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      const res = await appDispatch(logout());
-
-      if (res.type == "auth/logout/fulfilled") {
-        router.replace("/screens/landingPage/login-page");
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error.message);
+        return;
       }
-      if (res.type === "auth/logout/rejected") {
-        console.log("logout failed.", res);
-      }
+      await AsyncStorage.removeItem("access_token");
+      await AsyncStorage.removeItem("refresh_token");
+      await AsyncStorage.removeItem("expires_at");
+      router.replace("/screens/landingPage/login-page");
     } catch (err) {
       console.error("Logout error:", err);
     }
