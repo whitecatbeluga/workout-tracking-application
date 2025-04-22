@@ -1,17 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
 type InputDropdownProps = {
+  inputLabel?: string;
   data: any;
-  value: string;
+  value: string | undefined | number;
   icon: any;
   placeholder: string;
   onChangeText: (name: string) => void;
 };
 
 const InputDropdown = ({
+  inputLabel,
   data,
   value,
   icon,
@@ -22,6 +24,7 @@ const InputDropdown = ({
 
   return (
     <>
+      {inputLabel && <Text style={styles.inputLabel}>{inputLabel}</Text>}
       <Dropdown
         style={[styles.dropdown, isFocus && { borderColor: "blue" }]}
         placeholderStyle={styles.placeholderStyle}
@@ -58,6 +61,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 16,
     marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontFamily: "Inter_400Regular",
+    color: "#323232",
   },
   icon: {
     marginRight: 8,

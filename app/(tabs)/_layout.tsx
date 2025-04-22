@@ -154,7 +154,9 @@ const TabLayout = () => {
                     size={24}
                     color="black"
                     style={{ marginRight: 20 }}
-                    onPress={() => router.push("/screens/profile/settings")}
+                    onPress={() =>
+                      router.push("/screens/profile/settings/settings-layout")
+                    }
                   />
                 </TouchableOpacity>
               </React.Fragment>
