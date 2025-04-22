@@ -58,6 +58,17 @@ export default function DashboardScreensLayout() {
           },
         }}
       />
+      <Stack.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
     </Stack>
   );
 }

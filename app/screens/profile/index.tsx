@@ -35,11 +35,11 @@ const routeNames: {
     routeUrl: "/screens/profile/statistics",
     routeIcon: "stats-chart",
   },
-  {
-    routeName: "Workouts",
-    routeUrl: "/screens/profile/workouts",
-    routeIcon: "barbell",
-  },
+  // {
+  //   routeName: "Workouts",
+  //   routeUrl: "/screens/profile/workouts",
+  //   routeIcon: "barbell",
+  // },
   {
     routeName: "Measures",
     routeUrl: "/screens/profile/measures",
@@ -62,26 +62,10 @@ const ProfilePage = () => {
   const user = useAppSelector((state) => state.auth.user);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const appDispatch = useAppDispatch();
   const router = useRouter();
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.expand();
-  };
-
-  const handleLogout = async () => {
-    try {
-      const res = await appDispatch(logout());
-
-      if (res.type == "auth/logout/fulfilled") {
-        router.replace("/screens/landingPage/login-page");
-      }
-      if (res.type === "auth/logout/rejected") {
-        console.log("logout failed.", res);
-      }
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
   };
 
   const [visible, setIsVisible] = useState(false);
@@ -131,7 +115,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20 }}
@@ -275,11 +259,6 @@ const ProfilePage = () => {
               routeIcon={routes.routeIcon}
             />
           ))}
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={handleLogout}>
-            <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
         </View>
 
         {/* dashboard buttons */}

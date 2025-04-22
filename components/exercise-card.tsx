@@ -8,7 +8,8 @@ const ExerciseCard = ({ card }: { card: any }) => {
         backgroundColor: "#fff",
         borderRadius: 8,
         padding: 14,
-        elevation: 1,
+        borderColor: "#CBD5E1",
+        borderWidth: 1,
       }}
     >
       <View style={{ gap: 8 }}>
