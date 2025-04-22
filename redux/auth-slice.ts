@@ -127,87 +127,90 @@ const authSlice = createSlice({
     resetErrorMessage: (state, action) => {
       state.error = action.payload;
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
   },
-  extraReducers: (builder) => {
-    builder
-      // Login
-      .addCase(login.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(login.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.access_token = action.payload.access_token;
-        state.user = action.payload.user;
-        state.error = null;
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        const payload = action.payload as string | ApiError;
+  // extraReducers: (builder) => {
+  //   builder
+  //     // Login
+  //     .addCase(login.pending, (state) => {
+  //       state.loading = Loading.Pending;
+  //       state.error = null;
+  //     })
+  //     .addCase(login.fulfilled, (state, action) => {
+  //       state.loading = Loading.Fulfilled;
+  //       state.access_token = action.payload.access_token;
+  //       state.user = action.payload.user;
+  //       state.error = null;
+  //     })
+  //     .addCase(login.rejected, (state, action) => {
+  //       state.loading = Loading.Rejected;
+  //       const payload = action.payload as string | ApiError;
 
-        if (typeof payload === "string") {
-          state.error = payload;
-        } else if (payload?.errors?.length) {
-          const fieldErrors: Record<string, string> = {};
-          payload.errors.forEach((err) => {
-            const match = err.match(/^(\w+)\s+(.*)$/);
-            if (match) {
-              const field = match[1].toLowerCase();
-              fieldErrors[field] = match[0];
-            }
-          });
-          state.error = fieldErrors;
-        } else {
-          state.error = payload?.message ?? "An error occurred";
-        }
-      })
+  //       if (typeof payload === "string") {
+  //         state.error = payload;
+  //       } else if (payload?.errors?.length) {
+  //         const fieldErrors: Record<string, string> = {};
+  //         payload.errors.forEach((err) => {
+  //           const match = err.match(/^(\w+)\s+(.*)$/);
+  //           if (match) {
+  //             const field = match[1].toLowerCase();
+  //             fieldErrors[field] = match[0];
+  //           }
+  //         });
+  //         state.error = fieldErrors;
+  //       } else {
+  //         state.error = payload?.message ?? "An error occurred";
+  //       }
+  //     })
 
-      // Register
-      .addCase(register.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(register.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.access_token = action.payload.access_token;
-        state.user = action.payload.user;
-        state.error = null;
-      })
-      .addCase(register.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      })
+  //     // Register
+  //     .addCase(register.pending, (state) => {
+  //       state.loading = Loading.Pending;
+  //       state.error = null;
+  //     })
+  //     .addCase(register.fulfilled, (state, action) => {
+  //       state.loading = Loading.Fulfilled;
+  //       state.access_token = action.payload.access_token;
+  //       state.user = action.payload.user;
+  //       state.error = null;
+  //     })
+  //     .addCase(register.rejected, (state, action) => {
+  //       state.loading = Loading.Rejected;
+  //       state.error = action.payload as string;
+  //     })
 
-      // Refresh Token
-      .addCase(refreshToken.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(refreshToken.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.access_token = action.payload.access_token;
-        state.user = action.payload.user;
-        state.error = null;
-      })
-      .addCase(refreshToken.rejected, (state) => {
-        state.loading = Loading.Rejected;
-      })
+  //     // Refresh Token
+  //     .addCase(refreshToken.pending, (state) => {
+  //       state.loading = Loading.Pending;
+  //       state.error = null;
+  //     })
+  //     .addCase(refreshToken.fulfilled, (state, action) => {
+  //       state.loading = Loading.Fulfilled;
+  //       state.access_token = action.payload.access_token;
+  //       state.user = action.payload.user;
+  //       state.error = null;
+  //     })
+  //     .addCase(refreshToken.rejected, (state) => {
+  //       state.loading = Loading.Rejected;
+  //     })
 
-      // Logout
-      .addCase(logout.pending, (state) => {
-        state.loading = Loading.Pending;
-      })
-      .addCase(logout.fulfilled, (state) => {
-        state.loading = Loading.Fulfilled;
-        state.access_token = null;
-        state.user = null;
-        state.error = null;
-      })
-      .addCase(logout.rejected, (state) => {
-        state.loading = Loading.Rejected;
-      });
-  },
+  //     // Logout
+  //     .addCase(logout.pending, (state) => {
+  //       state.loading = Loading.Pending;
+  //     })
+  //     .addCase(logout.fulfilled, (state) => {
+  //       state.loading = Loading.Fulfilled;
+  //       state.access_token = null;
+  //       state.user = null;
+  //       state.error = null;
+  //     })
+  //     .addCase(logout.rejected, (state) => {
+  //       state.loading = Loading.Rejected;
+  //     });
+  // },
 });
 
-export const { setAccessToken, resetErrorMessage } = authSlice.actions;
+export const { setAccessToken, resetErrorMessage, setUser } = authSlice.actions;
 export default authSlice.reducer;

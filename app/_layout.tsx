@@ -1,14 +1,12 @@
-// app/_layout.tsx
-
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Provider } from "react-redux";
 import { store } from "@/redux/store";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-import Styles from "./screens/profile/styles"; // or your own style
+import Styles from "./screens/profile/styles";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Inter_300Light,
   Inter_400Regular,
@@ -19,7 +17,8 @@ import {
 } from "@expo-google-fonts/inter";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
-import { refreshToken } from "@/redux/auth-slice";
+import { supabase } from "@/utils/supabase";
+import { setAccessToken } from "@/redux/auth-slice";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,13 +38,32 @@ export default function Layout() {
   }, [loaded]);
 
   useEffect(() => {
-    const verifyRefreshToken = async () => {
-      const isLoggedIn = await AsyncStorage.getItem("loggedIn");
-      if (isLoggedIn != null) {
-        store.dispatch(refreshToken());
+    const restoreSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Error restoring session:", error.message);
+        return;
+      }
+
+      const session = data?.session;
+      console.log("layout", session);
+
+      if (session) {
+        const { access_token, refresh_token, expires_at } = session;
+
+        await AsyncStorage.setItem("access_token", access_token);
+        await AsyncStorage.setItem("refresh_token", refresh_token);
+        await AsyncStorage.setItem("expires_at", (expires_at ?? "").toString());
+
+        store.dispatch(setAccessToken(access_token));
+
+        console.log("Session restored.");
+      } else {
+        console.log("No active session.");
       }
     };
-    void verifyRefreshToken();
+    restoreSession();
   }, []);
 
   if (!loaded) return null;
