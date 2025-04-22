@@ -1,6 +1,5 @@
-import { Stack } from "expo-router";
 import { TouchableOpacity, Text } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 
 export default function Workout() {
   const router = useRouter();
@@ -67,11 +66,37 @@ export default function Workout() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/screens/workout/create-exercise")}
+            >
               <Text
                 style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
               >
                 Create
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="create-exercise"
+        options={{
+          title: "Create Exercise",
+          headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+          headerTitleAlign: "center",
+          headerRight: () => (
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#48A6A7",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 8,
+              }}
+            >
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
+              >
+                Save
               </Text>
             </TouchableOpacity>
           ),
