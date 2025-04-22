@@ -1,36 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Image,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LoginFormData } from "@/custom-types/form-data-type";
-import { Ionicons } from "@expo/vector-icons";
 import { ScrollView } from "react-native-gesture-handler";
-import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { useAppSelector } from "@/hooks/use-app-selector";
-import { login } from "@/redux/auth-slice";
 
 import Input from "@/components/input-text";
+import { supabase } from "@/utils/supabase";
+import { setAccessToken, setUser } from "@/redux/auth-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const screenWidth = Dimensions.get("window").width;
 
 const LoginPage = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
-
-  const { loading, error, access_token } = useAppSelector(
-    (state) => state.auth
-  );
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -41,24 +39,56 @@ const LoginPage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleLogin = async () => {
-    await dispatch(login(formData));
-  };
+  const signInWithEmail = async () => {
+    setLoading(true);
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    });
+    if (error) {
+      setLoading(false);
+      setError(error.message);
+    }
 
-  useEffect(() => {
-    if (access_token) {
+    if (data.session) {
+      const { access_token, refresh_token, expires_at } = data.session;
+      await AsyncStorage.setItem("access_token", access_token);
+      await AsyncStorage.setItem("refresh_token", refresh_token);
+      if (expires_at !== undefined) {
+        await AsyncStorage.setItem("expires_at", expires_at.toString());
+      }
+      // retrive user info
+      const { data: userProfile } = await supabase
+        .from("User")
+        .select("*")
+        .eq("auth_user_id", data.user.id)
+        .single();
+
+      dispatch(setUser(userProfile));
+      dispatch(setAccessToken(access_token));
       router.replace("/(tabs)");
     }
-  }, [access_token]);
-
-  const isFieldError = (field: string): string | null => {
-    if (typeof error === "object" && error !== null && error[field]) {
-      return error[field];
-    }
-    return null;
   };
 
-  const [showPassword, setShowPassword] = useState(false);
+  // async function signUpWithEmail() {
+  //   setLoading(true);
+  //   const {
+  //     data: { session },
+  //     error,
+  //   } = await supabase.auth.signUp({
+  //     email: formData.email,
+  //     password: formData.password,
+  //   });
+  //   if (error) console.log("error login", error.message);
+  //   if (!session) console.log("error login", "session is null");
+  //   setLoading(false);
+  // }
+
+  // useEffect(() => {
+  //   if (access_token) {
+  //     router.replace("/(tabs)");
+  //   }
+  // }, [access_token]);
 
   return (
     <KeyboardAvoidingView
@@ -78,15 +108,15 @@ const LoginPage = () => {
               width: "100%",
             }}
           >
-            {typeof error === "string" && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-
             <Text style={styles.header}>Workout Tracking Application</Text>
 
             <View style={{ gap: 10 }}>
+              {error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
               {/* Email Field */}
               <Input
                 value={formData.email}
@@ -95,7 +125,7 @@ const LoginPage = () => {
                 onChangeText={(text) => handleInputChange("email", text)}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                error={isFieldError("email")}
+                // error={isFieldError("email")}
               />
 
               {/* Password Field */}
@@ -109,7 +139,7 @@ const LoginPage = () => {
                 showPassword={showPassword}
                 toggleShowPassword={() => setShowPassword((prev) => !prev)}
                 autoCapitalize="none"
-                error={isFieldError("password")}
+                // error={isFieldError("password")}
               />
             </View>
 
@@ -117,9 +147,13 @@ const LoginPage = () => {
             <View style={{ gap: 10 }}>
               <TouchableOpacity
                 style={styles.loginButton}
-                onPress={handleLogin}
+                onPress={() => signInWithEmail()}
               >
-                <Text style={styles.loginText}>Login</Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.loginText}>Sign in</Text>
+                )}
               </TouchableOpacity>
 
               <View style={styles.forgotPasswordContainer}>
