@@ -7,6 +7,7 @@ export interface User {
   address: string;
   age: number;
   height: number;
+  weight: number;
   gender: string;
   bmi: number;
   activity_level: number;

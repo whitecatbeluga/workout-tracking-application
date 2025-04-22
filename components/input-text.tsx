@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text, TextInput, View } from "react-native";
 
 type InputProps = {
+  inputLabel?: string;
   value: any;
   icon: any;
   placeholder: string;
@@ -20,6 +21,7 @@ type InputProps = {
 };
 
 const Input = ({
+  inputLabel,
   value,
   icon,
   suffixIcon,
@@ -36,80 +38,95 @@ const Input = ({
   numberOfLines,
 }: InputProps) => {
   return (
-    <View
-      style={{
-        justifyContent: "center",
-      }}
-    >
-      <Ionicons
+    <View>
+      {inputLabel && (
+        <View style={{ marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Inter_400Regular",
+              color: "#323232",
+            }}
+          >
+            {inputLabel}
+          </Text>
+        </View>
+      )}
+      <View
         style={{
-          position: "absolute",
-          left: 11,
-          top: 13,
-          zIndex: 1,
+          justifyContent: "center",
         }}
-        name={icon}
-        size={24}
-        color="#6F7A88"
-      />
-      <TextInput
-        style={{
-          backgroundColor: "white",
-          borderColor: "#CBD5E1",
-          borderWidth: 1,
-          ...(multiline
-            ? {
-                minHeight: numberOfLines ? numberOfLines * 20 : 100,
-                textAlignVertical: "top",
-              }
-            : { height: 50 }),
-          paddingHorizontal: 8,
-          paddingLeft: 40,
-          paddingRight: 40,
-          borderRadius: 10,
-          fontSize: 16,
-          marginBottom: 16,
-          fontFamily: "Inter_400Regular",
-        }}
-        placeholder={placeholder}
-        placeholderTextColor="#94A3B8"
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-      />
-
-      {isSuffix && (
+      >
         <Ionicons
-          style={{ position: "absolute", right: 11, top: 13, zIndex: 1 }}
-          name={
-            typeof showPassword === "boolean"
-              ? showPassword
-                ? "eye-off"
-                : "eye"
-              : suffixIcon
-          }
+          style={{
+            position: "absolute",
+            left: 11,
+            top: 13,
+            zIndex: 1,
+          }}
+          name={icon}
           size={24}
           color="#6F7A88"
-          onPress={toggleShowPassword}
         />
-      )}
-
-      {error && (
-        <Text
+        <TextInput
           style={{
-            top: -10,
-            color: "#721c24",
+            backgroundColor: "white",
+            borderColor: "#CBD5E1",
+            borderWidth: 1,
+            ...(multiline
+              ? {
+                  minHeight: numberOfLines ? numberOfLines * 20 : 100,
+                  textAlignVertical: "top",
+                }
+              : { height: 50 }),
+            paddingHorizontal: 8,
+            paddingLeft: 40,
+            paddingRight: 40,
+            borderRadius: 10,
+            fontSize: 16,
+            marginBottom: 16,
             fontFamily: "Inter_400Regular",
-            fontSize: 14,
           }}
-        >
-          {error}
-        </Text>
-      )}
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
+        />
+
+        {isSuffix && (
+          <Ionicons
+            style={{ position: "absolute", right: 11, top: 13, zIndex: 1 }}
+            name={
+              typeof showPassword === "boolean"
+                ? showPassword
+                  ? "eye-off"
+                  : "eye"
+                : suffixIcon
+            }
+            size={24}
+            color="#6F7A88"
+            onPress={toggleShowPassword}
+          />
+        )}
+
+        {error && (
+          <Text
+            style={{
+              top: -10,
+              color: "#721c24",
+              fontFamily: "Inter_400Regular",
+              fontSize: 14,
+            }}
+          >
+            {error}
+          </Text>
+        )}
+      </View>
     </View>
   );
 };
