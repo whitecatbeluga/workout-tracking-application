@@ -6,8 +6,14 @@ import { useAppSelector } from "@/hooks/use-app-selector";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+import * as ImagePicker from "expo-image-picker";
+
 const EditProfile = () => {
   const user = useAppSelector((state) => state.auth.user);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [exerciseImage, setExerciseImage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
     username: user?.user_name || "",
@@ -15,17 +21,36 @@ const EditProfile = () => {
     password: "",
     confirm_password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  const handlePickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      setErrorMessage("Permission to access camera roll is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const { uri } = result.assets[0];
+      setExerciseImage(uri);
+    }
+  };
+
   return (
     <ContainerSettings>
       {/* user info */}
-      <TouchableOpacity
+      <View
         style={{
           flexDirection: "row",
           alignItems: "center",
@@ -33,11 +58,36 @@ const EditProfile = () => {
           paddingBottom: 20,
         }}
       >
-        <Image
-          source={{ uri: "https://avatar.iran.liara.run/public/41" }}
-          style={{ width: 140, height: 140 }}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={{ borderRadius: 50 }}
+          onPress={handlePickImage}
+        >
+          <View
+            style={{
+              height: 100,
+              width: 100,
+              borderRadius: 50,
+              borderColor: "#000000",
+              borderWidth: 0.5,
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {!exerciseImage ? (
+              <Image
+                source={{ uri: "https://avatar.iran.liara.run/public/41" }}
+                style={{ width: 140, height: 140 }}
+              />
+            ) : (
+              <Image
+                source={{ uri: exerciseImage }}
+                style={{ width: "100%", height: "100%", resizeMode: "cover" }}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
 
       <View style={{ gap: 10 }}>
         {/* Username Field */}

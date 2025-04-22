@@ -28,6 +28,7 @@ const AboutUs = () => {
               zIndex: 1,
             }}
             color="yellow"
+            direction="steepRight"
           />
         </Text>
 
