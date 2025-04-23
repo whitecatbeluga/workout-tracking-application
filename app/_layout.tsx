@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import Styles from "./screens/profile/styles";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Inter_300Light,
   Inter_400Regular,
@@ -18,13 +18,14 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { supabase } from "@/utils/supabase";
-import { setAccessToken } from "@/redux/auth-slice";
+import { setAccessToken, setUser } from "@/redux/auth-slice";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
+  const router = useRouter();
+
   const [loaded] = useFonts({
-    // SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     Inter_300Light,
     Inter_400Regular,
     Inter_500Medium,
@@ -34,37 +35,46 @@ export default function Layout() {
   });
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
-
-  useEffect(() => {
     const restoreSession = async () => {
       const { data, error } = await supabase.auth.getSession();
-
       if (error) {
         console.error("Error restoring session:", error.message);
         return;
       }
 
       const session = data?.session;
-      console.log("layout", session);
-
-      if (session) {
+      if (
+        session &&
+        session.expires_at &&
+        session.expires_at * 1000 > Date.now()
+      ) {
         const { access_token, refresh_token, expires_at } = session;
-
+        const { data: userProfile } = await supabase
+          .from("User")
+          .select("*")
+          .eq("auth_user_id", data.session?.user.id)
+          .single();
         await AsyncStorage.setItem("access_token", access_token);
         await AsyncStorage.setItem("refresh_token", refresh_token);
-        await AsyncStorage.setItem("expires_at", (expires_at ?? "").toString());
-
+        await AsyncStorage.setItem("expires_at", expires_at.toString());
         store.dispatch(setAccessToken(access_token));
-
-        console.log("Session restored.");
+        store.dispatch(setUser(userProfile));
+        router.replace("/(tabs)");
       } else {
-        console.log("No active session.");
+        await AsyncStorage.removeItem("access_token");
+        await AsyncStorage.removeItem("refresh_token");
+        await AsyncStorage.removeItem("expires_at");
+        store.dispatch(setAccessToken(null));
+
+        router.replace("/");
       }
     };
-    restoreSession();
-  }, []);
+
+    if (loaded) {
+      SplashScreen.hideAsync();
+      restoreSession();
+    }
+  }, [loaded]);
 
   if (!loaded) return null;
 
