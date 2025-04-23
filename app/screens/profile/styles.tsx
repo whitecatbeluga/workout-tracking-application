@@ -5,11 +5,10 @@ const Styles = StyleSheet.create({
   profileImage: {
     width: 50,
     height: 50,
-    marginRight: 20,
   },
   profileName: {
     fontSize: 16,
-    fontFamily: "Inter_700Bold"
+    fontFamily: "Inter_700Bold",
   },
   profileInfo: {
     fontSize: 12,

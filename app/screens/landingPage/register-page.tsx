@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import Input from "@/components/input-text";
-// import { TextInput } from "react-native-gesture-handler";
+import { supabase } from "@/utils/supabase";
 
 // dropdown
 import InputDropdown from "@/components/input-dropdown";
@@ -336,6 +336,55 @@ const RegisterPage = () => {
     }
   };
 
+  const handleRegister = async () => {
+    try {
+      const { data: signUpData, error: signUpError } =
+        await supabase.auth.signUp({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        });
+
+      if (signUpError) {
+        console.log("Error signing up:", signUpError.message);
+        return;
+      }
+
+      const authUserId = signUpData.user?.id;
+
+      if (!authUserId) {
+        throw new Error("User ID not found after sign up.");
+      }
+
+      // Now insert additional user info
+      const { error: insertError } = await supabase.from("User").insert([
+        {
+          auth_user_id: authUserId,
+          user_name: formData.user_name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          address: formData.address,
+          gender: formData.gender,
+          age: formData.age,
+          height: formData.height,
+          weight: formData.weight,
+          bmi: formData.bmi,
+          activity_level: formData.activity_level,
+          user_type: formData.user_type,
+          email: formData.email.toLowerCase(), // optional, but consistent
+        },
+      ]);
+
+      if (insertError) {
+        console.log("Error inserting user data:", insertError.message);
+        return;
+      }
+
+      console.log("User registered successfully!");
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ProgressSteps
@@ -387,6 +436,7 @@ const RegisterPage = () => {
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
+          onSubmit={handleRegister}
         >
           <Step4 formData={formData} />
         </ProgressStep>

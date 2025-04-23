@@ -42,6 +42,9 @@ export default {
     },
     extra: {
       API_URL: process.env.API_URL,
+      REACT_NATIVE_SUPABASE_URL: process.env.REACT_NATIVE_SUPABASE_URL,
+      REACT_NATIVE_SUPABASE_ANON_KEY:
+        process.env.REACT_NATIVE_SUPABASE_ANON_KEY,
     },
   },
 };

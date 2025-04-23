@@ -62,7 +62,6 @@ const ProfilePage = () => {
   const user = useAppSelector((state) => state.auth.user);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const router = useRouter();
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.expand();
@@ -131,7 +130,7 @@ const ProfilePage = () => {
             justifyContent: "space-between",
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <TouchableOpacity onPress={() => setIsVisible(true)}>
               <Image
                 source={{ uri: "https://avatar.iran.liara.run/public/41" }}

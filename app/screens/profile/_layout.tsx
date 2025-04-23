@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function DashboardScreensLayout() {
+export default function ProfileScreensLayout() {
   return (
     <Stack>
       <Stack.Screen
@@ -58,10 +58,67 @@ export default function DashboardScreensLayout() {
           },
         }}
       />
+
+      {/* under profile */}
       <Stack.Screen
-        name="settings"
+        name="settings/settings-layout"
         options={{
           title: "Settings",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="settings/edit-profile"
+        options={{
+          title: "Edit Profile",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="settings/account-details"
+        options={{
+          title: "Account Details",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="settings/contact-us"
+        options={{
+          title: "Contact Us",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="settings/terms-of-service"
+        options={{
+          title: "Terms of Service",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+        }}
+      />
+      <Stack.Screen
+        name="settings/about-us"
+        options={{
+          title: "About Us",
           headerTitleAlign: "center",
           headerTitleStyle: {
             fontSize: 18,
