@@ -62,7 +62,7 @@ const EditWorkoutBottomSheet = forwardRef<RefType, Props>((props, ref) => {
     intensity: 0,
     volume: 0,
     set: 0,
-    exerciseIds: [],
+    exercise_ids: [],
   });
 
   const onChangeText = (name: keyof WorkoutFormData) => (text: string) => {

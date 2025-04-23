@@ -18,6 +18,39 @@ export default function Workout() {
         }}
       />
       <Stack.Screen
+        name="edit-workout"
+        options={{
+          title: "Edit Workout",
+          headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+          headerTitleAlign: "center",
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#48A6A7",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 8,
+              }}
+            >
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
+              >
+                Save
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Stack.Screen
         name="create-routine"
         options={{
           title: "Create Routine",

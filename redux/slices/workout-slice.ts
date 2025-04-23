@@ -1,3 +1,4 @@
+import { RootState } from "@/redux/store"; // Import your RootState type
 import { ApiError } from "@/custom-types/api-error-type";
 import { Loading } from "@/custom-types/loading-type";
 import { Workout, WorkoutFormData } from "@/custom-types/workout-type";
@@ -7,26 +8,38 @@ import { AxiosError } from "axios";
 import { getAuthToken } from "@/services/get-token";
 
 import Constants from "expo-constants";
+import { supabase } from "@/utils/supabase";
 
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
 export const getWorkout = createAsyncThunk(
   "workout/getWorkout",
-  async (_, thunkApi) => {
-    const token = await getAuthToken();
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const response = await axios.get(`${API_URL}/workout`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      return response.data;
-    } catch (error) {
-      const axiosError = error as AxiosError;
-      const response = axiosError.response?.data as ApiError;
-      return thunkApi.rejectWithValue(response.message);
+      const state = getState() as RootState;
+      const authUserId = state.auth.user?.id;
+      if (!authUserId) {
+        return rejectWithValue("User is not authenticated.");
+      }
+
+      const { data, error } = await supabase
+        .from("Workout")
+        .select("*")
+        .eq("user_id", authUserId);
+
+      if (error) {
+        console.error("Error fetching workouts:", error.message);
+        return rejectWithValue(error.message);
+      }
+      return data;
+    } catch (err: any) {
+      console.log("err", err.message);
+      return rejectWithValue(err.message);
     }
   }
 );
+
 export const createWorkout = createAsyncThunk(
   "workout/createWorkout",
   async (data: WorkoutFormData, thunkApi) => {
@@ -51,13 +64,13 @@ export const createWorkout = createAsyncThunk(
 interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
-  workout: Workout[] | null;
+  workout: Workout[];
 }
 
 const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
-  workout: null,
+  workout: [],
 };
 
 const WorkoutSlice = createSlice({
@@ -88,7 +101,7 @@ const WorkoutSlice = createSlice({
       .addCase(getWorkout.fulfilled, (state, action) => {
         state.loading = Loading.Fulfilled;
         state.error = null;
-        state.workout = action.payload;
+        state.workout = action.payload ?? [];
       })
       .addCase(getWorkout.rejected, (state, action) => {
         state.loading = Loading.Rejected;

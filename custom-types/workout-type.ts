@@ -14,7 +14,7 @@ export interface Workout {
   intensity: number;
   volume: number;
   set: number;
-  exercises: Exercise[];
+  exercise_ids: number[];
 }
 
 export interface WorkoutFormData {
@@ -25,7 +25,8 @@ export interface WorkoutFormData {
   intensity: number;
   volume: number;
   set: number;
-  exerciseIds: number[];
+  user_id?: number;
+  exercise_ids: number[];
 }
 
 export interface WorkoutExercise {

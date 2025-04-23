@@ -36,17 +36,28 @@ import Input from "@/components/input-text";
 import { Loading } from "@/custom-types/loading-type";
 import { SkeletonLoader } from "@/components/workout-skeleton";
 import { useRouter } from "expo-router";
+import { supabase } from "@/utils/supabase";
 
 const { height: screenHeight } = Dimensions.get("window");
 
-const ActionButtons = () => {
+interface ActionButtonsProps {
+  onDelete: () => void;
+  onEdit?: () => void;
+}
+
+const ActionButtons: React.FC<ActionButtonsProps> = ({ onDelete, onEdit }) => {
   const buttonDetails = [
-    { label: "Edit Workout", icon: "create", color: "#006A71", onpress: "" },
+    {
+      label: "Edit Workout",
+      icon: "create",
+      color: "#006A71",
+      onpress: onEdit,
+    },
     {
       label: "Delete Workout",
       icon: "close-circle",
       color: "#991919",
-      onpress: "",
+      onpress: onDelete,
     },
   ];
   return (
@@ -73,6 +84,7 @@ const ActionButtons = () => {
             backgroundColor: item.color,
             paddingVertical: 14,
           }}
+          onPress={item.onpress as () => void}
         >
           <Ionicons
             name={item.icon as keyof typeof Ionicons.glyphMap}
@@ -90,7 +102,7 @@ const WorkoutPage = () => {
   const offset = useRef(0);
   const { setTabVisible } = useTabVisibility();
   const dispatch = useAppDispatch();
-  const workout = useAppSelector((state) => state.workout.workout);
+  const workout = useAppSelector((state) => state.workout.workout) ?? [];
   const loading = useAppSelector((state) => state.workout.loading);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<number | null>(
     null
@@ -188,14 +200,20 @@ const WorkoutPage = () => {
                 <SkeletonLoader />
               </>
             ) : (
-              workout?.map((item) => (
-                <WorkoutCard
-                  handleOpenWorkoutMenu={openWorkoutMenu}
-                  key={item.id}
-                  card={item}
-                  isEditable={false}
-                />
-              ))
+              <>
+                {workout && workout.length > 0 ? (
+                  workout.map((item) => (
+                    <WorkoutCard
+                      handleOpenWorkoutMenu={openWorkoutMenu}
+                      key={item.id}
+                      card={item}
+                      isEditable={false}
+                    />
+                  ))
+                ) : (
+                  <Text>No workouts found.</Text>
+                )}
+              </>
             )}
           </View>
         </ScrollView>
@@ -251,8 +269,45 @@ interface BottomSheetProps {
 const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
   ({ workoutDetails }, ref) => {
     const snapPoints = useMemo(() => [screenHeight * 0.65, "90%"], []);
-
+    const dispatch = useAppDispatch();
+    const router = useRouter();
     const handleSheetChanges = useCallback((index: number) => {}, []);
+
+    const deleteWorkout = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.log("Error: User is not authenticated.");
+        return;
+      }
+      const { error } = await supabase
+        .from("Workout")
+        .delete()
+        .eq("id", workoutDetails.id);
+      if (error) {
+        console.log("Error deleting workout:", error.message);
+        return;
+      }
+      dispatch(getWorkout());
+      if (ref && "current" in ref && ref.current) {
+        ref.current.close();
+      }
+    };
+
+    const editWorkout = async () => {
+      if (workoutDetails) {
+        router.push({
+          pathname: "/screens/workout/edit-workout",
+          params: { workoutId: workoutDetails.id },
+        });
+        console.log("workoutDetails.id", workoutDetails.id);
+        if (ref && "current" in ref && ref.current) {
+          ref.current.close();
+        }
+      }
+    };
 
     return (
       <BottomSheet
@@ -278,7 +333,7 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
         <BottomSheetView
           style={{ backgroundColor: "#F4F4F4", paddingHorizontal: 20, gap: 20 }}
         >
-          <ActionButtons />
+          <ActionButtons onDelete={deleteWorkout} onEdit={editWorkout} />
           <View>
             {workoutDetails ? (
               <View style={{ gap: 10 }}>

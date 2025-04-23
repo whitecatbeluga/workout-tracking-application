@@ -8,10 +8,14 @@ import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import Input from "@/components/input-text";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "@/utils/supabase";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const AddWorkout = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+
+  const user = useAppSelector((state) => state.auth.user);
 
   const [workoutData, setWorkoutData] = useState<WorkoutFormData>({
     name: "",
@@ -20,7 +24,7 @@ const AddWorkout = () => {
     intensity: 0,
     volume: 0,
     set: 0,
-    exerciseIds: [],
+    exercise_ids: [],
   });
 
   const [exerciseInput, setExerciseInput] = useState<string>("");
@@ -41,37 +45,29 @@ const AddWorkout = () => {
 
     const dataToSubmit: WorkoutFormData = {
       ...workoutData,
-      exerciseIds: parsedExercises,
+      exercise_ids: parsedExercises,
+      user_id: user?.id,
     };
 
     try {
-      const result = await dispatch(createWorkout(dataToSubmit));
-      if (result.type === "workout/createWorkout/fulfilled") {
-        setWorkoutData({
-          name: "",
-          description: "",
-          duration: 0,
-          intensity: 0,
-          volume: 0,
-          set: 0,
-          exerciseIds: [],
-        });
-        setExerciseInput("");
-        Toast.show({
-          type: "success",
-          text1: "Successfully Created!",
-          text2: "Happy Workout!",
-        });
-        router.replace("/(tabs)/workout");
+      const { error } = await supabase.from("Workout").insert([dataToSubmit]);
+      if (error) {
+        throw new Error(error.message);
       }
+      setWorkoutData({
+        name: "",
+        description: "",
+        duration: 0,
+        intensity: 0,
+        volume: 0,
+        set: 0,
+        exercise_ids: [],
+      });
+      setExerciseInput("");
+      console.log("Workout created:", dataToSubmit);
+      router.replace("/(tabs)/workout");
     } catch (error: any) {
-      const message =
-        typeof error === "string"
-          ? error
-          : typeof error?.message === "string"
-          ? error.message
-          : "Something went wrong";
-      console.error("Workout creation error:", message);
+      console.error("Workout creation error:", error.message);
     }
   };
 

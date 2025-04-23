@@ -1,3 +1,4 @@
+import { Workout } from "@/custom-types/workout-type";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -51,7 +52,7 @@ export const WorkoutCard = ({
   handleOpenEditWorkout,
   isEditable,
 }: {
-  card: any;
+  card: Workout;
   handleOpenEditWorkout?: () => void;
   handleOpenWorkoutMenu?: (id: number) => void;
   isEditable: boolean;
@@ -85,7 +86,7 @@ export const WorkoutCard = ({
               paddingVertical: 5,
               paddingLeft: 10,
             }}
-            onPress={() => handleOpenWorkoutMenu?.(card.id)}
+            onPress={() => handleOpenWorkoutMenu?.(card.id as number)}
           >
             <Ionicons name="ellipsis-horizontal" size={22} color="#323232" />
           </TouchableOpacity>
@@ -104,19 +105,20 @@ export const WorkoutCard = ({
           <CardWorkoutInfo label={"Volume"} value={card.volume} />
 
           {/* sets */}
-          <CardWorkoutInfo label={"Sets"} value={card.sets || card.set} />
+          <CardWorkoutInfo label={"Sets"} value={card.set} />
         </View>
       </View>
       <Collapsible
         collapsed={collapsed}
         style={{ flexDirection: "column", gap: 8, paddingTop: 10 }}
       >
-        {card.exercises.map((e: any) => (
+        {card.exercise_ids.map((exercise, index) => (
           <Text
-            key={e.id}
+            key={index}
             style={{ fontSize: 12, color: "#626262", fontWeight: "medium" }}
           >
-            {e.exercise.name} ({e.exercise.category})
+            {exercise}
+            {/* {e.exercise.name} ({e.exercise.category}) */}
           </Text>
         ))}
       </Collapsible>
