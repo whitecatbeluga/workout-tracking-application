@@ -15,6 +15,10 @@ import { Ionicons } from "@expo/vector-icons";
 
 // type
 import { RegisterFormData } from "@/custom-types/form-data-type";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "@/FirebaseConfig";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { router } from "expo-router";
 
 const initialFormData: RegisterFormData = {
   email: "",
@@ -179,7 +183,7 @@ const Step2 = ({
         ]}
       />
       <Input
-        value={formData.age?.toString() ?? ""}
+        value={formData.age}
         icon="analytics"
         placeholder="Age"
         onChangeText={(text) => onChangeText("age")(text)}
@@ -210,7 +214,7 @@ const Step3 = ({
       <Header desc="What's your physical details?" />
 
       <Input
-        value={formData.height?.toString() ?? ""}
+        value={formData.height}
         icon="man"
         placeholder="Height (cm)"
         onChangeText={(text) => onChangeText("height")(text)}
@@ -218,14 +222,14 @@ const Step3 = ({
       />
 
       <Input
-        value={formData.weight?.toString() ?? ""}
+        value={formData.weight}
         icon="scale"
         placeholder="Weight (kg)"
         onChangeText={(text) => onChangeText("weight")(text)}
         keyboardType="numeric"
       />
       <Input
-        value={formData.activity_level?.toString() ?? ""}
+        value={formData.activity_level}
         icon="heart-circle"
         placeholder="Activity level"
         onChangeText={(text) => onChangeText("activity_level")(text)}
@@ -295,6 +299,8 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState<RegisterFormData>(initialFormData);
   const [currentStep, setCurrentStep] = useState(0);
 
+  const [errors, setErrors] = useState(false);
+
   const onChangeText = (name: keyof RegisterFormData) => (text: string) => {
     const numericFields = ["height", "weight", "age", "activity_level", "bmi"];
     const value = numericFields.includes(name) ? Number(text) : text;
@@ -306,13 +312,13 @@ const RegisterPage = () => {
   };
 
   const isStepValid = (step: number) => {
-    console.log("Current step: ", currentStep);
     switch (step) {
       case 0:
         return (
           formData.user_name.trim() != "" &&
-          formData.email.trim() != "" &&
-          formData.password.trim() != ""
+          formData.email.trim() !== "" &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
+          formData.password.trim().length >= 6
         );
       case 1:
         return (
@@ -336,52 +342,37 @@ const RegisterPage = () => {
     }
   };
 
+  const onNextStep = () => {
+    const valid = isStepValid(currentStep);
+    if (valid) setCurrentStep(currentStep + 1);
+    setErrors(!valid);
+  };
+
   const handleRegister = async () => {
     try {
-      const { data: signUpData, error: signUpError } =
-        await supabase.auth.signUp({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          ...formData,
+          email: user.email,
+          createdAt: serverTimestamp(),
         });
 
-      if (signUpError) {
-        console.log("Error signing up:", signUpError.message);
-        return;
+        router.replace("/(tabs)");
+      } catch (error) {
+        console.log("Error setting user document:", error);
       }
 
-      const authUserId = signUpData.user?.id;
-
-      if (!authUserId) {
-        throw new Error("User ID not found after sign up.");
-      }
-
-      // Now insert additional user info
-      const { error: insertError } = await supabase.from("User").insert([
-        {
-          auth_user_id: authUserId,
-          user_name: formData.user_name,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          address: formData.address,
-          gender: formData.gender,
-          age: formData.age,
-          height: formData.height,
-          weight: formData.weight,
-          bmi: formData.bmi,
-          activity_level: formData.activity_level,
-          user_type: formData.user_type,
-          email: formData.email.toLowerCase(), // optional, but consistent
-        },
-      ]);
-
-      if (insertError) {
-        console.log("Error inserting user data:", insertError.message);
-        return;
-      }
-
-      console.log("User registered successfully!");
+      return user.uid;
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.log("Error registering user:", error);
+      return null;
     }
   };
 
@@ -404,8 +395,7 @@ const RegisterPage = () => {
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
           buttonNextDisabled={!isStepValid(0)}
-          onNext={() => setCurrentStep((prev) => prev + 1)}
-          onPrevious={() => setCurrentStep((prev) => prev - 1)}
+          onNext={onNextStep}
         >
           <Step1 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
@@ -415,8 +405,7 @@ const RegisterPage = () => {
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
           buttonNextDisabled={!isStepValid(1)}
-          onNext={() => setCurrentStep((prev) => prev + 1)}
-          onPrevious={() => setCurrentStep((prev) => prev - 1)}
+          onNext={onNextStep}
         >
           <Step2 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
@@ -426,8 +415,7 @@ const RegisterPage = () => {
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
           buttonNextDisabled={!isStepValid(2)}
-          onNext={() => setCurrentStep((prev) => prev + 1)}
-          onPrevious={() => setCurrentStep((prev) => prev - 1)}
+          onNext={onNextStep}
         >
           <Step3 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
