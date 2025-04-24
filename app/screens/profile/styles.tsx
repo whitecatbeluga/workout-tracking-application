@@ -29,6 +29,11 @@ const Styles = StyleSheet.create({
     gap: 10,
     justifyContent: "space-between",
   },
+  tabContainerTwoButtons: {
+    flexDirection: "row",
+    marginBottom: 10,
+    gap: 10,
+  },
   tabButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
