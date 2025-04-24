@@ -8,12 +8,14 @@ import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: (Constants.expoConfig?.extra as { API_KEY: string }).API_KEY,
-  authDomain: "workout-tracking-app-e7a2d.firebaseapp.com",
-  projectId: "workout-tracking-app-e7a2d",
-  storageBucket: "workout-tracking-app-e7a2d.firebasestorage.app",
-  messagingSenderId: "1038049349433",
-  appId: "1:1038049349433:web:29431bc0fcfb3f8fbf22e8",
+  apiKey: (Constants.expoConfig?.extra as { FIREBASE_KEY: string })
+    .FIREBASE_KEY,
+  authDomain: "workout-app-59927.firebaseapp.com",
+  projectId: "workout-app-59927",
+  storageBucket: "workout-app-59927.firebasestorage.app",
+  messagingSenderId: "683585224838",
+  appId: "1:683585224838:web:5c6379c015bd10eef51107",
+  measurementId: "G-T4HWY5HB7E",
 };
 
 console.log("firebaseConfig", firebaseConfig);

@@ -98,7 +98,7 @@ const LoginPage = () => {
         );
         const userUID = userCredential.user.uid;
       
-        const userDocRef = doc(db, "testLogin", userUID);
+        const userDocRef = doc(db, "users", userUID);
         const userDoc = await getDoc(userDocRef);
       
         if (userDoc.exists()) {
