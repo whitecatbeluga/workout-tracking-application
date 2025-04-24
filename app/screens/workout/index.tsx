@@ -49,6 +49,9 @@ const ActionButtons = () => {
       onpress: "",
     },
   ];
+  const user = useAppSelector((state) => state.auth.user);
+  const access_token = useAppSelector((state) => state.auth.access_token);
+
   return (
     <View
       style={{
@@ -121,9 +124,12 @@ const WorkoutPage = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     const result = await dispatch(getWorkout());
-    if (result.type === "workout/getWorkout/fulfilled") {
+    // if (result.type === "workout/getWorkout/fulfilled") {
+    //   setRefreshing(false);
+    // }
+    setTimeout(() => {
       setRefreshing(false);
-    }
+    }, 2000);
   };
 
   const openWorkoutMenu = (id: number) => {

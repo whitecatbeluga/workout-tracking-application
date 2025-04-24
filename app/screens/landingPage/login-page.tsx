@@ -90,7 +90,6 @@ const LoginPage = () => {
   // }, [access_token]);
 
   const handleLogin = async () => {
-
     if (formData.email && formData.password) {
       setLoading(true);
 
@@ -134,7 +133,7 @@ const LoginPage = () => {
           await dispatch(setUserFromFirebase(fullUser));
           await dispatch(setUserToken(await token));
 
-          router.replace("/(tabs)");
+          router.replace("/(tabs)/workout");
         } else {
           setError("Account data not found in database.");
         }
@@ -164,7 +163,6 @@ const LoginPage = () => {
       setError("Please fill in all fields.");
     }
   };
-  console.log("after login -> user-profile:", user);
 
   return (
     <KeyboardAvoidingView

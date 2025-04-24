@@ -181,6 +181,7 @@ const authSlice = createSlice({
     },
 
     clearUser: (state) => {
+      AsyncStorage.removeItem("token");
       state.user = null;
       state.access_token = null;
       state.loading = Loading.Idle;

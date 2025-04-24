@@ -21,7 +21,6 @@ import Styles from "@/app/screens/profile/styles";
 import BottomSheet from "@gorhom/bottom-sheet";
 import WorkoutCard from "./components/workout-card";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { logout } from "@/redux/auth-slice";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppSelector } from "@/hooks/use-app-selector";
 
@@ -113,7 +112,7 @@ const ProfilePage = () => {
 
     offset.current = currentOffset;
   };
-  
+
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ScrollView
