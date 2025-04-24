@@ -306,7 +306,6 @@ const RegisterPage = () => {
   };
 
   const isStepValid = (step: number) => {
-    console.log("Current step: ", currentStep);
     switch (step) {
       case 0:
         return (

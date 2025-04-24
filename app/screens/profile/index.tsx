@@ -60,6 +60,7 @@ const routeNames: {
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
   const user = useAppSelector((state) => state.auth.user);
+  const access_token = useAppSelector((state) => state.auth.access_token);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -112,7 +113,7 @@ const ProfilePage = () => {
 
     offset.current = currentOffset;
   };
-
+  
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <ScrollView
