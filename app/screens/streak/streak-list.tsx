@@ -2,20 +2,27 @@ import React, { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { CalendarList } from "react-native-calendars";
 const StreakList = () => {
-  const [currentDate, setcurrentDate] = useState("");
+  const [currentDate, setCurrentDate] = useState("");
+  const [monthsSinceRegistered, setMonthsSinceRegistered] = useState(0);
 
   useEffect(() => {
     let current = new Date();
     const offset = current.getTimezoneOffset();
     current = new Date(current.getTime() - offset * 60 * 1000);
-    setcurrentDate(current.toISOString().split("T")[0]);
+    setCurrentDate(current.toISOString().split("T")[0]);
+    setMonthsSinceRegistered(1);
   }, []);
 
   return (
-    <View style={styles.calendarContainer}>
+    <View style={styles.container}>
       <CalendarList
+        theme={{
+          backgroundColor: "#F2F2F2",
+          calendarBackground: "#F2F2F2",
+        }}
+        calendarStyle={styles.calendarContainer}
         current={currentDate}
-        pastScrollRange={2}
+        pastScrollRange={monthsSinceRegistered}
         futureScrollRange={0}
         markingType="custom"
         markedDates={{
@@ -56,14 +63,14 @@ const StreakList = () => {
 };
 
 export default StreakList;
-export const styles = StyleSheet.create({
+
+const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  calendarContainer: {
     flex: 10,
     paddingBottom: 50,
+    backgroundColor: "#F2F2F2",
+  },
+  calendarContainer: {
+    backgroundColor: "#F2F2F2",
   },
 });

@@ -25,19 +25,14 @@ const StreakHeader = () => {
 
 export default StreakHeader;
 
-export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+const styles = StyleSheet.create({
   headerContainer: {
     flex: 1,
     flexDirection: "row",
     gap: 15,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#F2F2F2",
     padding: 20,
   },
   streakContainer: {
@@ -46,9 +41,10 @@ export const styles = StyleSheet.create({
     gap: 10,
     justifyContent: "flex-start",
     alignItems: "center",
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 5,
     padding: 10,
+    elevation: 1,
   },
   streakText: {
     fontSize: 18,
