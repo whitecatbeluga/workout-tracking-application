@@ -1,16 +1,50 @@
+import ExerciseCard from "@/components/exercises-card";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
+import { db } from "../../../utils/firebase-config";
+import { collection, getDocs } from "firebase/firestore";
+import { Exercise } from "@/custom-types/exercise-type";
 
 const AddExercise = () => {
   const [searchExercise, setSearchExercise] = useState("");
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
+  const fetchExercises = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "exercises"));
+      const fetchedExercises: Exercise[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data() as Omit<Exercise, "id">;
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
+      setExercises(fetchedExercises);
+    } catch (error) {
+      console.log("Error fetching exercises:", error);
+    }
+    return true;
+  };
+  useEffect(() => {
+    fetchExercises();
+  }, []);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    const success = await fetchExercises();
+    if (success) {
+      setRefreshing(false);
+    }
+  };
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -49,9 +83,19 @@ const AddExercise = () => {
           All Exercises
         </Text>
       </View>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>List of exercises here</Text>
-      </View>
+      <ScrollView
+        // style={styles.scrollView}
+        // contentContainerStyle={styles.scrollViewContainer}
+        showsHorizontalScrollIndicator={false}
+        overScrollMode="never"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        {exercises.map((exercise) => (
+          <ExerciseCard key={exercise.id} exercise={exercise} />
+        ))}
+      </ScrollView>
     </View>
   );
 };

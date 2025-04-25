@@ -15,7 +15,7 @@ import { LoginFormData } from "@/custom-types/form-data-type";
 import { ScrollView } from "react-native-gesture-handler";
 import Input from "@/components/input-text";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../../FirebaseConfig";
+import { auth, db } from "../../../utils/firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 import { setUserFromFirebase, setUserToken } from "@/redux/auth-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
@@ -143,6 +143,9 @@ const LoginPage = () => {
           error.message?.includes("auth/invalid-credential") ||
           error.code === "auth/invalid-credential"
         ) {
+          setError(
+            "Invalid credentials. Please check your email and password."
+          );
           setError(
             "Invalid credentials. Please check your email and password."
           );

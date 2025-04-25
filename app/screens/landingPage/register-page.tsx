@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 // type
 import { RegisterFormData } from "@/custom-types/form-data-type";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/FirebaseConfig";
+import { auth, db } from "@/utils/firebase-config";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { router } from "expo-router";
 
