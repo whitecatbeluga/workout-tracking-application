@@ -1,6 +1,7 @@
-import { TouchableOpacity, Text } from "react-native";
+import { TouchableOpacity, Text, View } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import ExerciseProvider from "./context/exercise-content";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function Workout() {
   const router = useRouter();
@@ -11,12 +12,11 @@ export default function Workout() {
         <Stack.Screen
           name="add-workout"
           options={{
-            title: "Add Empty Workout",
+            title: "Log Workout",
             headerTitleStyle: {
               fontSize: 18,
               fontFamily: "Inter_400Regular",
             },
-            headerTitleAlign: "center",
           }}
         />
         <Stack.Screen
@@ -59,9 +59,7 @@ export default function Workout() {
             headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
             headerTitleAlign: "center",
             headerLeft: () => (
-              <TouchableOpacity
-                onPress={() => router.push("/screens/workout/create-routine")}
-              >
+              <TouchableOpacity onPress={() => router.back()}>
                 <Text
                   style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
                 >
@@ -105,9 +103,7 @@ export default function Workout() {
               </TouchableOpacity>
             ),
             headerLeft: () => (
-              <TouchableOpacity
-                onPress={() => router.push("/screens/workout/add-exercise")}
-              >
+              <TouchableOpacity onPress={() => router.back()}>
                 <Text
                   style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
                 >
@@ -120,6 +116,23 @@ export default function Workout() {
         <Stack.Screen
           name="create-exercise-subscreen"
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="workout-settings"
+          options={{
+            title: "Workout Settings",
+            headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerRight: () => (
+              <TouchableOpacity>
+                <Text
+                  style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+                >
+                  Done
+                </Text>
+              </TouchableOpacity>
+            ),
+          }}
         />
       </Stack>
     </ExerciseProvider>
