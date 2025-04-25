@@ -15,7 +15,7 @@ import { LoginFormData } from "@/custom-types/form-data-type";
 import { ScrollView } from "react-native-gesture-handler";
 import Input from "@/components/input-text";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../../FirebaseConfig";
+import { auth, db } from "../../../utils/firebase-config";
 import { doc, getDoc } from "firebase/firestore";
 
 const LoginPage = () => {
@@ -33,7 +33,6 @@ const LoginPage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
- 
   //   setLoading(true);
   //   const { error, data } = await supabase.auth.signInWithPassword({
   //     email: formData.email,
@@ -85,8 +84,6 @@ const LoginPage = () => {
   // }, [access_token]);
 
   const handleLogin = async () => {
-    console.log(formData);
-    
     if (formData.email && formData.password) {
       setLoading(true);
 
@@ -97,12 +94,11 @@ const LoginPage = () => {
           formData.password
         );
         const userUID = userCredential.user.uid;
-      
+
         const userDocRef = doc(db, "users", userUID);
         const userDoc = await getDoc(userDocRef);
-      
+
         if (userDoc.exists()) {
-          console.log("User logged in");
           router.replace("/(tabs)");
         } else {
           setError("Account data not found in database.");
@@ -113,7 +109,9 @@ const LoginPage = () => {
           error.message?.includes("auth/invalid-credential") ||
           error.code === "auth/invalid-credential"
         ) {
-          setError("Invalid credentials. Please check your email and password.");
+          setError(
+            "Invalid credentials. Please check your email and password."
+          );
         } else if (
           error.message?.includes("auth/invalid-email") ||
           error.code === "auth/invalid-email"

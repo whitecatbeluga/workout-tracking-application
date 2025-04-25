@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import Input from "@/components/input-text";
-import { supabase } from "@/utils/supabase";
 
 // dropdown
 import InputDropdown from "@/components/input-dropdown";
@@ -16,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 // type
 import { RegisterFormData } from "@/custom-types/form-data-type";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/FirebaseConfig";
+import { auth, db } from "@/utils/firebase-config";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { router } from "expo-router";
 
