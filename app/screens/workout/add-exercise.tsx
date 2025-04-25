@@ -42,7 +42,6 @@ const AddExercise = () => {
     if (exercises.length === 0) {
       setLoading(true);
     }
-    setLoading(false);
     fetchExercises();
   }, []);
   const handleRefresh = async () => {
