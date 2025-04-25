@@ -1,10 +1,12 @@
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { logout } from "@/redux/auth-slice";
+import { clearUser, logout } from "@/redux/auth-slice";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import ContainerSettings from "./container";
+import { signOut } from "firebase/auth";
+import { auth } from "@/utils/firebase-config";
 
 const otherSettings = [
   {
@@ -32,19 +34,14 @@ const otherSettings = [
 const SettingsScreen = () => {
   const user = useAppSelector((state) => state.auth.user);
 
-  const appDispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      const res = await appDispatch(logout());
-
-      if (res.type == "auth/logout/fulfilled") {
-        router.replace("/screens/landingPage/login-page");
-      }
-      if (res.type === "auth/logout/rejected") {
-        console.log("logout failed.", res);
-      }
+      await signOut(auth);
+      dispatch(clearUser());
+      router.replace("/screens/landingPage/login-page");
     } catch (err) {
       console.error("Logout error:", err);
     }

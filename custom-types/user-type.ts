@@ -1,15 +1,21 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface User {
-  id: number;
   email: string;
-  user_name: string;
   first_name: string;
   last_name: string;
+  username: string;
   address: string;
-  age: number;
-  height: number;
-  weight: number;
+  birthday: Timestamp | string;
   gender: string;
+  height: string;
+  weight: string;
   bmi: number;
-  activity_level: number;
-  user_type: string;
+  activity_level: string;
+
+  workout_type: string[];
+
+  firebaseUid?: string;
+  displayName?: string;
+  provider?: "firebase" | "api";
 }

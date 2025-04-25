@@ -17,7 +17,6 @@ import { useRouter } from "expo-router";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { supabase } from "@/utils/supabase";
 
 type PostItem = {
   id: string;
@@ -138,31 +137,31 @@ const HomeScreen = () => {
   //   void verifyRefreshToken();
   // }, []);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     const {
+  //       data: { user: currentUser },
+  //     } = await supabase.auth.getUser();
 
-      if (currentUser) {
-        const { data: userProfile, error: profileError } = await supabase
-          .from("User")
-          .select("*")
-          .eq("auth_user_id", currentUser.id)
-          .single();
+  //     if (currentUser) {
+  //       const { data: userProfile, error: profileError } = await supabase
+  //         .from("User")
+  //         .select("*")
+  //         .eq("auth_user_id", currentUser.id)
+  //         .single();
 
-        if (profileError) {
-          console.error("Profile error:", profileError.message);
-        } else {
-          setUserSupa(userProfile); // your state setter
-        }
-      } else {
-        console.log("No user is currently logged in");
-      }
-    };
+  //       if (profileError) {
+  //         console.error("Profile error:", profileError.message);
+  //       } else {
+  //         setUserSupa(userProfile); // your state setter
+  //       }
+  //     } else {
+  //       console.log("No user is currently logged in");
+  //     }
+  //   };
 
-    fetchUserData();
-  }, []);
+  //   fetchUserData();
+  // }, []);
 
   const toggleLike = (postId: string) => {
     setLikedPosts((prev) => ({

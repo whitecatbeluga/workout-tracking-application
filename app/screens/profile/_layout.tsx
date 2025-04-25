@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
+import { Text, TouchableOpacity } from "react-native";
 
 export default function ProfileScreensLayout() {
   return (
@@ -29,6 +30,28 @@ export default function ProfileScreensLayout() {
         name="measures"
         options={{
           title: "Measures",
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            fontSize: 18,
+            fontFamily: "Inter_400Regular",
+          },
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push("/screens/profile/new-measurements")}
+            >
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+              >
+                Create
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="new-measurements"
+        options={{
+          title: "New Measurements",
           headerTitleAlign: "center",
           headerTitleStyle: {
             fontSize: 18,
