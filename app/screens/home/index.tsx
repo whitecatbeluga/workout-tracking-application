@@ -17,7 +17,6 @@ import { useRouter } from "expo-router";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { supabase } from "@/utils/supabase";
 
 type PostItem = {
   id: string;

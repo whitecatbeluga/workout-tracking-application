@@ -15,10 +15,10 @@ import {
   Inter_700Bold,
   Inter_800ExtraBold,
 } from "@expo-google-fonts/inter";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
-import { supabase } from "@/utils/supabase";
-import { setAccessToken } from "@/redux/auth-slice";
+import { clearUser, setUserFromFirebase } from "@/redux/auth-slice";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/FirebaseConfig";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,33 +37,51 @@ export default function Layout() {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
+  // useEffect(() => {
+  //   const restoreSession = async () => {
+  //     const { data, error } = await supabase.auth.getSession();
+
+  //     if (error) {
+  //       console.error("Error restoring session:", error.message);
+  //       return;
+  //     }
+
+  //     const session = data?.session;
+  //     console.log("layout", session);
+
+  //     if (session) {
+  //       const { access_token, refresh_token, expires_at } = session;
+
+  //       await AsyncStorage.setItem("access_token", access_token);
+  //       await AsyncStorage.setItem("refresh_token", refresh_token);
+  //       await AsyncStorage.setItem("expires_at", (expires_at ?? "").toString());
+
+  //       store.dispatch(setAccessToken(access_token));
+
+  //       console.log("Session restored.");
+  //     } else {
+  //       console.log("No active session.");
+  //     }
+  //   };
+  //   restoreSession();
+  // }, []);
+
   useEffect(() => {
-    const restoreSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("Error restoring session:", error.message);
-        return;
-      }
-
-      const session = data?.session;
-      console.log("layout", session);
-
-      if (session) {
-        const { access_token, refresh_token, expires_at } = session;
-
-        await AsyncStorage.setItem("access_token", access_token);
-        await AsyncStorage.setItem("refresh_token", refresh_token);
-        await AsyncStorage.setItem("expires_at", (expires_at ?? "").toString());
-
-        store.dispatch(setAccessToken(access_token));
-
-        console.log("Session restored.");
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const sanitizedUser = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          emailVerified: user.emailVerified,
+        };
+        store.dispatch(setUserFromFirebase(sanitizedUser));
       } else {
-        console.log("No active session.");
+        store.dispatch(clearUser());
       }
-    };
-    restoreSession();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (!loaded) return null;

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import Input from "@/components/input-text";
-import { supabase } from "@/utils/supabase";
 
 // dropdown
 import InputDropdown from "@/components/input-dropdown";

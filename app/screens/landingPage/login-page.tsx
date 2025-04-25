@@ -17,12 +17,18 @@ import Input from "@/components/input-text";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../../FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import { setUserFromFirebase, setUserToken } from "@/redux/auth-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const LoginPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -33,7 +39,6 @@ const LoginPage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
- 
   //   setLoading(true);
   //   const { error, data } = await supabase.auth.signInWithPassword({
   //     email: formData.email,
@@ -85,8 +90,6 @@ const LoginPage = () => {
   // }, [access_token]);
 
   const handleLogin = async () => {
-    console.log(formData);
-    
     if (formData.email && formData.password) {
       setLoading(true);
 
@@ -96,14 +99,41 @@ const LoginPage = () => {
           formData.email,
           formData.password
         );
+        const user = userCredential.user;
+
+        const token = user.getIdToken();
+
         const userUID = userCredential.user.uid;
-      
+
         const userDocRef = doc(db, "users", userUID);
         const userDoc = await getDoc(userDocRef);
-      
         if (userDoc.exists()) {
-          console.log("User logged in");
-          router.replace("/(tabs)");
+          const profileData = userDoc.data();
+
+          const fullUser = {
+            firebaseUid: userUID,
+            email: userCredential.user.email || "",
+            first_name: profileData.first_name || "",
+            last_name: profileData.last_name || "",
+            username: profileData.username || "",
+            address: profileData.address || "",
+            birthday: profileData.birthday?.toDate().toISOString() || "",
+            gender: profileData.gender || "",
+            height: profileData.height || "",
+            weight: profileData.weight || "",
+            bmi: profileData.bmi || 0,
+            activity_level: profileData.activity_level || "",
+            workout_type: profileData.workout_type || [],
+            provider: "firebase",
+            displayName: `${profileData.first_name || ""} ${
+              profileData.last_name || ""
+            }`.trim(),
+          };
+
+          await dispatch(setUserFromFirebase(fullUser));
+          await dispatch(setUserToken(await token));
+
+          router.replace("/(tabs)/workout");
         } else {
           setError("Account data not found in database.");
         }
@@ -113,7 +143,9 @@ const LoginPage = () => {
           error.message?.includes("auth/invalid-credential") ||
           error.code === "auth/invalid-credential"
         ) {
-          setError("Invalid credentials. Please check your email and password.");
+          setError(
+            "Invalid credentials. Please check your email and password."
+          );
         } else if (
           error.message?.includes("auth/invalid-email") ||
           error.code === "auth/invalid-email"
