@@ -3,14 +3,62 @@ import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Modal from "react-native-modal";
 import { useRouter, useNavigation } from "expo-router";
+import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 
 const AddWorkout = () => {
   const [timer, setTimer] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
+  const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
+    "timer"
+  );
+
+  // For timer
+  const [duration, setDuration] = useState<number>(60);
+  const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
+  const [key, setKey] = useState<number>(0);
+
+  // For stopwatch
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
+
   const router = useRouter();
   const navigation = useNavigation();
+
+  const handleCancel = () => {
+    setIsTimerPlaying(false);
+    setKey((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    if (isRunning) {
+      intervalRefStopwatch.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    } else if (intervalRefStopwatch.current) {
+      clearInterval(intervalRefStopwatch.current);
+    }
+
+    return () => {
+      if (intervalRefStopwatch.current)
+        clearInterval(intervalRefStopwatch.current);
+    };
+  }, [isRunning]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    return `${minutes}:${secs}`;
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setElapsedTime(0);
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -176,6 +224,8 @@ const AddWorkout = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Clock Modal */}
       <Modal
         isVisible={isClockModal}
         onBackdropPress={() => setIsClockModal(false)}
@@ -184,14 +234,174 @@ const AddWorkout = () => {
           <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 18 }}>
             Clock
           </Text>
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity style={styles.timerButton}>
-              <Text style={{ fontFamily: "Inter_400Regular" }}>Timer</Text>
+          <View style={{ flexDirection: "row", width: "100%" }}>
+            <TouchableOpacity
+              style={[
+                styles.timerButton,
+                activeButton === "timer" && styles.activeButton,
+              ]}
+              onPress={() => setActiveButton("timer")}
+            >
+              <Text
+                style={[
+                  styles.buttonText,
+                  activeButton === "timer" && styles.activeText,
+                ]}
+              >
+                Timer
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.stopwatchButton}>
-              <Text style={{ fontFamily: "Inter_400Regular" }}>Stopwatch</Text>
+            <TouchableOpacity
+              style={[
+                styles.stopwatchButton,
+                activeButton === "stopwatch" && styles.activeButton,
+              ]}
+              onPress={() => setActiveButton("stopwatch")}
+            >
+              <Text
+                style={[
+                  styles.buttonText,
+                  activeButton === "stopwatch" && styles.activeText,
+                ]}
+              >
+                Stopwatch
+              </Text>
             </TouchableOpacity>
           </View>
+
+          {activeButton === "timer" ? (
+            <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
+              <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
+                <TouchableOpacity
+                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                >
+                  <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
+                </TouchableOpacity>
+                <CountdownCircleTimer
+                  isPlaying={isTimerPlaying}
+                  duration={duration}
+                  key={key}
+                  colors={["#48A6A7", "#F7B801", "#ED1010", "#000000"]}
+                  colorsTime={[duration, duration * 0.66, duration * 0.33, 0]}
+                  size={200}
+                  strokeWidth={10}
+                  onComplete={() => {
+                    setIsTimerPlaying(false);
+                    setKey((prev) => prev + 1);
+                    return { shouldRepeat: false };
+                  }}
+                >
+                  {({ remainingTime }) => (
+                    <Text
+                      style={{ fontFamily: "Inter_600SemiBold", fontSize: 22 }}
+                    >{`${Math.floor(remainingTime / 60)
+                      .toString()
+                      .padStart(2, "0")}:${(remainingTime % 60)
+                      .toString()
+                      .padStart(2, "0")}`}</Text>
+                  )}
+                </CountdownCircleTimer>
+                <TouchableOpacity
+                  onPress={() => setDuration((prev) => prev + 15)}
+                >
+                  <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
+                </TouchableOpacity>
+              </View>
+              {!isTimerPlaying ? (
+                <TouchableOpacity
+                  style={styles.clockStartButton}
+                  onPress={() => setIsTimerPlaying(true)}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 16,
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    Start
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.clockCancelButton}
+                  onPress={handleCancel}
+                >
+                  <Text
+                    style={{ fontFamily: "Inter_400Regular", fontSize: 16 }}
+                  >
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
+              <Text style={styles.stopwatch}>{formatTime(elapsedTime)}</Text>
+              {!isRunning && elapsedTime === 0 ? (
+                <TouchableOpacity
+                  style={styles.stopwatchStartButton}
+                  onPress={() => setIsRunning(true)}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 16,
+                      color: "#FFFFFF",
+                    }}
+                  >
+                    Start
+                  </Text>
+                </TouchableOpacity>
+              ) : isRunning ? (
+                <TouchableOpacity
+                  style={styles.stopwatchStopButton}
+                  onPress={() => setIsRunning(false)}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 16,
+                      color: "#000000",
+                    }}
+                  >
+                    Stop
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <TouchableOpacity
+                    style={styles.stopwatchResetButton}
+                    onPress={handleReset}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Inter_500Medium",
+                        fontSize: 16,
+                        color: "#000000",
+                      }}
+                    >
+                      Reset
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.stopwatchStartButtonHalf}
+                    onPress={() => setIsRunning(true)}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Inter_500Medium",
+                        fontSize: 16,
+                        color: "#FFFFFF",
+                      }}
+                    >
+                      Start
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </Modal>
     </View>
@@ -208,7 +418,6 @@ const styles = StyleSheet.create({
   },
   topContainer: {
     flexDirection: "row",
-    // justifyContent: "space-between"
     gap: 90,
   },
   title: {
@@ -277,18 +486,20 @@ const styles = StyleSheet.create({
   // Clock Modal
   clockModalContainer: {
     backgroundColor: "#FFFFFF",
-    padding: 10,
+    padding: 18,
     alignItems: "center",
-    justifyContent: "center",
     borderRadius: 8,
+    flexDirection: "column",
+    gap: 16,
+    height: 400,
   },
   timerButton: {
     backgroundColor: "#FFFFFF",
     borderWidth: 0.5,
     borderTopLeftRadius: 8,
     borderBottomLeftRadius: 8,
-    width: 100,
-    padding: 6,
+    width: "50%",
+    padding: 10,
     alignItems: "center",
   },
   stopwatchButton: {
@@ -296,8 +507,68 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderTopRightRadius: 8,
     borderBottomRightRadius: 8,
-    width: 100,
-    padding: 6,
+    width: "50%",
+    padding: 10,
+    alignItems: "center",
+  },
+  activeButton: {
+    backgroundColor: "#48A6A7",
+  },
+  buttonText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+  },
+  activeText: {
+    fontFamily: "Inter_400Regular",
+    color: "#FFFFFF",
+  },
+  clockStartButton: {
+    padding: 10,
+    backgroundColor: "#48A6A7",
+    width: "100%",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  clockCancelButton: {
+    padding: 10,
+    backgroundColor: "#EEEEEE",
+    width: "100%",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  // Stopwatch
+  stopwatch: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 50,
+    paddingVertical: 63.5,
+  },
+  stopwatchStartButton: {
+    padding: 10,
+    backgroundColor: "#48A6A7",
+    width: "100%",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  stopwatchStopButton: {
+    padding: 10,
+    backgroundColor: "#EEEEEE",
+    width: "100%",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  stopwatchResetButton: {
+    padding: 10,
+    backgroundColor: "#EEEEEE",
+    width: "50%",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  stopwatchStartButtonHalf: {
+    padding: 10,
+    backgroundColor: "#48A6A7",
+    width: "50%",
+    borderRadius: 8,
     alignItems: "center",
   },
 });
