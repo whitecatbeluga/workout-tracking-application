@@ -13,14 +13,11 @@ const Streak = () => {
 
 export default Streak;
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  calendarContainer: {
-    flex: 10,
-    paddingBottom: 50,
+    backgroundColor: "#F2F2F2",
   },
 });
