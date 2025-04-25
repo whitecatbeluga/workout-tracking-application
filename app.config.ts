@@ -41,6 +41,7 @@ export default {
       typedRoutes: true,
     },
     extra: {
+      FIREBASE_KEY:process.env.FIREBASE_KEY,
       API_URL: process.env.API_URL,
       REACT_NATIVE_SUPABASE_URL: process.env.REACT_NATIVE_SUPABASE_URL,
       REACT_NATIVE_SUPABASE_ANON_KEY:

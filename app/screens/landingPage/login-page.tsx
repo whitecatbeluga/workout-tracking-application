@@ -8,27 +8,27 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LoginFormData } from "@/custom-types/form-data-type";
 import { ScrollView } from "react-native-gesture-handler";
-
 import Input from "@/components/input-text";
-import { supabase } from "@/utils/supabase";
-import { setAccessToken, setUser } from "@/redux/auth-slice";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../../utils/firebase-config";
+import { doc, getDoc } from "firebase/firestore";
+import { setUserFromFirebase, setUserToken } from "@/redux/auth-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const screenWidth = Dimensions.get("window").width;
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const LoginPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -39,36 +39,35 @@ const LoginPage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const signInWithEmail = async () => {
-    setLoading(true);
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
-    if (error) {
-      setLoading(false);
-      setError(error.message);
-    }
+  //   setLoading(true);
+  //   const { error, data } = await supabase.auth.signInWithPassword({
+  //     email: formData.email,
+  //     password: formData.password,
+  //   });
+  //   if (error) {
+  //     setLoading(false);
+  //     setError(error.message);
+  //   }
 
-    if (data.session) {
-      const { access_token, refresh_token, expires_at } = data.session;
-      await AsyncStorage.setItem("access_token", access_token);
-      await AsyncStorage.setItem("refresh_token", refresh_token);
-      if (expires_at !== undefined) {
-        await AsyncStorage.setItem("expires_at", expires_at.toString());
-      }
-      // retrive user info
-      const { data: userProfile } = await supabase
-        .from("User")
-        .select("*")
-        .eq("auth_user_id", data.user.id)
-        .single();
+  //   if (data.session) {
+  //     const { access_token, refresh_token, expires_at } = data.session;
+  //     await AsyncStorage.setItem("access_token", access_token);
+  //     await AsyncStorage.setItem("refresh_token", refresh_token);
+  //     if (expires_at !== undefined) {
+  //       await AsyncStorage.setItem("expires_at", expires_at.toString());
+  //     }
+  //     // retrive user info
+  //     const { data: userProfile } = await supabase
+  //       .from("User")
+  //       .select("*")
+  //       .eq("auth_user_id", data.user.id)
+  //       .single();
 
-      dispatch(setUser(userProfile));
-      dispatch(setAccessToken(access_token));
-      router.replace("/(tabs)");
-    }
-  };
+  //     dispatch(setUser(userProfile));
+  //     dispatch(setAccessToken(access_token));
+  //     router.replace("/(tabs)");
+  //   }
+  // };
 
   // async function signUpWithEmail() {
   //   setLoading(true);
@@ -89,6 +88,84 @@ const LoginPage = () => {
   //     router.replace("/(tabs)");
   //   }
   // }, [access_token]);
+
+  const handleLogin = async () => {
+    if (formData.email && formData.password) {
+      setLoading(true);
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+        const user = userCredential.user;
+
+        const token = user.getIdToken();
+
+        const userUID = userCredential.user.uid;
+
+        const userDocRef = doc(db, "users", userUID);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const profileData = userDoc.data();
+
+          const fullUser = {
+            firebaseUid: userUID,
+            email: userCredential.user.email || "",
+            first_name: profileData.first_name || "",
+            last_name: profileData.last_name || "",
+            username: profileData.username || "",
+            address: profileData.address || "",
+            birthday: profileData.birthday?.toDate().toISOString() || "",
+            gender: profileData.gender || "",
+            height: profileData.height || "",
+            weight: profileData.weight || "",
+            bmi: profileData.bmi || 0,
+            activity_level: profileData.activity_level || "",
+            workout_type: profileData.workout_type || [],
+            provider: "firebase",
+            displayName: `${profileData.first_name || ""} ${
+              profileData.last_name || ""
+            }`.trim(),
+          };
+
+          await dispatch(setUserFromFirebase(fullUser));
+          await dispatch(setUserToken(await token));
+
+          router.replace("/(tabs)/workout");
+        } else {
+          setError("Account data not found in database.");
+        }
+      } catch (error: any) {
+        console.error("Login Error:", error);
+        if (
+          error.message?.includes("auth/invalid-credential") ||
+          error.code === "auth/invalid-credential"
+        ) {
+          setError(
+            "Invalid credentials. Please check your email and password."
+          );
+          setError(
+            "Invalid credentials. Please check your email and password."
+          );
+        } else if (
+          error.message?.includes("auth/invalid-email") ||
+          error.code === "auth/invalid-email"
+        ) {
+          setError("Invalid email format. Please enter a valid email.");
+        } else if (error.code === "permission-denied") {
+          setError("You don't have permission to access this data.");
+        } else {
+          setError("Error logging in. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setError("Please fill in all fields.");
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -147,7 +224,7 @@ const LoginPage = () => {
             <View style={{ gap: 10 }}>
               <TouchableOpacity
                 style={styles.loginButton}
-                onPress={() => signInWithEmail()}
+                onPress={handleLogin}
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#fff" />

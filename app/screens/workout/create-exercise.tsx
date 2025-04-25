@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,32 @@ import {
   Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { useExerciseContext } from "../workout/context/exercise-content"; // Import context
 
-const CreateExercise = () => {
+const CreateExercise: React.FC = () => {
+  const router = useRouter();
   const [exerciseImage, setExerciseImage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
+  const {
+    selectedEquipment,
+    primaryMuscleGroup,
+    secondaryMuscleGroups,
+    exerciseType,
+    resetExerciseData, // Import reset function from context
+  } = useExerciseContext();
+
+  useEffect(() => {
+    return () => {
+      resetExerciseData();
+      setExerciseImage(null);
+    };
+  }, []);
 
   const handlePickImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      setErrorMessage("Permission to access camera roll is required.");
+      alert("Permission to access camera roll is required.");
       return;
     }
 
@@ -37,7 +53,7 @@ const CreateExercise = () => {
 
   return (
     <View style={styles.container}>
-      {/* Preview image */}
+      {/* Preview Image */}
       <View style={{ alignItems: "center", marginTop: 50 }}>
         <TouchableOpacity
           style={{ alignItems: "center", gap: 16 }}
@@ -59,47 +75,106 @@ const CreateExercise = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.exerciseContainer}>
-        {/* Exercise name */}
+        {/* Exercise Name Input */}
         <TextInput
           placeholder="Exercise Name"
           style={styles.exerciseNameInput}
         />
-        {/* Equipment select */}
-        <TouchableOpacity style={styles.selectContainer}>
+
+        {/* Equipment Selection */}
+        <TouchableOpacity
+          style={styles.selectContainer}
+          onPress={() =>
+            router.push("/screens/workout/create-exercise-subscreen/equipment")
+          }
+        >
           <View style={{ gap: 5 }}>
             <Text style={styles.title}>Equipment</Text>
-            <Text style={styles.select}>Select</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={16} />
-        </TouchableOpacity>
-        {/* Primary muscle group select */}
-        <TouchableOpacity style={styles.selectContainer}>
-          <View style={{ gap: 5 }}>
-            <Text style={styles.title}>Primary Muscle Group</Text>
-            <Text style={styles.select}>Select</Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={16} />
-        </TouchableOpacity>
-        {/* Other muscles */}
-        <TouchableOpacity style={styles.selectContainer}>
-          <View style={{ gap: 5 }}>
-            <Text style={styles.title}>Other Muscles</Text>
-            <View style={{ flexDirection: "row", gap: 5 }}>
-              <Text style={styles.select}>Select</Text>
+            {selectedEquipment ? (
               <Text
                 style={{ fontFamily: "Inter_400Regular", color: "#6A6A6A" }}
               >
-                (optional)
+                {selectedEquipment}
               </Text>
-            </View>
+            ) : (
+              <Text style={styles.select}>Select</Text>
+            )}
           </View>
           <Ionicons name="chevron-forward-outline" size={16} />
         </TouchableOpacity>
-        {/* Exercise type select */}
-        <TouchableOpacity style={styles.selectContainer}>
+
+        {/* Primary Muscle Group Selection */}
+        <TouchableOpacity
+          style={styles.selectContainer}
+          onPress={() =>
+            router.push(
+              "/screens/workout/create-exercise-subscreen/primary-muscle-group"
+            )
+          }
+        >
+          <View style={{ gap: 5 }}>
+            <Text style={styles.title}>Primary Muscle Group</Text>
+            {primaryMuscleGroup ? (
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#6A6A6A" }}
+              >
+                {primaryMuscleGroup}
+              </Text>
+            ) : (
+              <Text style={styles.select}>Select</Text>
+            )}
+          </View>
+          <Ionicons name="chevron-forward-outline" size={16} />
+        </TouchableOpacity>
+
+        {/* Secondary Muscle Groups Selection */}
+        <TouchableOpacity
+          style={styles.selectContainer}
+          onPress={() =>
+            router.push(
+              "/screens/workout/create-exercise-subscreen/secondary-muscle-group"
+            )
+          }
+        >
+          <View style={{ gap: 5 }}>
+            <Text style={styles.title}>Secondary Muscle Groups</Text>
+            {secondaryMuscleGroups.length > 0 ? (
+              <Text
+                style={{
+                  fontFamily: "Inter_400Regular",
+                  color: "#6A6A6A",
+                  paddingRight: 20,
+                }}
+              >
+                {secondaryMuscleGroups.join(", ")}
+              </Text>
+            ) : (
+              <Text style={styles.select}>Select</Text>
+            )}
+          </View>
+          <Ionicons name="chevron-forward-outline" size={16} />
+        </TouchableOpacity>
+
+        {/* Exercise Type Selection */}
+        <TouchableOpacity
+          style={styles.selectContainer}
+          onPress={() =>
+            router.push(
+              "/screens/workout/create-exercise-subscreen/exercise-type"
+            )
+          }
+        >
           <View style={{ gap: 5 }}>
             <Text style={styles.title}>Exercise Type</Text>
-            <Text style={styles.select}>Select</Text>
+            {exerciseType ? (
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#6A6A6A" }}
+              >
+                {exerciseType}
+              </Text>
+            ) : (
+              <Text style={styles.select}>Select</Text>
+            )}
           </View>
           <Ionicons name="chevron-forward-outline" size={16} />
         </TouchableOpacity>

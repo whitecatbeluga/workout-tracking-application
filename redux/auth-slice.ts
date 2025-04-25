@@ -99,6 +99,18 @@ export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
   }
 });
 
+export const setUserToken = createAsyncThunk(
+  "auth/setUserToken",
+  async (token: string, { rejectWithValue }) => {
+    try {
+      await AsyncStorage.setItem("token", token);
+      return token;
+    } catch (error) {
+      return rejectWithValue("Failed to store token");
+    }
+  }
+);
+
 // State
 interface InitialState {
   loading: Loading;
@@ -130,6 +142,59 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
     },
+    setUserFromFirebase: (state, action) => {
+      const {
+        uid,
+        email,
+        displayName,
+        first_name,
+        last_name,
+        username,
+        address,
+        birthday,
+        gender,
+        height,
+        weight,
+        bmi,
+        activity_level,
+        workout_type,
+      } = action.payload;
+
+      state.user = {
+        firebaseUid: uid,
+        email: email || "",
+        first_name: first_name || "",
+        last_name: last_name || "",
+        username: username || "",
+        address: address || "",
+        birthday: birthday || "",
+        gender: gender || "",
+        height: height || "",
+        weight: weight || "",
+        bmi: bmi || 0,
+        activity_level: activity_level || "",
+        workout_type: workout_type || [],
+        provider: "firebase",
+        displayName: displayName || "",
+      };
+      state.loading = Loading.Fulfilled;
+    },
+
+    clearUser: (state) => {
+      AsyncStorage.removeItem("token");
+      state.user = null;
+      state.access_token = null;
+      state.loading = Loading.Idle;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(setUserToken.fulfilled, (state, action) => {
+        state.access_token = action.payload;
+      })
+      .addCase(setUserToken.rejected, (state, action) => {
+        console.error(action.payload);
+      });
   },
   // extraReducers: (builder) => {
   //   builder
@@ -212,5 +277,11 @@ const authSlice = createSlice({
   // },
 });
 
-export const { setAccessToken, resetErrorMessage, setUser } = authSlice.actions;
+export const {
+  setAccessToken,
+  resetErrorMessage,
+  setUser,
+  setUserFromFirebase,
+  clearUser,
+} = authSlice.actions;
 export default authSlice.reducer;
