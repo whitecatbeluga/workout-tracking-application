@@ -5,9 +5,15 @@ import { Exercise } from "@/custom-types/exercise-type";
 
 interface ExerciseCardProps {
   exercise: Exercise;
+  onToggleSelect: () => void;
+  isSelected: boolean;
 }
 
-const ExerciseCard = ({ exercise }: ExerciseCardProps) => {
+const ExerciseCard = ({
+  exercise,
+  onToggleSelect,
+  isSelected,
+}: ExerciseCardProps) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const [active, setActive] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -22,6 +28,7 @@ const ExerciseCard = ({ exercise }: ExerciseCardProps) => {
   const handlePress = () => {
     const toValue = active ? 0 : 20;
     setActive(!active);
+    onToggleSelect();
 
     Animated.timing(translateX, {
       toValue,
@@ -29,7 +36,7 @@ const ExerciseCard = ({ exercise }: ExerciseCardProps) => {
       useNativeDriver: true,
     }).start();
   };
-
+  console.log("isSelected", isSelected);
   return (
     <>
       {isLoading ? (

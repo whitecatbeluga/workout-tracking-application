@@ -4,9 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import Modal from "react-native-modal";
 import { useRouter, useNavigation } from "expo-router";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import ExerciseDetailCard from "@/components/exercise-card-detail";
 
 const AddWorkout = () => {
   const [timer, setTimer] = useState<number>(0);
+
+  const startTimerRef = useRef<number>(Date.now());
+  const [displayTime, setDisplayTime] = useState<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
@@ -24,6 +29,11 @@ const AddWorkout = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
     null
+  );
+
+  const exercises = useAppSelector((state) => state.exercise.exercise);
+  const selectedExercises = useAppSelector(
+    (state) => state.exercise.selectedExercise
   );
 
   const router = useRouter();
@@ -60,6 +70,16 @@ const AddWorkout = () => {
     setElapsedTime(0);
   };
 
+  // useEffect(() => {
+  //   intervalRef.current = setInterval(() => {
+  //     const elapsed = Math.floor((Date.now() - startTimerRef.current) / 1000);
+  //     setDisplayTime(elapsed);
+  //   }, 1000);
+  //   return () => {
+  //     if (intervalRef.current) clearInterval(intervalRef.current);
+  //   };
+  // }, []);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -95,19 +115,8 @@ const AddWorkout = () => {
       ),
     });
   });
-
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setTimer((prevTime) => prevTime + 1);
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
+  console.log("selectedExercises", selectedExercises);
+  console.log("selectedExercises", selectedExercises.length);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -120,9 +129,9 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            {timer < 60
+            {/* {timer < 60
               ? `${timer}s`
-              : `${Math.floor(timer / 60)}min ${timer % 60}s`}
+              : `${Math.floor(timer / 60)}min ${timer % 60}s`} */}
           </Text>
         </View>
         <View>
@@ -134,13 +143,21 @@ const AddWorkout = () => {
           <Text style={styles.volumeSets}>0</Text>
         </View>
       </View>
-      <View style={styles.getStartedContainer}>
-        <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
-        <Text style={styles.getStartedText}>Get started</Text>
-        <Text style={styles.getStartedDescription}>
-          Add an exercise to start your workout
-        </Text>
-      </View>
+      {/* Show here the added exercise */}
+      {selectedExercises.length === 0 ? (
+        <View style={styles.getStartedContainer}>
+          <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
+          <Text style={styles.getStartedText}>Get started</Text>
+          <Text style={styles.getStartedDescription}>
+            Add an exercise to start your workout
+          </Text>
+        </View>
+      ) : (
+        selectedExercises.map((selectedExercise) => (
+          <ExerciseDetailCard exercise={selectedExercise} />
+        ))
+      )}
+      {/*  */}
       <View style={{ flexDirection: "column", gap: 12, paddingVertical: 20 }}>
         <View>
           <TouchableOpacity
