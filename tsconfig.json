@@ -12,6 +12,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "../App.tsx",
-    "utils/FirebaseConfig.ts"
+    "utils/firebase-config.ts"
   ]
 }
