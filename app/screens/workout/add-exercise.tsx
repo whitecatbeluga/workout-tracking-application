@@ -18,8 +18,10 @@ const AddExercise = () => {
   const [searchExercise, setSearchExercise] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchExercises = async () => {
+    setLoading(true);
     try {
       const querySnapshot = await getDocs(collection(db, "exercises"));
       const fetchedExercises: Exercise[] = querySnapshot.docs.map((doc) => {
@@ -33,9 +35,14 @@ const AddExercise = () => {
     } catch (error) {
       console.log("Error fetching exercises:", error);
     }
+    setLoading(false);
     return true;
   };
   useEffect(() => {
+    if (exercises.length === 0) {
+      setLoading(true);
+    }
+    setLoading(false);
     fetchExercises();
   }, []);
   const handleRefresh = async () => {
@@ -45,6 +52,7 @@ const AddExercise = () => {
       setRefreshing(false);
     }
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -83,19 +91,25 @@ const AddExercise = () => {
           All Exercises
         </Text>
       </View>
-      <ScrollView
-        // style={styles.scrollView}
-        // contentContainerStyle={styles.scrollViewContainer}
-        showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-      >
-        {exercises.map((exercise) => (
-          <ExerciseCard key={exercise.id} exercise={exercise} />
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingExercises}>
+          <Text>Loading Exercises...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          // style={styles.scrollView}
+          // contentContainerStyle={styles.scrollViewContainer}
+          showsHorizontalScrollIndicator={false}
+          overScrollMode="never"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
+          {exercises.map((exercise) => (
+            <ExerciseCard key={exercise.id} exercise={exercise} />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -147,5 +161,11 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: "Inter_500Medium",
     fontSize: 16,
+  },
+  loadingExercises: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 200,
+    width: "100%",
   },
 });
