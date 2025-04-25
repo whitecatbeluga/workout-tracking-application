@@ -4,9 +4,6 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: (Constants.expoConfig?.extra as { FIREBASE_KEY: string })
     .FIREBASE_KEY,
@@ -18,7 +15,6 @@ const firebaseConfig = {
   measurementId: "G-T4HWY5HB7E",
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
