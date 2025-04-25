@@ -13,12 +13,18 @@ import {
 import { db } from "../../../utils/firebase-config";
 import { collection, getDocs } from "firebase/firestore";
 import { Exercise } from "@/custom-types/exercise-type";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { setSelectExercises } from "@/redux/slices/exercise-slice";
+import { useRouter } from "expo-router";
 
 const AddExercise = () => {
   const [searchExercise, setSearchExercise] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -50,6 +56,20 @@ const AddExercise = () => {
     if (success) {
       setRefreshing(false);
     }
+  };
+
+  const toggleExercise = (exercise: Exercise) => {
+    const exists = selectedExercises.find((e) => e.id === exercise.id);
+    if (exists) {
+      setSelectedExercises((prev) => prev.filter((e) => e.id !== exercise.id));
+    } else {
+      setSelectedExercises((prev) => [...prev, exercise]);
+    }
+  };
+
+  const handleAddExercise = () => {
+    dispatch(setSelectExercises(selectedExercises));
+    router.replace("/screens/workout/add-workout");
   };
 
   return (
@@ -105,9 +125,27 @@ const AddExercise = () => {
           }
         >
           {exercises.map((exercise) => (
-            <ExerciseCard key={exercise.id} exercise={exercise} />
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onToggleSelect={() => toggleExercise(exercise)}
+              isSelected={!selectedExercises.find((e) => e.id === exercise.id)}
+            />
           ))}
         </ScrollView>
+      )}
+      {selectedExercises.length > 0 && (
+        <View style={styles.floatingButtonContainer}>
+          <TouchableOpacity
+            style={styles.floatingButton}
+            onPress={handleAddExercise}
+          >
+            <Text style={styles.floatingButtonText}>
+              Add {selectedExercises.length} Exercise
+              {selectedExercises.length > 1 ? "s" : ""}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -166,5 +204,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 200,
     width: "100%",
+  },
+
+  floatingButtonContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+  },
+
+  floatingButton: {
+    backgroundColor: "#48A6A7",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    width: "100%",
+  },
+
+  floatingButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
