@@ -10,7 +10,9 @@ import { ProgressSteps, ProgressStep } from "react-native-progress-steps";
 import { Ionicons } from "@expo/vector-icons";
 
 // redux
-// import { useDispatch, useSelector } from "react-redux";
+import { setUserFromFirebase, setUserToken } from "@/redux/auth-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 // type
 import { RegisterFormData } from "@/custom-types/form-data-type";
@@ -182,18 +184,6 @@ const Step1 = ({
 
       if (password.length < 8) {
         passwordErrors.push("Password must be at least 8 characters.");
-      }
-      if (!lowercaseRegex.test(password)) {
-        passwordErrors.push("Password must contain a lowercase letter.");
-      }
-      if (!uppercaseRegex.test(password)) {
-        passwordErrors.push("Password must contain an uppercase letter.");
-      }
-      if (!digitRegex.test(password)) {
-        passwordErrors.push("Password must contain a number.");
-      }
-      if (!specialCharRegex.test(password)) {
-        passwordErrors.push("Password must contain a special character.");
       }
 
       if (passwordErrors.length > 0) {
@@ -540,6 +530,9 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+
   const onChangeText =
     (name: keyof RegisterFormData) => (value: string | string[]) => {
       const numericFields = ["bmi"];
@@ -568,11 +561,7 @@ const RegisterPage = () => {
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
           formData.password.trim().length >= 8 &&
           formData.confirmPassword.trim().length >= 8 &&
-          formData.password === formData.confirmPassword &&
-          lowercaseRegex.test(formData.password) &&
-          uppercaseRegex.test(formData.password) &&
-          digitRegex.test(formData.password) &&
-          specialCharRegex.test(formData.password)
+          formData.password === formData.confirmPassword
         );
       case 1:
         return (
@@ -615,6 +604,8 @@ const RegisterPage = () => {
       );
       const user = userCredential.user;
 
+      const token = user.getIdToken();
+
       try {
         const { confirmPassword, ...dataToStore } = formData;
 
@@ -623,6 +614,9 @@ const RegisterPage = () => {
           email: user.email,
           createdAt: serverTimestamp(),
         });
+
+        await dispatch(setUserFromFirebase(dataToStore));
+        await dispatch(setUserToken(await token));
 
         setLoading(false);
         router.replace("/(tabs)");
@@ -636,8 +630,6 @@ const RegisterPage = () => {
       return null;
     }
   };
-
-  console.log(formData);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -691,7 +683,8 @@ const RegisterPage = () => {
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
           onSubmit={handleRegister}
-          buttonFinishText={loading ? "Registering" : "Register"}
+          buttonFinishDisabled={loading}
+          buttonFinishText="Register"
         >
           <Step4 formData={formData} />
         </ProgressStep>
