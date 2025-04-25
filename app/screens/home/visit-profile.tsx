@@ -113,7 +113,7 @@ const VisitProfile = () => {
             </View>
           </View>
           <View style={styles.totalContainer}>
-            <Text style={styles.totalTitle}>Total Exercises</Text>
+            <Text style={styles.totalTitle}>Total Workouts</Text>
             <View
               style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
             >
