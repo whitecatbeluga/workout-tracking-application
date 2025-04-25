@@ -1,165 +1,200 @@
-import React, { useState } from "react";
-import { Text, TextInput, StyleSheet, ScrollView, View } from "react-native";
-import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { CustomBtn, BtnTitle } from "@/components/custom-btn";
-import { createWorkout } from "@/redux/slices/workout-slice";
-import { WorkoutFormData } from "@/custom-types/workout-type";
-import { useRouter } from "expo-router";
-import Toast from "react-native-toast-message";
-import Input from "@/components/input-text";
+import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Modal from "react-native-modal";
+import { useRouter, useNavigation } from "expo-router";
 
 const AddWorkout = () => {
-  const dispatch = useAppDispatch();
+  const [timer, setTimer] = useState<number>(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isClockModal, setIsClockModal] = useState<boolean>(false);
   const router = useRouter();
+  const navigation = useNavigation();
 
-  const [workoutData, setWorkoutData] = useState<WorkoutFormData>({
-    name: "",
-    description: "",
-    duration: 0,
-    intensity: 0,
-    volume: 0,
-    set: 0,
-    exerciseIds: [],
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+          onPress={() => setIsModalVisible((prev) => !prev)}
+        >
+          <Ionicons name="arrow-back-outline" size={20} />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => setIsClockModal((prev) => !prev)}>
+            <Ionicons name="alarm-outline" size={34} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#48A6A7",
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
+              Finish
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
   });
 
-  const [exerciseInput, setExerciseInput] = useState<string>("");
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setTimer((prevTime) => prevTime + 1);
+    }, 1000);
 
-  const handleInputChange = (field: keyof WorkoutFormData, value: string) => {
-    setWorkoutData((prev) => ({
-      ...prev,
-      [field]:
-        field === "name" || field === "description" ? value : Number(value),
-    }));
-  };
-
-  const handleSubmit = async () => {
-    const parsedExercises = exerciseInput
-      .split(",")
-      .map((id) => Number(id.trim()))
-      .filter((id) => !isNaN(id));
-
-    const dataToSubmit: WorkoutFormData = {
-      ...workoutData,
-      exerciseIds: parsedExercises,
-    };
-
-    try {
-      const result = await dispatch(createWorkout(dataToSubmit));
-      if (result.type === "workout/createWorkout/fulfilled") {
-        setWorkoutData({
-          name: "",
-          description: "",
-          duration: 0,
-          intensity: 0,
-          volume: 0,
-          set: 0,
-          exerciseIds: [],
-        });
-        setExerciseInput("");
-        Toast.show({
-          type: "success",
-          text1: "Successfully Created!",
-          text2: "Happy Workout!",
-        });
-        router.replace("/(tabs)/workout");
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
-    } catch (error: any) {
-      const message =
-        typeof error === "string"
-          ? error
-          : typeof error?.message === "string"
-          ? error.message
-          : "Something went wrong";
-      console.error("Workout creation error:", message);
-    }
-  };
+    };
+  }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={{ marginBottom: 16 }}>
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            letterSpacing: -0.6,
-            color: "#323232",
-          }}
-        >
-          What's your workout?
+    <View style={styles.container}>
+      <View style={styles.topContainer}>
+        <View>
+          <Text style={styles.title}>Duration</Text>
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Inter_400Regular",
+              color: "#48A6A7",
+            }}
+          >
+            {timer < 60
+              ? `${timer}s`
+              : `${Math.floor(timer / 60)}min ${timer % 60}s`}
+          </Text>
+        </View>
+        <View>
+          <Text style={styles.title}>Volume</Text>
+          <Text style={styles.volumeSets}>0 kg</Text>
+        </View>
+        <View>
+          <Text style={styles.title}>Sets</Text>
+          <Text style={styles.volumeSets}>0</Text>
+        </View>
+      </View>
+      <View style={styles.getStartedContainer}>
+        <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
+        <Text style={styles.getStartedText}>Get started</Text>
+        <Text style={styles.getStartedDescription}>
+          Add an exercise to start your workout
         </Text>
       </View>
-
-      <Input
-        value={workoutData.name}
-        icon="bicycle"
-        placeholder="Workout name"
-        onChangeText={(value) => {
-          handleInputChange("name", value);
-        }}
-      />
-      <Input
-        value={workoutData.description}
-        icon="document-text"
-        placeholder="Workout description"
-        onChangeText={(value) => {
-          handleInputChange("description", value);
-        }}
-        multiline={true}
-        numberOfLines={4}
-      />
-      <Input
-        value={workoutData.duration}
-        icon="alarm"
-        placeholder="Workout duration"
-        onChangeText={(value) => {
-          handleInputChange("duration", value);
-        }}
-        keyboardType="numeric"
-      />
-      <Input
-        value={workoutData.intensity}
-        icon="heart-circle"
-        placeholder="Workout intensity"
-        onChangeText={(value) => {
-          handleInputChange("intensity", value);
-        }}
-        keyboardType="numeric"
-      />
-      <Input
-        value={workoutData.volume}
-        icon="book"
-        placeholder="Workout volume"
-        onChangeText={(value) => {
-          handleInputChange("volume", value);
-        }}
-        keyboardType="numeric"
-      />
-      <Input
-        value={workoutData.set}
-        icon="list"
-        placeholder="Workout sets"
-        onChangeText={(value) => {
-          handleInputChange("set", value);
-        }}
-        keyboardType="numeric"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Exercise IDs (e.g. 1,3,5)"
-        value={exerciseInput}
-        onChangeText={setExerciseInput}
-      />
-
-      <CustomBtn
-        onPress={handleSubmit}
-        buttonStyle={{ marginTop: 18, borderRadius: 8 }}
+      <View style={{ flexDirection: "column", gap: 12, paddingVertical: 20 }}>
+        <View>
+          <TouchableOpacity
+            style={styles.addExerciseButton}
+            onPress={() => router.push("/screens/workout/add-exercise")}
+          >
+            <Ionicons name="add-outline" size={20} color="#FFFFFF" />
+            <Text
+              style={{
+                fontFamily: "Inter_500Medium",
+                fontSize: 16,
+                color: "#FFFFFF",
+              }}
+            >
+              Add Exercise
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.settingsDiscardContainer}>
+          <TouchableOpacity
+            style={styles.settingsDiscardButton}
+            onPress={() => router.push("/screens/workout/workout-settings")}
+          >
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 16 }}>
+              Settings
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.settingsDiscardButton}
+            onPress={() => setIsModalVisible((prev) => !prev)}
+          >
+            <Text
+              style={{
+                fontFamily: "Inter_500Medium",
+                fontSize: 16,
+                color: "#ED1010",
+              }}
+            >
+              Discard Workout
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Modal
+        isVisible={isModalVisible}
+        onBackdropPress={() => setIsModalVisible(false)}
       >
-        <Ionicons name="add-circle" size={26} color="white" />
-        <BtnTitle title="Create Workout" />
-      </CustomBtn>
-    </ScrollView>
+        <View style={styles.modalContainer}>
+          <Text
+            style={{
+              fontFamily: "Inter_400Regular",
+              fontSize: 16,
+              textAlign: "center",
+            }}
+          >
+            Are you sure you want to discard this workout?
+          </Text>
+          <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
+            <TouchableOpacity
+              style={styles.modalSettingsDiscardButton}
+              onPress={() => router.back()}
+            >
+              <Text
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 16,
+                  color: "#ED1010",
+                }}
+              >
+                Discard Workout
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalSettingsDiscardButton}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 16 }}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        isVisible={isClockModal}
+        onBackdropPress={() => setIsClockModal(false)}
+      >
+        <View style={styles.clockModalContainer}>
+          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 18 }}>
+            Clock
+          </Text>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity style={styles.timerButton}>
+              <Text style={{ fontFamily: "Inter_400Regular" }}>Timer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.stopwatchButton}>
+              <Text style={{ fontFamily: "Inter_400Regular" }}>Stopwatch</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -167,22 +202,102 @@ export default AddWorkout;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
     padding: 20,
-    backgroundColor: "#fff",
-    flexGrow: 1,
   },
-  heading: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    marginBottom: 20,
-    textAlign: "center",
+  topContainer: {
+    flexDirection: "row",
+    // justifyContent: "space-between"
+    gap: 90,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 15,
+  title: {
+    color: "#6A6A6A",
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  volumeSets: {
     fontSize: 16,
+    fontFamily: "Inter_400Regular",
+  },
+  getStartedContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 100,
+    gap: 10,
+  },
+  getStartedText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+  },
+  getStartedDescription: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+  },
+  addExerciseButton: {
+    backgroundColor: "#48A6A7",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 5,
+  },
+  settingsDiscardContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  settingsDiscardButton: {
+    backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: 175,
+    borderRadius: 8,
+  },
+
+  // Modal
+  modalContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    gap: 20,
+  },
+  modalSettingsDiscardButton: {
+    backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: "100%",
+    borderRadius: 8,
+  },
+
+  // Clock Modal
+  clockModalContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  timerButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 0.5,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+    width: 100,
+    padding: 6,
+    alignItems: "center",
+  },
+  stopwatchButton: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 0.5,
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+    width: 100,
+    padding: 6,
+    alignItems: "center",
   },
 });
