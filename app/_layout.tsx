@@ -18,7 +18,7 @@ import {
 import Toast from "react-native-toast-message";
 import { clearUser, setUserFromFirebase } from "@/redux/auth-slice";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/FirebaseConfig";
+import { auth } from "@/utils/firebase-config";
 
 SplashScreen.preventAutoHideAsync();
 

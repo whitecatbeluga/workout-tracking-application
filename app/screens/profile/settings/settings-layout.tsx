@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import ContainerSettings from "./container";
 import { signOut } from "firebase/auth";
-import { auth } from "@/FirebaseConfig";
+import { auth } from "@/utils/firebase-config";
 
 const otherSettings = [
   {
