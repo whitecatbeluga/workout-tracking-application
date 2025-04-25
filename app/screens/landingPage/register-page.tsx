@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import Input from "@/components/input-text";
 
 // dropdown
@@ -19,20 +19,38 @@ import { auth, db } from "@/utils/firebase-config";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { router } from "expo-router";
 
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Badge from "@/components/badge";
+
 const initialFormData: RegisterFormData = {
   email: "",
   password: "",
+  confirmPassword: "",
   user_name: "",
   first_name: "",
   last_name: "",
+  birthdate: "",
   address: "",
   gender: "",
-  age: 0,
   height: 0,
   weight: 0,
   bmi: 0,
-  activity_level: 0,
-  user_type: "",
+  activity_level: "",
+  workout_type: [],
+};
+
+const lowercaseRegex = /^(?=.*[a-z]).*$/;
+const uppercaseRegex = /^(?=.*[A-Z]).*$/;
+const digitRegex = /^(?=.*\d).*$/;
+const specialCharRegex = /^(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]*$/;
+
+type FieldErrors = {
+  birthdate?: string[];
+  email?: string[];
+  password?: string[];
+  confirmPassword?: string[];
+  height?: string[];
+  weight?: string[];
 };
 
 const Header = ({ desc }: { desc: string }) => {
@@ -61,35 +79,75 @@ const ReviewInfo = ({
   label: string;
   icon: any;
 }) => {
+  const getBMIInfo = () => {
+    if (label == "BMI") {
+      if (data < 18.5) return { label: "Underweight", color: "blue" };
+      if (data < 25) return { label: "Normal", color: "green" };
+      if (data < 30) return { label: "Overweight", color: "orange" };
+      if (data < 35) return { label: "Obese I", color: "red" };
+      if (data < 40) return { label: "Obese II", color: "darkred" };
+    }
+    return { label: "Obese III", color: "maroon" };
+  };
+
   return (
-    <View
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 8,
-      }}
-    >
+    <View style={{ marginBottom: 16 }}>
       <View
         style={{
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
           gap: 5,
         }}
       >
         <Ionicons name={icon} size={16} color="#6F7A88" />
-        <Text style={{ fontSize: 14, color: "#6b7280" }}>{label}</Text>
+        <Text style={{ fontSize: 16, color: "#6b7280" }}>{label}</Text>
       </View>
-      <Text
-        style={{
-          fontSize: 16,
-          fontFamily: "Inter_600SemiBold",
-        }}
-      >
-        {data}
-      </Text>
+      <View style={{ display: "flex", flexDirection: "row", gap: 5 }}>
+        {label == "Workout Experience" ? (
+          <View style={{ gap: 5 }}>
+            {data.map((item: string, index: number) => (
+              <Text
+                key={index}
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Inter_600SemiBold",
+                }}
+              >
+                {index + 1}. {item.charAt(0).toUpperCase() + item.slice(1)}
+              </Text>
+            ))}
+          </View>
+        ) : label == "Birthdate" ? (
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Inter_600SemiBold",
+            }}
+          >
+            {new Date(data).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </Text>
+        ) : (
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: "Inter_600SemiBold",
+            }}
+          >
+            {data}
+          </Text>
+        )}
+        {label == "BMI" && (
+          <Badge
+            label={getBMIInfo().label}
+            backgroundColor={getBMIInfo().color}
+          />
+        )}
+      </View>
     </View>
   );
 };
@@ -103,10 +161,58 @@ const Step1 = ({
   onChangeText: (name: keyof RegisterFormData) => (text: string) => void;
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  const toggleShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  useEffect(() => {
+    const { password, confirmPassword, email } = formData;
+    const newErrors: FieldErrors = {};
+
+    // Password validations
+    if (password) {
+      const passwordErrors: string[] = [];
+
+      if (password.length < 8) {
+        passwordErrors.push("Password must be at least 8 characters.");
+      }
+      if (!lowercaseRegex.test(password)) {
+        passwordErrors.push("Password must contain a lowercase letter.");
+      }
+      if (!uppercaseRegex.test(password)) {
+        passwordErrors.push("Password must contain an uppercase letter.");
+      }
+      if (!digitRegex.test(password)) {
+        passwordErrors.push("Password must contain a number.");
+      }
+      if (!specialCharRegex.test(password)) {
+        passwordErrors.push("Password must contain a special character.");
+      }
+
+      if (passwordErrors.length > 0) {
+        newErrors.password = passwordErrors;
+      }
+    }
+
+    // Confirm password match
+    if (password && confirmPassword && password !== confirmPassword) {
+      newErrors.confirmPassword = ["Passwords do not match."];
+    }
+
+    // Email format check
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = ["Invalid email format."];
+    }
+
+    setErrors(newErrors);
+  }, [formData.password, formData.confirmPassword, formData.email]);
 
   return (
     <View>
@@ -125,6 +231,7 @@ const Step1 = ({
         onChangeText={onChangeText("email")}
         keyboardType="email-address"
         autoCapitalize="none"
+        error={errors.email}
       />
       <Input
         value={formData.password}
@@ -136,6 +243,19 @@ const Step1 = ({
         showPassword={showPassword}
         toggleShowPassword={toggleShowPassword}
         autoCapitalize="none"
+        error={errors.password}
+      />
+      <Input
+        value={formData.confirmPassword}
+        icon="lock-closed"
+        placeholder="Confirm Password"
+        onChangeText={onChangeText("confirmPassword")}
+        secureTextEntry={!showConfirmPassword}
+        isSuffix={true}
+        showPassword={showConfirmPassword}
+        toggleShowPassword={toggleShowConfirmPassword}
+        autoCapitalize="none"
+        error={errors.confirmPassword}
       />
     </View>
   );
@@ -149,6 +269,38 @@ const Step2 = ({
   formData: RegisterFormData;
   onChangeText: (name: keyof RegisterFormData) => (text: string) => void;
 }) => {
+  const [openDatePickerModal, setOpenDatePickerModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    formData.birthdate ? new Date(formData.birthdate) : new Date()
+  );
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  useEffect(() => {
+    const { birthdate } = formData;
+    const newErrors: FieldErrors = {};
+
+    if (birthdate) {
+      const birthDate = new Date(selectedDate);
+
+      if (!isNaN(birthDate.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+
+        if (age < 9) {
+          newErrors.birthdate = ["Must be at least 9 years old."];
+        }
+      } else {
+        newErrors.birthdate = ["Invalid date."];
+      }
+    }
+
+    setErrors(newErrors);
+  }, [formData.birthdate]);
+
   return (
     <View>
       <Header desc="Tell us more about you" />
@@ -181,13 +333,42 @@ const Step2 = ({
           { label: "Others", value: "Others" },
         ]}
       />
-      <Input
-        value={formData.age}
-        icon="analytics"
-        placeholder="Age"
-        onChangeText={(text) => onChangeText("age")(text)}
-        keyboardType="numeric"
-      />
+      <TouchableOpacity onPress={() => setOpenDatePickerModal(true)}>
+        <Input
+          editable={false}
+          value={
+            formData.birthdate
+              ? new Date(formData.birthdate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : ""
+          }
+          icon="calendar"
+          placeholder="Birthdate"
+          onChangeText={(text) => onChangeText("birthdate")(text)}
+          keyboardType="numeric"
+          error={errors.birthdate}
+        />
+      </TouchableOpacity>
+      {openDatePickerModal && (
+        <View style={{ backgroundColor: "red", borderRadius: 10 }}>
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display="default"
+            onChange={(event, date) => {
+              setOpenDatePickerModal(false);
+              if (event.type === "set" && date) {
+                setSelectedDate(date);
+                onChangeText("birthdate")(date.toISOString().split("T")[0]);
+              }
+            }}
+            maximumDate={new Date()}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -200,12 +381,51 @@ const Step3 = ({
   formData: RegisterFormData;
   onChangeText: (name: keyof RegisterFormData) => (text: string) => void;
 }) => {
+  const [errors, setErrors] = useState<FieldErrors>({});
+
   useEffect(() => {
     const { height, weight } = formData;
     if (height && weight) {
       const bmiValue = (weight * 10000) / (height * height);
       onChangeText("bmi")(bmiValue.toFixed(2));
     }
+  }, [formData.height, formData.weight]);
+
+  useEffect(() => {
+    const { height, weight } = formData;
+    const newErrors: FieldErrors = {};
+
+    if (height) {
+      const heightErrors: string[] = [];
+
+      if (height < 100) {
+        heightErrors.push("Height must be at least 100cm.");
+      }
+      if (height > 250) {
+        heightErrors.push("Height must be at most 250cm.");
+      }
+
+      if (heightErrors.length > 0) {
+        newErrors.height = heightErrors;
+      }
+    }
+
+    if (weight) {
+      const weightErrors: string[] = [];
+
+      if (weight < 30) {
+        weightErrors.push("Weight must be at least 30kg.");
+      }
+      if (weight > 120) {
+        weightErrors.push("Weight must be at most 120kg.");
+      }
+
+      if (weightErrors.length > 0) {
+        newErrors.weight = weightErrors;
+      }
+    }
+
+    setErrors(newErrors);
   }, [formData.height, formData.weight]);
 
   return (
@@ -216,33 +436,52 @@ const Step3 = ({
         value={formData.height}
         icon="man"
         placeholder="Height (cm)"
-        onChangeText={(text) => onChangeText("height")(text)}
+        onChangeText={onChangeText("height")}
         keyboardType="numeric"
+        error={errors.height}
       />
 
       <Input
         value={formData.weight}
         icon="scale"
         placeholder="Weight (kg)"
-        onChangeText={(text) => onChangeText("weight")(text)}
+        onChangeText={onChangeText("weight")}
         keyboardType="numeric"
-      />
-      <Input
-        value={formData.activity_level}
-        icon="heart-circle"
-        placeholder="Activity level"
-        onChangeText={(text) => onChangeText("activity_level")(text)}
+        error={errors.weight}
       />
 
       <InputDropdown
-        onChangeText={onChangeText("user_type")}
-        value={formData.user_type}
-        icon="barbell"
-        placeholder="Workout Experience"
+        onChangeText={onChangeText("activity_level")}
+        value={formData.activity_level}
+        icon="heart-circle"
+        placeholder="Activity Level"
         data={[
-          { label: "Beginner", value: "Beginner" },
-          { label: "Intermediate", value: "Intermediate" },
-          { label: "Expert", value: "Expert" },
+          { label: "Fervid", value: "fervid" },
+          { label: "Active", value: "active" },
+          { label: "Light", value: "light" },
+          { label: "Moderate", value: "moderate" },
+          { label: "Sedentary", value: "sedentary" },
+        ]}
+      />
+
+      <InputDropdown
+        isMultiSelect
+        multiSelectValue={formData.workout_type}
+        setSelected={(val) => {
+          onChangeText("workout_type")(val);
+        }}
+        onChangeText={onChangeText("workout_type")}
+        icon="barbell"
+        placeholder="Workout Type"
+        data={[
+          { label: "Cardio", value: "cardio" },
+          { label: "Flexibility", value: "flexibility" },
+          { label: "Functional", value: "functional" },
+          { label: "HIIT", value: "hiit" },
+          { label: "Mixed", value: "mixed" },
+          { label: "Rest", value: "rest" },
+          { label: "Sports", value: "sports" },
+          { label: "Strength", value: "strength" },
         ]}
       />
     </View>
@@ -256,7 +495,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
       <Header
         desc={`Almost done, ${formData.first_name}! Review your information below`}
       />
-      <View style={{ backgroundColor: "white", padding: 20, borderRadius: 16 }}>
+      <View style={{ backgroundColor: "white", borderRadius: 16 }}>
         <ReviewInfo icon="person" label="Username" data={formData.user_name} />
         <ReviewInfo icon="mail" label="Email" data={formData.email} />
         <ReviewInfo
@@ -269,8 +508,8 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
         <ReviewInfo icon="transgender" label="Gender" data={formData.gender} />
         <ReviewInfo
           icon="analytics"
-          label="Age"
-          data={formData.age.toString()}
+          label="Birthdate"
+          data={formData.birthdate.toString()}
         />
         <ReviewInfo icon="man" label="Height" data={`${formData.height} cm`} />
         <ReviewInfo
@@ -287,7 +526,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
         <ReviewInfo
           icon="barbell"
           label="Workout Experience"
-          data={formData.user_type}
+          data={formData.workout_type}
         />
       </View>
     </View>
@@ -299,16 +538,26 @@ const RegisterPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const [errors, setErrors] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const onChangeText = (name: keyof RegisterFormData) => (text: string) => {
-    const numericFields = ["height", "weight", "age", "activity_level", "bmi"];
-    const value = numericFields.includes(name) ? Number(text) : text;
+  const onChangeText =
+    (name: keyof RegisterFormData) => (value: string | string[]) => {
+      const numericFields = ["bmi"];
+      let newValue: any;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+      // Check if it's a multi-select (array)
+      if (Array.isArray(value)) {
+        newValue = value;
+      } else {
+        // If it's a single value, handle as usual
+        newValue = numericFields.includes(name) ? Number(value) : value;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        [name]: newValue,
+      }));
+    };
 
   const isStepValid = (step: number) => {
     switch (step) {
@@ -317,7 +566,13 @@ const RegisterPage = () => {
           formData.user_name.trim() != "" &&
           formData.email.trim() !== "" &&
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
-          formData.password.trim().length >= 6
+          formData.password.trim().length >= 8 &&
+          formData.confirmPassword.trim().length >= 8 &&
+          formData.password === formData.confirmPassword &&
+          lowercaseRegex.test(formData.password) &&
+          uppercaseRegex.test(formData.password) &&
+          digitRegex.test(formData.password) &&
+          specialCharRegex.test(formData.password)
         );
       case 1:
         return (
@@ -325,14 +580,16 @@ const RegisterPage = () => {
           formData.last_name.trim() != "" &&
           formData.address.trim() != "" &&
           formData.gender.trim() != "" &&
-          formData.age > 0
+          formData.birthdate.trim() != ""
         );
       case 2:
         return (
           formData.height > 0 &&
+          formData.height < 250 &&
           formData.weight > 0 &&
-          formData.activity_level > 0 &&
-          formData.user_type.trim() !== ""
+          formData.weight < 120 &&
+          formData.activity_level.trim() != "" &&
+          formData.workout_type.length > 0
         );
       case 3:
         return true;
@@ -348,6 +605,8 @@ const RegisterPage = () => {
   };
 
   const handleRegister = async () => {
+    setLoading(true);
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -357,12 +616,15 @@ const RegisterPage = () => {
       const user = userCredential.user;
 
       try {
+        const { confirmPassword, ...dataToStore } = formData;
+
         await setDoc(doc(db, "users", user.uid), {
-          ...formData,
+          ...dataToStore,
           email: user.email,
           createdAt: serverTimestamp(),
         });
 
+        setLoading(false);
         router.replace("/(tabs)");
       } catch (error) {
         console.log("Error setting user document:", error);
@@ -374,6 +636,8 @@ const RegisterPage = () => {
       return null;
     }
   };
+
+  console.log(formData);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -419,11 +683,15 @@ const RegisterPage = () => {
           <Step3 formData={formData} onChangeText={onChangeText} />
         </ProgressStep>
         <ProgressStep
+          scrollViewProps={{
+            showsVerticalScrollIndicator: false,
+          }}
           label="Review Information"
           buttonFillColor="#006A71"
           buttonPreviousTextColor="#006A71"
           buttonBorderColor="#006A71"
           onSubmit={handleRegister}
+          buttonFinishText={loading ? "Registering" : "Register"}
         >
           <Step4 formData={formData} />
         </ProgressStep>

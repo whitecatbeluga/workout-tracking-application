@@ -16,8 +16,9 @@ type InputProps = {
   suffixIcon?: any;
   passwordToggle?: boolean;
   showPassword?: boolean;
-  error?: any;
+  error?: string | string[];
   toggleShowPassword?: () => void;
+  editable?: boolean;
 };
 
 const Input = ({
@@ -36,6 +37,7 @@ const Input = ({
   toggleShowPassword,
   multiline,
   numberOfLines,
+  editable = true,
 }: InputProps) => {
   return (
     <View>
@@ -69,9 +71,10 @@ const Input = ({
           color="#6F7A88"
         />
         <TextInput
+          editable={editable}
           style={{
             backgroundColor: "white",
-            borderColor: "#CBD5E1",
+            borderColor: error ? "#721c24" : "#CBD5E1",
             borderWidth: 1,
             ...(multiline
               ? {
@@ -114,18 +117,32 @@ const Input = ({
           />
         )}
 
-        {error && (
-          <Text
-            style={{
-              top: -10,
-              color: "#721c24",
-              fontFamily: "Inter_400Regular",
-              fontSize: 14,
-            }}
-          >
-            {error}
-          </Text>
-        )}
+        {Array.isArray(error)
+          ? error.map((msg, idx) => (
+              <Text
+                key={idx}
+                style={{
+                  top: -10,
+                  color: "#721c24",
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 14,
+                }}
+              >
+                {"\u2022"} {msg}
+              </Text>
+            ))
+          : error && (
+              <Text
+                style={{
+                  top: -10,
+                  color: "#721c24",
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 14,
+                }}
+              >
+                {"\u2022"} {error}
+              </Text>
+            )}
       </View>
     </View>
   );
