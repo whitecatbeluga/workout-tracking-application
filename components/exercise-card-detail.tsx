@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import {
 } from "react-native";
 import { Exercise } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
+import { updateWorkoutSets } from "@/redux/slices/workout-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -27,48 +30,70 @@ interface SetData {
 }
 
 const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
-  const [sets, setSets] = useState<SetData[]>([
-    { set: 1, previous: "", kg: "", reps: "", checked: false },
-  ]);
-  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+  const [setsByExercise, setSetsByExercise] = useState<{
+    [key: string]: SetData[];
+  }>({
+    [exercise.id]: [{ set: 1, previous: "", kg: "", reps: "", checked: false }],
+  });
 
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const [isRestModalVisible, setIsRestModalVisible] = useState(false);
-  const [restTimer, setRestTimer] = useState<number>(34); // default 34s
+  const [restTimer, setRestTimer] = useState<number>(34);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const exercisesData = Object.keys(setsByExercise).map((exerciseId) => {
+      const sets = setsByExercise[exerciseId];
+      return {
+        exerciseId,
+        sets: sets.map((set) => ({
+          set: set.set,
+          previous: set.previous,
+          kg: set.kg,
+          reps: set.reps,
+          checked: set.checked,
+        })),
+      };
+    });
+
+    dispatch(updateWorkoutSets(exercisesData));
+  }, [setsByExercise]);
 
   const handleInputChange = (
+    exerciseId: string,
     index: number,
     field: keyof SetData,
     value: string
   ) => {
-    setSets((prevSets) => {
-      const updatedSets = [...prevSets];
-      updatedSets[index] = {
-        ...updatedSets[index],
-        [field]: value || "",
-      };
-      return updatedSets;
+    setSetsByExercise((prevSetsByExercise) => {
+      const updatedSets = [...prevSetsByExercise[exerciseId]];
+      updatedSets[index] = { ...updatedSets[index], [field]: value || "" };
+      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
     });
   };
 
-  const handleToggleCheck = (index: number) => {
-    setSets((prevSets) => {
-      const updatedSets = [...prevSets];
+  const handleToggleCheck = (exerciseId: string, index: number) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const updatedSets = [...prevSetsByExercise[exerciseId]];
       updatedSets[index].checked = !updatedSets[index].checked;
-      return updatedSets;
+      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
     });
   };
 
-  const handleAddSet = () => {
-    setSets((prevSets) => [
-      ...prevSets,
-      {
-        set: prevSets.length + 1,
-        previous: "",
-        kg: "",
-        reps: "",
-        checked: false,
-      },
-    ]);
+  const handleAddSet = (exerciseId: string) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const updatedSets = [
+        ...prevSetsByExercise[exerciseId],
+        {
+          set: prevSetsByExercise[exerciseId].length + 1,
+          previous: "",
+          kg: "",
+          reps: "",
+          checked: false,
+        },
+      ];
+      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
+    });
   };
 
   const handleSelectRestTime = (seconds: number) => {
@@ -108,7 +133,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           <Text style={styles.tableHeaderText}>CHECK</Text>
         </View>
 
-        {sets.map((set, index) => (
+        {setsByExercise[exercise.id].map((set, index) => (
           <View
             key={set.set}
             style={[
@@ -122,7 +147,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
               style={[styles.tableCell, styles.inputTextCenter]}
               value={set.previous}
               onChangeText={(text) =>
-                handleInputChange(index, "previous", text)
+                handleInputChange(exercise.id, index, "previous", text)
               }
               onFocus={() => setFocusedRowIndex(index)}
               placeholder="-"
@@ -130,7 +155,9 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
             <TextInput
               style={[styles.tableCell, styles.inputTextCenter]}
               value={set.kg}
-              onChangeText={(text) => handleInputChange(index, "kg", text)}
+              onChangeText={(text) =>
+                handleInputChange(exercise.id, index, "kg", text)
+              }
               onFocus={() => setFocusedRowIndex(index)}
               placeholder="0"
               keyboardType="numeric"
@@ -138,7 +165,9 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
             <TextInput
               style={[styles.tableCell, styles.inputTextCenter]}
               value={set.reps}
-              onChangeText={(text) => handleInputChange(index, "reps", text)}
+              onChangeText={(text) =>
+                handleInputChange(exercise.id, index, "reps", text)
+              }
               onFocus={() => setFocusedRowIndex(index)}
               placeholder="0"
               keyboardType="numeric"
@@ -146,7 +175,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
 
             <TouchableOpacity
               style={styles.tableCell}
-              onPress={() => handleToggleCheck(index)}
+              onPress={() => handleToggleCheck(exercise.id, index)}
             >
               <Text style={{ fontSize: 16, textAlign: "center" }}>
                 {set.checked ? "✔️" : ""}
@@ -156,7 +185,11 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         ))}
       </View>
 
-      <Button title="+ Add Set" onPress={handleAddSet} color="#48A6A7" />
+      <Button
+        title="+ Add Set"
+        onPress={() => handleAddSet(exercise.id)}
+        color="#48A6A7"
+      />
 
       <Modal
         visible={isRestModalVisible}
@@ -193,8 +226,6 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     </View>
   );
 };
-
-export default ExerciseDetailCard;
 
 const ExerciseSetCardHeader = () => {
   return (
@@ -290,3 +321,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+
+export default ExerciseDetailCard;

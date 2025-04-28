@@ -14,6 +14,9 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/utils/firebase-config";
+import { WorkoutSets } from "@/redux/slices/workout-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -34,6 +37,7 @@ const AddWorkout = () => {
   // );
 
   const exercises = useAppSelector((state) => state.exercise.exercise);
+  const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
@@ -55,6 +59,70 @@ const AddWorkout = () => {
   const handleReset = () => {
     setIsRunning(false);
     setElapsedTime(0);
+  };
+
+  const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
+    try {
+      const workoutRef = await addDoc(collection(db, "workouts"), {
+        timestamp: new Date(),
+      });
+
+      console.log("Workout document created with ID: ", workoutRef.id);
+      console.log("workoutSets", workoutSets);
+
+      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+        const { name, sets } = exercise;
+        console.log("sets:", sets);
+        console.log("name", name);
+        if (!name) {
+          console.error(
+            `Error: 'name' is missing in exercise with ID: ${exerciseId}`
+          );
+          continue;
+        }
+
+        const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
+          workoutRef,
+        });
+
+        console.log("Exercise document created with ID: ", exerciseRef.id);
+
+        if (sets && Array.isArray(sets)) {
+          for (const set of sets) {
+            const { reps, kg, checked, previous } = set;
+
+            if (reps === undefined || kg === undefined) {
+              console.error("Error: reps or kg is undefined. Skipping set.");
+              continue;
+            }
+
+            await addDoc(collection(exerciseRef, "sets"), {
+              reps,
+              kg,
+              checked: checked || false,
+              previous: previous || false,
+            });
+
+            console.log("Set added to exercise with ID: ", exerciseRef.id);
+          }
+        } else {
+          console.log("No sets provided for exercise ID: ", exerciseId);
+        }
+      }
+
+      console.log("Workout saved successfully");
+    } catch (e) {
+      console.error("Error saving workout to Firestore: ", e);
+    }
+  };
+
+  const handleExercises = () => {
+    if (workoutSets) {
+      // Check if workoutSets is not null
+      saveWorkoutToFirestore(workoutSets);
+    } else {
+      console.error("Error: workoutSets is null.");
+    }
   };
 
   useLayoutEffect(() => {
@@ -83,6 +151,7 @@ const AddWorkout = () => {
               paddingVertical: 8,
               borderRadius: 8,
             }}
+            onPress={handleExercises}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
               Finish
@@ -91,8 +160,8 @@ const AddWorkout = () => {
         </View>
       ),
     });
-  });
-  console.log("selectedExercises", selectedExercises);
+  }, [selectedExercises, duration, navigation]);
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
