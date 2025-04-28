@@ -62,6 +62,8 @@ const InputDropdown = ({
           labelField="label"
           valueField="value"
           placeholder={!isFocus ? placeholder : "..."}
+          onFocus={() => setIsFocus(true)}
+          onBlur={() => setIsFocus(false)}
           value={multiSelectValue?.map((item) => String(item))}
           searchPlaceholder="Search..."
           onChange={(item) => {

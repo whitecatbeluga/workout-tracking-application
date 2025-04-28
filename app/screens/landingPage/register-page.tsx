@@ -18,7 +18,15 @@ import { useAppSelector } from "@/hooks/use-app-selector";
 import { RegisterFormData } from "@/custom-types/form-data-type";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/utils/firebase-config";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+} from "firebase/firestore";
 import { router } from "expo-router";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -28,7 +36,7 @@ const initialFormData: RegisterFormData = {
   email: "",
   password: "",
   confirmPassword: "",
-  user_name: "",
+  username: "",
   first_name: "",
   last_name: "",
   birthdate: "",
@@ -178,40 +186,64 @@ const Step1 = ({
     const { password, confirmPassword, email } = formData;
     const newErrors: FieldErrors = {};
 
-    // Password validations
-    if (password) {
-      const passwordErrors: string[] = [];
+    const validateForm = async () => {
+      // Password validations
+      if (password) {
+        const passwordErrors: string[] = [];
 
-      if (password.length < 8) {
-        passwordErrors.push("Password must be at least 8 characters.");
+        if (password.length < 8) {
+          passwordErrors.push("Password must be at least 8 characters.");
+        }
+
+        if (passwordErrors.length > 0) {
+          newErrors.password = passwordErrors;
+        }
       }
 
-      if (passwordErrors.length > 0) {
-        newErrors.password = passwordErrors;
+      // Confirm password match
+      if (password && confirmPassword && password !== confirmPassword) {
+        newErrors.confirmPassword = ["Passwords do not match."];
       }
-    }
 
-    // Confirm password match
-    if (password && confirmPassword && password !== confirmPassword) {
-      newErrors.confirmPassword = ["Passwords do not match."];
-    }
+      // Email validations
+      if (email) {
+        const emailErrors: string[] = [];
 
-    // Email format check
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = ["Invalid email format."];
-    }
+        // Email format check
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          emailErrors.push("Invalid email format.");
+        } else {
+          const q = query(
+            collection(db, "users"),
+            where("email", "==", formData.email)
+          );
+          const querySnapshot = await getDocs(q);
+          const emailExists = !querySnapshot.empty; // true if at least one found
 
-    setErrors(newErrors);
+          if (emailExists) {
+            emailErrors.push("Email already exists.");
+          }
+        }
+
+        if (emailErrors.length > 0) {
+          newErrors.email = emailErrors;
+        }
+      }
+
+      setErrors(newErrors);
+    };
+
+    validateForm();
   }, [formData.password, formData.confirmPassword, formData.email]);
 
   return (
     <View>
       <Header desc="What shall we call you?" />
       <Input
-        value={formData.user_name}
+        value={formData.username}
         icon="person"
         placeholder="Username"
-        onChangeText={onChangeText("user_name")}
+        onChangeText={onChangeText("username")}
         autoCapitalize="none"
       />
       <Input
@@ -369,7 +401,9 @@ const Step3 = ({
   onChangeText,
 }: {
   formData: RegisterFormData;
-  onChangeText: (name: keyof RegisterFormData) => (text: string) => void;
+  onChangeText: (
+    name: keyof RegisterFormData
+  ) => (text: string | string[]) => void;
 }) => {
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -486,7 +520,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
         desc={`Almost done, ${formData.first_name}! Review your information below`}
       />
       <View style={{ backgroundColor: "white", borderRadius: 16 }}>
-        <ReviewInfo icon="person" label="Username" data={formData.user_name} />
+        <ReviewInfo icon="person" label="Username" data={formData.username} />
         <ReviewInfo icon="mail" label="Email" data={formData.email} />
         <ReviewInfo
           icon="person"
@@ -533,6 +567,21 @@ const RegisterPage = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
 
+  const [emailExists, setEmailExists] = useState(false);
+
+  useEffect(() => {
+    const validate = async () => {
+      const q = query(
+        collection(db, "users"),
+        where("email", "==", formData.email)
+      );
+      const querySnapshot = await getDocs(q);
+      setEmailExists(!querySnapshot.empty);
+    };
+
+    validate();
+  }, [formData.email]);
+
   const onChangeText =
     (name: keyof RegisterFormData) => (value: string | string[]) => {
       const numericFields = ["bmi"];
@@ -556,9 +605,10 @@ const RegisterPage = () => {
     switch (step) {
       case 0:
         return (
-          formData.user_name.trim() != "" &&
+          formData.username.trim() != "" &&
           formData.email.trim() !== "" &&
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
+          !emailExists &&
           formData.password.trim().length >= 8 &&
           formData.confirmPassword.trim().length >= 8 &&
           formData.password === formData.confirmPassword
