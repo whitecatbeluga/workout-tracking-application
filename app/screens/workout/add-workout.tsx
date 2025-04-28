@@ -6,13 +6,14 @@ import { useRouter, useNavigation } from "expo-router";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
+import Timer from "@/components/timer";
 
 const AddWorkout = () => {
-  const [timer, setTimer] = useState<number>(0);
+  // const [timer, setTimer] = useState<number>(0);
 
-  const startTimerRef = useRef<number>(Date.now());
-  const [displayTime, setDisplayTime] = useState<number>(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  // const startTimerRef = useRef<number>(Date.now());
+  // const [displayTime, setDisplayTime] = useState<number>(0);
+  // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
@@ -27,9 +28,9 @@ const AddWorkout = () => {
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
+  // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
+  //   null
+  // );
 
   const exercises = useAppSelector((state) => state.exercise.exercise);
   const selectedExercises = useAppSelector(
@@ -44,21 +45,6 @@ const AddWorkout = () => {
     setKey((prev) => prev + 1);
   };
 
-  useEffect(() => {
-    if (isRunning) {
-      intervalRefStopwatch.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
-    } else if (intervalRefStopwatch.current) {
-      clearInterval(intervalRefStopwatch.current);
-    }
-
-    return () => {
-      if (intervalRefStopwatch.current)
-        clearInterval(intervalRefStopwatch.current);
-    };
-  }, [isRunning]);
-
   const formatTime = (seconds: number) => {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
@@ -69,16 +55,6 @@ const AddWorkout = () => {
     setIsRunning(false);
     setElapsedTime(0);
   };
-
-  // useEffect(() => {
-  //   intervalRef.current = setInterval(() => {
-  //     const elapsed = Math.floor((Date.now() - startTimerRef.current) / 1000);
-  //     setDisplayTime(elapsed);
-  //   }, 1000);
-  //   return () => {
-  //     if (intervalRef.current) clearInterval(intervalRef.current);
-  //   };
-  // }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -128,9 +104,7 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            {/* {timer < 60
-              ? `${timer}s`
-              : `${Math.floor(timer / 60)}min ${timer % 60}s`} */}
+            <Timer />
           </Text>
         </View>
         <View>
