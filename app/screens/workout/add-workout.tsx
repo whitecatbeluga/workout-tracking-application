@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
+import {
+  Text,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ScrollViewComponent,
+  ScrollView,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Modal from "react-native-modal";
 import { useRouter, useNavigation } from "expo-router";
@@ -9,18 +16,12 @@ import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
 
 const AddWorkout = () => {
-  // const [timer, setTimer] = useState<number>(0);
-
-  // const startTimerRef = useRef<number>(Date.now());
-  // const [displayTime, setDisplayTime] = useState<number>(0);
-  // const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
 
-  // For timer
   const [duration, setDuration] = useState<number>(60);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
@@ -91,7 +92,7 @@ const AddWorkout = () => {
       ),
     });
   });
-
+  console.log("selectedExercises", selectedExercises);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -117,22 +118,25 @@ const AddWorkout = () => {
         </View>
       </View>
       {/* Show here the added exercise */}
-      {selectedExercises.length === 0 ? (
-        <View style={styles.getStartedContainer}>
-          <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
-          <Text style={styles.getStartedText}>Get started</Text>
-          <Text style={styles.getStartedDescription}>
-            Add an exercise to start your workout
-          </Text>
-        </View>
-      ) : (
-        selectedExercises.map((selectedExercise) => (
-          <ExerciseDetailCard
-            key={selectedExercise.id}
-            exercise={selectedExercise}
-          />
-        ))
-      )}
+
+      <ScrollView overScrollMode="never">
+        {selectedExercises.length === 0 ? (
+          <View style={styles.getStartedContainer}>
+            <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
+            <Text style={styles.getStartedText}>Get started</Text>
+            <Text style={styles.getStartedDescription}>
+              Add an exercise to start your workout
+            </Text>
+          </View>
+        ) : (
+          selectedExercises.map((selectedExercise) => (
+            <ExerciseDetailCard
+              key={selectedExercise.id}
+              exercise={selectedExercise}
+            />
+          ))
+        )}
+      </ScrollView>
       {/*  */}
       <View style={{ flexDirection: "column", gap: 12, paddingVertical: 20 }}>
         <View>
