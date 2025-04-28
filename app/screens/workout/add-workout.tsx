@@ -115,8 +115,7 @@ const AddWorkout = () => {
       ),
     });
   });
-  console.log("selectedExercises", selectedExercises);
-  console.log("selectedExercises", selectedExercises.length);
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -154,7 +153,10 @@ const AddWorkout = () => {
         </View>
       ) : (
         selectedExercises.map((selectedExercise) => (
-          <ExerciseDetailCard exercise={selectedExercise} />
+          <ExerciseDetailCard
+            key={selectedExercise.id}
+            exercise={selectedExercise}
+          />
         ))
       )}
       {/*  */}
