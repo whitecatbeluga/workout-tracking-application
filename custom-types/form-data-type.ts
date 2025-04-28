@@ -7,7 +7,7 @@ export interface RegisterFormData {
   email: string;
   password: string;
   confirmPassword: string;
-  user_name: string;
+  username: string;
   first_name: string;
   last_name: string;
   address: string;
