@@ -16,15 +16,20 @@ import { Exercise } from "@/custom-types/exercise-type";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { setSelectExercises } from "@/redux/slices/exercise-slice";
 import { useRouter } from "expo-router";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 const AddExercise = () => {
   const [searchExercise, setSearchExercise] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
-  const router = useRouter();
+
   const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const selectedExercise = useAppSelector(
+    (state) => state.exercise.selectedExercise
+  );
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -42,33 +47,32 @@ const AddExercise = () => {
       console.log("Error fetching exercises:", error);
     }
     setLoading(false);
-    return true;
   };
+
   useEffect(() => {
-    if (exercises.length === 0) {
-      setLoading(true);
-    }
     fetchExercises();
   }, []);
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    const success = await fetchExercises();
-    if (success) {
-      setRefreshing(false);
-    }
+    await fetchExercises();
+    setRefreshing(false);
   };
 
   const toggleExercise = (exercise: Exercise) => {
-    const exists = selectedExercises.find((e) => e.id === exercise.id);
+    const exists = selectedExercise.find((e) => e.id === exercise.id);
+    let newSelectedExercises: Exercise[];
     if (exists) {
-      setSelectedExercises((prev) => prev.filter((e) => e.id !== exercise.id));
+      newSelectedExercises = selectedExercise.filter(
+        (e) => e.id !== exercise.id
+      );
     } else {
-      setSelectedExercises((prev) => [...prev, exercise]);
+      newSelectedExercises = [...selectedExercise, exercise];
     }
+    dispatch(setSelectExercises(newSelectedExercises));
   };
 
   const handleAddExercise = () => {
-    dispatch(setSelectExercises(selectedExercises));
     router.replace("/screens/workout/add-workout");
   };
 
@@ -84,14 +88,8 @@ const AddExercise = () => {
           autoFocus
         />
       </View>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: 16,
-        }}
-      >
+
+      <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.buttonAllEquipment}>
           <Text style={styles.buttonText}>All Equipment</Text>
         </TouchableOpacity>
@@ -99,25 +97,15 @@ const AddExercise = () => {
           <Text style={styles.buttonText}>All Muscles</Text>
         </TouchableOpacity>
       </View>
-      <View style={{ marginTop: 16 }}>
-        <Text
-          style={{
-            color: "#555555",
-            fontFamily: "Inter_500Medium",
-            fontSize: 16,
-          }}
-        >
-          All Exercises
-        </Text>
-      </View>
+
+      <Text style={styles.allExercisesTitle}>All Exercises</Text>
+
       {loading ? (
         <View style={styles.loadingExercises}>
           <Text>Loading Exercises...</Text>
         </View>
       ) : (
         <ScrollView
-          // style={styles.scrollView}
-          // contentContainerStyle={styles.scrollViewContainer}
           showsHorizontalScrollIndicator={false}
           overScrollMode="never"
           refreshControl={
@@ -129,20 +117,21 @@ const AddExercise = () => {
               key={exercise.id}
               exercise={exercise}
               onToggleSelect={() => toggleExercise(exercise)}
-              isSelected={!selectedExercises.find((e) => e.id === exercise.id)}
+              isSelected={selectedExercise.some((e) => e.id === exercise.id)}
             />
           ))}
         </ScrollView>
       )}
-      {selectedExercises.length > 0 && (
+
+      {selectedExercise.length > 0 && (
         <View style={styles.floatingButtonContainer}>
           <TouchableOpacity
             style={styles.floatingButton}
             onPress={handleAddExercise}
           >
             <Text style={styles.floatingButtonText}>
-              Add {selectedExercises.length} Exercise
-              {selectedExercises.length > 1 ? "s" : ""}
+              Add {selectedExercise.length} Exercise
+              {selectedExercise.length > 1 ? "s" : ""}
             </Text>
           </TouchableOpacity>
         </View>
@@ -179,23 +168,31 @@ const styles = StyleSheet.create({
     zIndex: 1,
     left: 10,
   },
+  buttonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
   buttonAllEquipment: {
     backgroundColor: "#f0f0f0",
     paddingHorizontal: 36,
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
   buttonAllMuscle: {
     backgroundColor: "#f0f0f0",
     paddingHorizontal: 46,
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
   buttonText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+  },
+  allExercisesTitle: {
+    marginTop: 16,
+    color: "#555555",
     fontFamily: "Inter_500Medium",
     fontSize: 16,
   },
@@ -205,7 +202,6 @@ const styles = StyleSheet.create({
     height: 200,
     width: "100%",
   },
-
   floatingButtonContainer: {
     position: "absolute",
     bottom: 20,
@@ -213,7 +209,6 @@ const styles = StyleSheet.create({
     right: 20,
     alignItems: "center",
   },
-
   floatingButton: {
     backgroundColor: "#48A6A7",
     paddingVertical: 14,
@@ -228,7 +223,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     width: "100%",
   },
-
   floatingButtonText: {
     color: "#fff",
     fontSize: 16,
