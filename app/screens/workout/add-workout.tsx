@@ -106,6 +106,7 @@ const AddWorkout = () => {
               paddingVertical: 8,
               borderRadius: 8,
             }}
+            onPress={() => router.push("/screens/workout/save-workout")}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
               Finish
