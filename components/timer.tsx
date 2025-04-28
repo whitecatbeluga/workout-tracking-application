@@ -28,5 +28,6 @@ export default Timer;
 const styles = StyleSheet.create({
   textSize: {
     fontSize: 16,
+    width: 100,
   },
 });
