@@ -50,6 +50,24 @@ const AddWorkout = () => {
     setKey((prev) => prev + 1);
   };
 
+  useEffect(() => {
+    if (workoutSets) {
+      // Iterate over workoutSets to log the exercises and sets
+      console.log("Workout Sets:", workoutSets);
+
+      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+        const { name, sets } = exercise;
+        console.log(`Exercise: ${name}, ID: ${exerciseId}`);
+        sets.forEach((set, index) => {
+          console.log(`Set ${index + 1}:`, set);
+        });
+      }
+
+      // Save workout to Firestore (optional)
+      saveWorkoutToFirestore(workoutSets);
+    }
+  }, [workoutSets]); // Run the effect when workoutSets changes
+
   const formatTime = (seconds: number) => {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
@@ -115,6 +133,61 @@ const AddWorkout = () => {
       console.error("Error saving workout to Firestore: ", e);
     }
   };
+
+  // const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
+  //   try {
+  //     const workoutRef = await addDoc(collection(db, "workouts"), {
+  //       timestamp: new Date(),
+  //     });
+
+  //     console.log("Workout document created with ID: ", workoutRef.id);
+  //     console.log("workoutSets", workoutSets);
+
+  //     for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+  //       const { name, sets } = exercise;
+  //       console.log("sets:", sets);
+  //       console.log("name", name);
+  //       if (!name) {
+  //         console.error(
+  //           `Error: 'name' is missing in exercise with ID: ${exerciseId}`
+  //         );
+  //         continue;
+  //       }
+
+  //       const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
+  //         workoutRef,
+  //       });
+
+  //       console.log("Exercise document created with ID: ", exerciseRef.id);
+
+  //       if (sets && Array.isArray(sets)) {
+  //         for (const set of sets) {
+  //           const { reps, kg, checked, previous } = set;
+
+  //           if (reps === undefined || kg === undefined) {
+  //             console.error("Error: reps or kg is undefined. Skipping set.");
+  //             continue;
+  //           }
+
+  //           await addDoc(collection(exerciseRef, "sets"), {
+  //             reps,
+  //             kg,
+  //             checked: checked || false,
+  //             previous: previous || false,
+  //           });
+
+  //           console.log("Set added to exercise with ID: ", exerciseRef.id);
+  //         }
+  //       } else {
+  //         console.log("No sets provided for exercise ID: ", exerciseId);
+  //       }
+  //     }
+
+  //     console.log("Workout saved successfully");
+  //   } catch (e) {
+  //     console.error("Error saving workout to Firestore: ", e);
+  //   }
+  // };
 
   const handleExercises = () => {
     if (workoutSets) {

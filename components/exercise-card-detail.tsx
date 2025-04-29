@@ -31,9 +31,20 @@ interface SetData {
 
 const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   const [setsByExercise, setSetsByExercise] = useState<{
-    [key: string]: SetData[];
+    [key: string]: { name: string; sets: SetData[] };
   }>({
-    [exercise.id]: [{ set: 1, previous: "", kg: "", reps: "", checked: false }],
+    [exercise.id]: {
+      name: exercise.name,
+      sets: [
+        {
+          set: 1,
+          previous: "",
+          kg: "",
+          reps: "",
+          checked: false,
+        },
+      ],
+    },
   });
 
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
@@ -43,9 +54,10 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
 
   useEffect(() => {
     const exercisesData = Object.keys(setsByExercise).map((exerciseId) => {
-      const sets = setsByExercise[exerciseId];
+      const { name, sets } = setsByExercise[exerciseId];
       return {
         exerciseId,
+        name,
         sets: sets.map((set) => ({
           set: set.set,
           previous: set.previous,
@@ -55,7 +67,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         })),
       };
     });
-
+    console.log("exercisesData", exercisesData);
     dispatch(updateWorkoutSets(exercisesData));
   }, [setsByExercise]);
 
@@ -66,33 +78,45 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     value: string
   ) => {
     setSetsByExercise((prevSetsByExercise) => {
-      const updatedSets = [...prevSetsByExercise[exerciseId]];
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = [...exerciseData.sets];
       updatedSets[index] = { ...updatedSets[index], [field]: value || "" };
-      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
     });
   };
 
   const handleToggleCheck = (exerciseId: string, index: number) => {
     setSetsByExercise((prevSetsByExercise) => {
-      const updatedSets = [...prevSetsByExercise[exerciseId]];
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = [...exerciseData.sets];
       updatedSets[index].checked = !updatedSets[index].checked;
-      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
     });
   };
 
   const handleAddSet = (exerciseId: string) => {
     setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
       const updatedSets = [
-        ...prevSetsByExercise[exerciseId],
+        ...exerciseData.sets,
         {
-          set: prevSetsByExercise[exerciseId].length + 1,
+          set: exerciseData.sets.length + 1,
           previous: "",
           kg: "",
           reps: "",
           checked: false,
         },
       ];
-      return { ...prevSetsByExercise, [exerciseId]: updatedSets };
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
     });
   };
 
@@ -133,7 +157,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           <Text style={styles.tableHeaderText}>CHECK</Text>
         </View>
 
-        {setsByExercise[exercise.id].map((set, index) => (
+        {setsByExercise[exercise.id].sets.map((set, index) => (
           <View
             key={set.set}
             style={[
