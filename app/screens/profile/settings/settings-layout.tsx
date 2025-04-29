@@ -8,6 +8,7 @@ import ContainerSettings from "./container";
 import { signOut } from "firebase/auth";
 import { auth } from "@/utils/firebase-config";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { clearProgramsAndRoutines } from "@/redux/slices/routine-slice";
 
 const otherSettings = [
   {
@@ -43,6 +44,7 @@ const SettingsScreen = () => {
       await signOut(auth);
       dispatch(clearUser());
       dispatch(clearSelectedExercises());
+      dispatch(clearProgramsAndRoutines());
       router.replace("/screens/landingPage/login-page");
     } catch (err) {
       console.error("Logout error:", err);
