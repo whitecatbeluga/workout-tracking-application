@@ -20,12 +20,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { setUserFromFirebase, setUserToken } from "@/redux/auth-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useAppSelector } from "@/hooks/use-app-selector";
+import { resetPassword } from "@/redux/auth-slice";
 
 const LoginPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
@@ -167,6 +169,30 @@ const LoginPage = () => {
     }
   };
 
+  // Handle password reset
+  const handlePasswordReset = async () => {
+    if (!formData.email) {
+      setError("Please enter your email to reset your password.");
+      return;
+    }
+
+    setEmailLoading(true);
+    setError(null);
+
+    try {
+      await dispatch(resetPassword(formData.email)).unwrap();
+      setError("Password reset email sent! Please check your inbox.");
+    } catch (error) {
+      if (typeof error === "string") {
+        setError(error);
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -234,11 +260,15 @@ const LoginPage = () => {
               </TouchableOpacity>
 
               <View style={styles.forgotPasswordContainer}>
-                <TouchableOpacity>
-                  <Text style={styles.forgotPasswordText}>
-                    Forgot Password?
-                  </Text>
-                </TouchableOpacity>
+                {emailLoading ? (
+                  <ActivityIndicator size="small" color="#48A6A7" />
+                ) : (
+                  <TouchableOpacity onPress={handlePasswordReset}>
+                    <Text style={styles.forgotPasswordText}>
+                      Forgot Password?
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
