@@ -80,7 +80,11 @@ const WorkoutSlice = createSlice({
   initialState,
   reducers: {
     updateWorkoutSets(state, action) {
-      state.workoutSets = action.payload;
+      const newSets = action.payload
+      state.workoutSets = {
+        ...state.workoutSets,
+        ...newSets
+      }
     },
   },
   extraReducers: (builder) => {

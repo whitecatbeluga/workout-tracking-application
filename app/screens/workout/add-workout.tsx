@@ -52,21 +52,22 @@ const AddWorkout = () => {
 
   useEffect(() => {
     if (workoutSets) {
-      // Iterate over workoutSets to log the exercises and sets
-      console.log("Workout Sets:", workoutSets);
+      console.log("workoutSets", workoutSets);
 
-      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-        const { name, sets } = exercise;
-        console.log(`Exercise: ${name}, ID: ${exerciseId}`);
-        sets.forEach((set, index) => {
-          console.log(`Set ${index + 1}:`, set);
+      Object.entries(workoutSets).forEach(([exerciseId, exerciseData]) => {
+        console.log(`Exercise ID: ${exerciseId}`);
+        console.log(`Exercise Name: ${exerciseData.name}`);
+
+        exerciseData.sets.forEach((set) => {
+          console.log(
+            `  Set ${set.set}: ${set.kg}kg x ${set.reps} reps - ${
+              set.checked ? "✔️" : "❌"
+            }`
+          );
         });
-      }
-
-      // Save workout to Firestore (optional)
-      saveWorkoutToFirestore(workoutSets);
+      });
     }
-  }, [workoutSets]); // Run the effect when workoutSets changes
+  }, [workoutSets]);
 
   const formatTime = (seconds: number) => {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -90,8 +91,6 @@ const AddWorkout = () => {
 
       for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
         const { name, sets } = exercise;
-        console.log("sets:", sets);
-        console.log("name", name);
         if (!name) {
           console.error(
             `Error: 'name' is missing in exercise with ID: ${exerciseId}`
@@ -102,8 +101,6 @@ const AddWorkout = () => {
         const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
           workoutRef,
         });
-
-        console.log("Exercise document created with ID: ", exerciseRef.id);
 
         if (sets && Array.isArray(sets)) {
           for (const set of sets) {
@@ -120,8 +117,6 @@ const AddWorkout = () => {
               checked: checked || false,
               previous: previous || false,
             });
-
-            console.log("Set added to exercise with ID: ", exerciseRef.id);
           }
         } else {
           console.log("No sets provided for exercise ID: ", exerciseId);
@@ -234,7 +229,9 @@ const AddWorkout = () => {
       ),
     });
   }, [selectedExercises, duration, navigation]);
-
+  console.log("selectedExercises", selectedExercises);
+  console.log("selectedExercises", selectedExercises.length);
+  console.log("workoutSets", workoutSets);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>

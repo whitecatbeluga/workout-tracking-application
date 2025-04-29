@@ -26,6 +26,18 @@ Run the Immulator
 ./emulator -avd Medium_Phone_API_36
 ```
 
+If your using WSL (list all the emulator installed in your machine)
+
+```
+/mnt/c/Users/Bluewind/AppData/Local/Android/Sdk/emulator/emulator.exe -list-avds
+```
+
+RUN the imulator from WSL
+
+```
+ /mnt/c/Users/Bluewind/AppData/Local/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36
+```
+
 ## To run the app in android
 
 Note: You can also use you phone just scan the QR code in the terminal but you need to install "EXPO GO"
