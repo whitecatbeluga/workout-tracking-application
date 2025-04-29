@@ -12,6 +12,10 @@ Note: If you haven't installed it yet install it on android studio
 
 ```
 C:\Users\Bluewind\AppData\Local\Android\Sdk\emulator>
+
+cd ~
+cd AppData\Local\Android\Sdk\emulator
+
 ```
 
 Then list all the emulator installed
@@ -24,6 +28,7 @@ Run the Immulator
 
 ```
 ./emulator -avd Medium_Phone_API_36
+./emulator -avd Pixel_7_Pro
 ```
 
 If your using WSL (list all the emulator installed in your machine)

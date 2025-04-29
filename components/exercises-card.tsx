@@ -24,9 +24,6 @@ const ExerciseCard = ({
     }).start();
   }, [isSelected]);
 
-  // Debugging: Log the exercise name and description
-  console.log("Rendering ExerciseCard with:", exercise);
-
   return (
     <Pressable onPress={onToggleSelect}>
       <View style={styles.card}>

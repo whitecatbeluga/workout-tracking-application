@@ -16,7 +16,7 @@ import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
-import { WorkoutSets } from "@/redux/slices/workout-slice";
+import { WorkoutSets } from "@/custom-types/exercise-type";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -50,25 +50,6 @@ const AddWorkout = () => {
     setKey((prev) => prev + 1);
   };
 
-  useEffect(() => {
-    if (workoutSets) {
-      console.log("workoutSets", workoutSets);
-
-      Object.entries(workoutSets).forEach(([exerciseId, exerciseData]) => {
-        console.log(`Exercise ID: ${exerciseId}`);
-        console.log(`Exercise Name: ${exerciseData.name}`);
-
-        exerciseData.sets.forEach((set) => {
-          console.log(
-            `  Set ${set.set}: ${set.kg}kg x ${set.reps} reps - ${
-              set.checked ? "✔️" : "❌"
-            }`
-          );
-        });
-      });
-    }
-  }, [workoutSets]);
-
   const formatTime = (seconds: number) => {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
@@ -86,9 +67,6 @@ const AddWorkout = () => {
         timestamp: new Date(),
       });
 
-      console.log("Workout document created with ID: ", workoutRef.id);
-      console.log("workoutSets", workoutSets);
-
       for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
         const { name, sets } = exercise;
         if (!name) {
@@ -97,17 +75,16 @@ const AddWorkout = () => {
           );
           continue;
         }
-
         const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
-          workoutRef,
+          name,
+          exerciseId,
         });
-
         if (sets && Array.isArray(sets)) {
           for (const set of sets) {
             const { reps, kg, checked, previous } = set;
 
             if (reps === undefined || kg === undefined) {
-              console.error("Error: reps or kg is undefined. Skipping set.");
+              console.error(`Error: reps or kg is undefined. Skipping set.`);
               continue;
             }
 
@@ -118,75 +95,15 @@ const AddWorkout = () => {
               previous: previous || false,
             });
           }
-        } else {
-          console.log("No sets provided for exercise ID: ", exerciseId);
         }
       }
-
-      console.log("Workout saved successfully");
     } catch (e) {
       console.error("Error saving workout to Firestore: ", e);
     }
   };
 
-  // const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
-  //   try {
-  //     const workoutRef = await addDoc(collection(db, "workouts"), {
-  //       timestamp: new Date(),
-  //     });
-
-  //     console.log("Workout document created with ID: ", workoutRef.id);
-  //     console.log("workoutSets", workoutSets);
-
-  //     for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-  //       const { name, sets } = exercise;
-  //       console.log("sets:", sets);
-  //       console.log("name", name);
-  //       if (!name) {
-  //         console.error(
-  //           `Error: 'name' is missing in exercise with ID: ${exerciseId}`
-  //         );
-  //         continue;
-  //       }
-
-  //       const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
-  //         workoutRef,
-  //       });
-
-  //       console.log("Exercise document created with ID: ", exerciseRef.id);
-
-  //       if (sets && Array.isArray(sets)) {
-  //         for (const set of sets) {
-  //           const { reps, kg, checked, previous } = set;
-
-  //           if (reps === undefined || kg === undefined) {
-  //             console.error("Error: reps or kg is undefined. Skipping set.");
-  //             continue;
-  //           }
-
-  //           await addDoc(collection(exerciseRef, "sets"), {
-  //             reps,
-  //             kg,
-  //             checked: checked || false,
-  //             previous: previous || false,
-  //           });
-
-  //           console.log("Set added to exercise with ID: ", exerciseRef.id);
-  //         }
-  //       } else {
-  //         console.log("No sets provided for exercise ID: ", exerciseId);
-  //       }
-  //     }
-
-  //     console.log("Workout saved successfully");
-  //   } catch (e) {
-  //     console.error("Error saving workout to Firestore: ", e);
-  //   }
-  // };
-
-  const handleExercises = () => {
+  const handleExercises = async () => {
     if (workoutSets) {
-      // Check if workoutSets is not null
       saveWorkoutToFirestore(workoutSets);
     } else {
       console.error("Error: workoutSets is null.");
@@ -229,9 +146,7 @@ const AddWorkout = () => {
       ),
     });
   }, [selectedExercises, duration, navigation]);
-  console.log("selectedExercises", selectedExercises);
-  console.log("selectedExercises", selectedExercises.length);
-  console.log("workoutSets", workoutSets);
+  console.log("add-workout->workoutSets->", workoutSets);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>

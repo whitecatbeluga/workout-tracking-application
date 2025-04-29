@@ -7,22 +7,10 @@ import { AxiosError } from "axios";
 import { getAuthToken } from "@/services/get-token";
 
 import Constants from "expo-constants";
+import { WorkoutSets } from "@/custom-types/exercise-type";
 
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
-
-export type WorkoutSets = {
-  [exerciseId: string]: {
-    name: string;
-    sets: {
-      set: number;
-      previous: string;
-      kg: string;
-      reps: string;
-      checked: boolean;
-    }[];
-  };
-};
 
 export const getWorkout = createAsyncThunk(
   "workout/getWorkout",
@@ -80,11 +68,11 @@ const WorkoutSlice = createSlice({
   initialState,
   reducers: {
     updateWorkoutSets(state, action) {
-      const newSets = action.payload
+      const newSets: WorkoutSets = action.payload;
       state.workoutSets = {
         ...state.workoutSets,
-        ...newSets
-      }
+        ...newSets,
+      };
     },
   },
   extraReducers: (builder) => {

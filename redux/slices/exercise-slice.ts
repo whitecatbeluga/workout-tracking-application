@@ -40,6 +40,13 @@ const exerciseSlice = createSlice({
     setSelectExercises: (state, action) => {
       state.selectedExercise = action.payload;
     },
+    updateSelectedExercises: (state, action) => {
+      const newSelectedExercise = action.payload;
+      state.selectedExercise = {
+        ...state.selectedExercise,
+        ...newSelectedExercise,
+      };
+    },
     clearSelectedExercises: (state) => {
       state.selectedExercise = [];
     },
@@ -62,7 +69,10 @@ const exerciseSlice = createSlice({
   },
 });
 
-export const { setSelectExercises, clearSelectedExercises } =
-  exerciseSlice.actions;
+export const {
+  setSelectExercises,
+  updateSelectedExercises,
+  clearSelectedExercises,
+} = exerciseSlice.actions;
 
 export default exerciseSlice.reducer;
