@@ -10,7 +10,6 @@ const WorkoutHeader = () => {
 
   const startEmptyWorkout = () => {
     router.push("/screens/workout/add-workout");
-    console.log("Workout Started");
   };
 
   return (

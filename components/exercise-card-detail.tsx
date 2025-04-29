@@ -11,11 +11,10 @@ import {
   Pressable,
   FlatList,
 } from "react-native";
-import { Exercise } from "@/custom-types/exercise-type";
+import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { useAppSelector } from "@/hooks/use-app-selector";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -53,22 +52,17 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const exercisesData = Object.keys(setsByExercise).map((exerciseId) => {
-      const { name, sets } = setsByExercise[exerciseId];
-      return {
-        exerciseId,
-        name,
-        sets: sets.map((set) => ({
-          set: set.set,
-          previous: set.previous,
-          kg: set.kg,
-          reps: set.reps,
-          checked: set.checked,
-        })),
-      };
-    });
-    console.log("exercisesData", exercisesData);
-    dispatch(updateWorkoutSets(exercisesData));
+    const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
+      (acc, exerciseId) => {
+        acc[exerciseId] = {
+          name: setsByExercise[exerciseId].name,
+          sets: setsByExercise[exerciseId].sets,
+        };
+        return acc;
+      },
+      {} as WorkoutSets
+    );
+    dispatch(updateWorkoutSets(setsObject));
   }, [setsByExercise]);
 
   const handleInputChange = (
@@ -124,7 +118,6 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     setRestTimer(seconds);
     setIsRestModalVisible(false);
   };
-
   return (
     <View style={styles.container}>
       <ExerciseSetCardHeader />
