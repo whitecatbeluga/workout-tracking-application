@@ -134,6 +134,7 @@ const AddExercise = () => {
               {selectedExercise.length > 1 ? "s" : ""}
             </Text>
           </TouchableOpacity>
+          
         </View>
       )}
     </View>

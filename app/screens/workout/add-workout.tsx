@@ -1,25 +1,30 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
+import {
+  Text,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ScrollViewComponent,
+  ScrollView,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Modal from "react-native-modal";
 import { useRouter, useNavigation } from "expo-router";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
+import Timer from "@/components/timer";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "@/utils/firebase-config";
+import { WorkoutSets } from "@/redux/slices/workout-slice";
 
 const AddWorkout = () => {
-  const [timer, setTimer] = useState<number>(0);
-
-  const startTimerRef = useRef<number>(Date.now());
-  const [displayTime, setDisplayTime] = useState<number>(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
 
-  // For timer
   const [duration, setDuration] = useState<number>(60);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
@@ -27,11 +32,12 @@ const AddWorkout = () => {
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
+  // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
+  //   null
+  // );
 
   const exercises = useAppSelector((state) => state.exercise.exercise);
+  const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
@@ -45,19 +51,22 @@ const AddWorkout = () => {
   };
 
   useEffect(() => {
-    if (isRunning) {
-      intervalRefStopwatch.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
-    } else if (intervalRefStopwatch.current) {
-      clearInterval(intervalRefStopwatch.current);
-    }
+    if (workoutSets) {
+      // Iterate over workoutSets to log the exercises and sets
+      console.log("Workout Sets:", workoutSets);
 
-    return () => {
-      if (intervalRefStopwatch.current)
-        clearInterval(intervalRefStopwatch.current);
-    };
-  }, [isRunning]);
+      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+        const { name, sets } = exercise;
+        console.log(`Exercise: ${name}, ID: ${exerciseId}`);
+        sets.forEach((set, index) => {
+          console.log(`Set ${index + 1}:`, set);
+        });
+      }
+
+      // Save workout to Firestore (optional)
+      saveWorkoutToFirestore(workoutSets);
+    }
+  }, [workoutSets]); // Run the effect when workoutSets changes
 
   const formatTime = (seconds: number) => {
     const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -70,15 +79,124 @@ const AddWorkout = () => {
     setElapsedTime(0);
   };
 
-  // useEffect(() => {
-  //   intervalRef.current = setInterval(() => {
-  //     const elapsed = Math.floor((Date.now() - startTimerRef.current) / 1000);
-  //     setDisplayTime(elapsed);
-  //   }, 1000);
-  //   return () => {
-  //     if (intervalRef.current) clearInterval(intervalRef.current);
-  //   };
-  // }, []);
+  const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
+    try {
+      const workoutRef = await addDoc(collection(db, "workouts"), {
+        timestamp: new Date(),
+      });
+
+      console.log("Workout document created with ID: ", workoutRef.id);
+      console.log("workoutSets", workoutSets);
+
+      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+        const { name, sets } = exercise;
+        console.log("sets:", sets);
+        console.log("name", name);
+        if (!name) {
+          console.error(
+            `Error: 'name' is missing in exercise with ID: ${exerciseId}`
+          );
+          continue;
+        }
+
+        const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
+          workoutRef,
+        });
+
+        console.log("Exercise document created with ID: ", exerciseRef.id);
+
+        if (sets && Array.isArray(sets)) {
+          for (const set of sets) {
+            const { reps, kg, checked, previous } = set;
+
+            if (reps === undefined || kg === undefined) {
+              console.error("Error: reps or kg is undefined. Skipping set.");
+              continue;
+            }
+
+            await addDoc(collection(exerciseRef, "sets"), {
+              reps,
+              kg,
+              checked: checked || false,
+              previous: previous || false,
+            });
+
+            console.log("Set added to exercise with ID: ", exerciseRef.id);
+          }
+        } else {
+          console.log("No sets provided for exercise ID: ", exerciseId);
+        }
+      }
+
+      console.log("Workout saved successfully");
+    } catch (e) {
+      console.error("Error saving workout to Firestore: ", e);
+    }
+  };
+
+  // const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
+  //   try {
+  //     const workoutRef = await addDoc(collection(db, "workouts"), {
+  //       timestamp: new Date(),
+  //     });
+
+  //     console.log("Workout document created with ID: ", workoutRef.id);
+  //     console.log("workoutSets", workoutSets);
+
+  //     for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+  //       const { name, sets } = exercise;
+  //       console.log("sets:", sets);
+  //       console.log("name", name);
+  //       if (!name) {
+  //         console.error(
+  //           `Error: 'name' is missing in exercise with ID: ${exerciseId}`
+  //         );
+  //         continue;
+  //       }
+
+  //       const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
+  //         workoutRef,
+  //       });
+
+  //       console.log("Exercise document created with ID: ", exerciseRef.id);
+
+  //       if (sets && Array.isArray(sets)) {
+  //         for (const set of sets) {
+  //           const { reps, kg, checked, previous } = set;
+
+  //           if (reps === undefined || kg === undefined) {
+  //             console.error("Error: reps or kg is undefined. Skipping set.");
+  //             continue;
+  //           }
+
+  //           await addDoc(collection(exerciseRef, "sets"), {
+  //             reps,
+  //             kg,
+  //             checked: checked || false,
+  //             previous: previous || false,
+  //           });
+
+  //           console.log("Set added to exercise with ID: ", exerciseRef.id);
+  //         }
+  //       } else {
+  //         console.log("No sets provided for exercise ID: ", exerciseId);
+  //       }
+  //     }
+
+  //     console.log("Workout saved successfully");
+  //   } catch (e) {
+  //     console.error("Error saving workout to Firestore: ", e);
+  //   }
+  // };
+
+  const handleExercises = () => {
+    if (workoutSets) {
+      // Check if workoutSets is not null
+      saveWorkoutToFirestore(workoutSets);
+    } else {
+      console.error("Error: workoutSets is null.");
+    }
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -106,7 +224,7 @@ const AddWorkout = () => {
               paddingVertical: 8,
               borderRadius: 8,
             }}
-            onPress={() => router.push("/screens/workout/save-workout")}
+            onPress={handleExercises}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
               Finish
@@ -115,7 +233,7 @@ const AddWorkout = () => {
         </View>
       ),
     });
-  });
+  }, [selectedExercises, duration, navigation]);
 
   return (
     <View style={styles.container}>
@@ -129,9 +247,7 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            {/* {timer < 60
-              ? `${timer}s`
-              : `${Math.floor(timer / 60)}min ${timer % 60}s`} */}
+            <Timer />
           </Text>
         </View>
         <View>
@@ -144,22 +260,25 @@ const AddWorkout = () => {
         </View>
       </View>
       {/* Show here the added exercise */}
-      {selectedExercises.length === 0 ? (
-        <View style={styles.getStartedContainer}>
-          <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
-          <Text style={styles.getStartedText}>Get started</Text>
-          <Text style={styles.getStartedDescription}>
-            Add an exercise to start your workout
-          </Text>
-        </View>
-      ) : (
-        selectedExercises.map((selectedExercise) => (
-          <ExerciseDetailCard
-            key={selectedExercise.id}
-            exercise={selectedExercise}
-          />
-        ))
-      )}
+
+      <ScrollView overScrollMode="never">
+        {selectedExercises.length === 0 ? (
+          <View style={styles.getStartedContainer}>
+            <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
+            <Text style={styles.getStartedText}>Get started</Text>
+            <Text style={styles.getStartedDescription}>
+              Add an exercise to start your workout
+            </Text>
+          </View>
+        ) : (
+          selectedExercises.map((selectedExercise) => (
+            <ExerciseDetailCard
+              key={selectedExercise.id}
+              exercise={selectedExercise}
+            />
+          ))
+        )}
+      </ScrollView>
       {/*  */}
       <View style={{ flexDirection: "column", gap: 12, paddingVertical: 20 }}>
         <View>
