@@ -2,6 +2,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RoutineService } from "../../services/routine-service";
 import { Exercise } from "@/custom-types/exercise-type";
+import { Loading } from "@/custom-types/loading-type";
 
 export type Routine = {
   id: string;
@@ -19,13 +20,13 @@ export type Program = {
 
 interface ProgramState {
   programs: Program[];
-  loading: boolean;
+  loading: Loading;
   error: string | null;
 }
 
 const initialState: ProgramState = {
   programs: [],
-  loading: false,
+  loading: Loading.Idle,
   error: null,
 };
 
@@ -110,7 +111,11 @@ export const deleteRoutine = createAsyncThunk(
 export const routineSlice = createSlice({
   name: "routines",
   initialState,
-  reducers: {},
+  reducers: {
+    clearProgramsAndRoutines: (state) => {
+      state.programs = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       //   // fetchRoutines
@@ -127,12 +132,12 @@ export const routineSlice = createSlice({
       //     state.error = action.error.message || "Failed to fetch routines";
       //   })
       //   // fetchPrograms
-      //   .addCase(fetchPrograms.pending, (state) => {
-      //     state.loading = true;
-      //   })
+      .addCase(fetchPrograms.pending, (state) => {
+        state.loading = Loading.Pending;
+      })
       .addCase(fetchPrograms.fulfilled, (state, action) => {
         state.programs = action.payload;
-        state.loading = false;
+        state.loading = Loading.Fulfilled;
       })
       //   .addCase(fetchPrograms.rejected, (state, action) => {
       //     state.error = action.error.message || "Failed to fetch routines";
@@ -158,5 +163,7 @@ export const routineSlice = createSlice({
       });
   },
 });
+
+export const { clearProgramsAndRoutines } = routineSlice.actions;
 
 export default routineSlice.reducer;

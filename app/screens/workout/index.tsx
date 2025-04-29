@@ -106,9 +106,8 @@ const WorkoutPage = () => {
   const dispatch = useAppDispatch();
 
   const userId = auth.currentUser?.uid;
-  const workout = useAppSelector((state) => state.workout.workout);
-  const loading = useAppSelector((state) => state.workout.loading);
-  // const routines = useAppSelector((state) => state.routine.routines);
+
+  const loading = useAppSelector((state) => state.routine.loading);
 
   const programs = useAppSelector((state) => state.routine.programs);
 
@@ -247,37 +246,32 @@ const WorkoutPage = () => {
             </View>
           </View>
 
-          <View style={{ marginTop: 20, width: "100%", gap: 8 }}>
-            {programs.map((program, index) => (
-              <RoutineFolderCard
-                openRoutineMenu={openRoutineMenu}
-                program={program}
-                key={index}
-              />
-            ))}
-          </View>
-
-          {/* <View style={styles.cardList}>
-            {loading == Loading.Pending ? (
-              <>
-                <Text>Loading...</Text>
-                <SkeletonLoader />
-                <SkeletonLoader />
-                <SkeletonLoader />
-              </>
-            ) : (
-              workout?.map((item) => (
-                <WorkoutCard
-                  handleOpenWorkoutMenu={openWorkoutMenu}
-                  key={item.id}
-                  card={item}
-                  isEditable={false}
+          {loading == Loading.Pending ? (
+            <View
+              style={{
+                marginTop: 20,
+                width: "100%",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <Text>Loading...</Text>
+              <SkeletonLoader />
+              <SkeletonLoader />
+              <SkeletonLoader />
+            </View>
+          ) : (
+            <View style={{ marginTop: 20, width: "100%", gap: 8 }}>
+              {programs.map((program, index) => (
+                <RoutineFolderCard
+                  openRoutineMenu={openRoutineMenu}
+                  program={program}
+                  key={index}
                 />
-              ))
-            )}
-          </View> */}
+              ))}
+            </View>
+          )}
         </ScrollView>
-
         {isModalVisible ? (
           <CustomModal
             isModalVisible={isModalVisible}
