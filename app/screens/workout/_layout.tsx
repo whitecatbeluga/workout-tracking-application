@@ -1,7 +1,6 @@
 import { TouchableOpacity, Text, View } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import ExerciseProvider from "./context/exercise-content";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function Workout() {
   const router = useRouter();
@@ -132,6 +131,14 @@ export default function Workout() {
                 </Text>
               </TouchableOpacity>
             ),
+          }}
+        />
+        <Stack.Screen
+          name="save-workout"
+          options={{
+            title: "Save Workout",
+            headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
           }}
         />
       </Stack>
