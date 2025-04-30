@@ -15,7 +15,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { Exercise } from "@/custom-types/exercise-type";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { setSelectExercises } from "@/redux/slices/exercise-slice";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
 
 const AddExercise = () => {
@@ -23,6 +23,8 @@ const AddExercise = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const { previousRoute } = useLocalSearchParams();
 
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -71,9 +73,12 @@ const AddExercise = () => {
     }
     dispatch(setSelectExercises(newSelectedExercises));
   };
-
   const handleAddExercise = () => {
-    router.replace("/screens/workout/add-workout");
+    if (previousRoute === "/screens/workout/create-routine") {
+      router.replace("/screens/workout/create-routine");
+    } else {
+      router.replace("/screens/workout/add-workout");
+    }
   };
 
   return (
