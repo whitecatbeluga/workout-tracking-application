@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    width: 175,
+    width: "49%",
     borderRadius: 8,
   },
 
