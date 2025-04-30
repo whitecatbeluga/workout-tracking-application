@@ -11,11 +11,13 @@ import { router } from "expo-router";
 type RoutineFolderCardProps = {
   program: Program;
   openRoutineMenu: (id: string) => void;
+  openProgramMenu: (id: string) => void;
 };
 
 const RoutineFolderCard = ({
   program,
   openRoutineMenu,
+  openProgramMenu,
 }: RoutineFolderCardProps) => {
   const [collapsed, setCollapsed] = useState(true);
 
@@ -53,7 +55,7 @@ const RoutineFolderCard = ({
             {program.routines.length >= 1 && `(${program.routines.length})`}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => openProgramMenu(program.id)}>
           <Ionicons name="create-outline" size={20} color="#323232" />
         </TouchableOpacity>
       </View>

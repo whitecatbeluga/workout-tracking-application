@@ -657,7 +657,7 @@ const RegisterPage = () => {
       const token = user.getIdToken();
 
       try {
-        const { confirmPassword, ...dataToStore } = formData;
+        const { confirmPassword, password, ...dataToStore } = formData;
 
         await setDoc(doc(db, "users", user.uid), {
           ...dataToStore,

@@ -18,6 +18,7 @@ import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useLocalSearchParams } from "expo-router";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -48,6 +49,8 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
       ],
     },
   });
+
+  const { type } = useLocalSearchParams();
 
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const [isRestModalVisible, setIsRestModalVisible] = useState(false);
@@ -162,7 +165,9 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           <Text style={styles.tableHeaderText}>Previous</Text>
           <Text style={styles.tableHeaderText}>KG</Text>
           <Text style={styles.tableHeaderText}>REPS</Text>
-          <Text style={styles.tableHeaderText}>CHECK</Text>
+          {type === "add-workout" && (
+            <Text style={styles.tableHeaderText}>CHECK</Text>
+          )}
         </View>
 
         {setsByExercise[exercise.id].sets.map((set, index) => (
@@ -215,14 +220,16 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
                 keyboardType="numeric"
               />
 
-              <TouchableOpacity
-                style={styles.tableCell}
-                onPress={() => handleToggleCheck(exercise.id, index)}
-              >
-                <Text style={{ fontSize: 16, textAlign: "center" }}>
-                  {set.checked ? "✔️" : ""}
-                </Text>
-              </TouchableOpacity>
+              {type === "add-workout" && (
+                <TouchableOpacity
+                  style={styles.tableCell}
+                  onPress={() => handleToggleCheck(exercise.id, index)}
+                >
+                  <Text style={{ fontSize: 16, textAlign: "center" }}>
+                    {set.checked ? "✔️" : ""}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Swipeable>
         ))}
