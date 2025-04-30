@@ -6,17 +6,18 @@ export interface LoginFormData {
 export interface RegisterFormData {
   email: string;
   password: string;
-  user_name: string;
+  confirmPassword: string;
+  username: string;
   first_name: string;
   last_name: string;
   address: string;
   gender: string;
-  age: number;
+  birthdate: string;
   height: number;
   weight: number;
   bmi: number;
-  activity_level: number;
-  user_type: string;
+  activity_level: string;
+  workout_type: string[];
 }
 
 export interface User {

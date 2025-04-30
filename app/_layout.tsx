@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import Styles from "./screens/profile/styles";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Inter_300Light,
   Inter_400Regular,

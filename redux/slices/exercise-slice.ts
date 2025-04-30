@@ -22,19 +22,35 @@ export const getExercise = createAsyncThunk(
 interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
-  exercise: Exercise[] | null;
+  exercise: Exercise[];
+  selectedExercise: Exercise[];
 }
 
 const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
-  exercise: null,
+  exercise: [],
+  selectedExercise: [],
 };
 
-const ExerciseSlice = createSlice({
+const exerciseSlice = createSlice({
   name: "exercise",
   initialState,
-  reducers: {},
+  reducers: {
+    setSelectExercises: (state, action) => {
+      state.selectedExercise = action.payload;
+    },
+    updateSelectedExercises: (state, action) => {
+      const newSelectedExercise = action.payload;
+      state.selectedExercise = {
+        ...state.selectedExercise,
+        ...newSelectedExercise,
+      };
+    },
+    clearSelectedExercises: (state) => {
+      state.selectedExercise = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getExercise.pending, (state) => {
@@ -53,4 +69,10 @@ const ExerciseSlice = createSlice({
   },
 });
 
-export default ExerciseSlice.reducer;
+export const {
+  setSelectExercises,
+  updateSelectedExercises,
+  clearSelectedExercises,
+} = exerciseSlice.actions;
+
+export default exerciseSlice.reducer;

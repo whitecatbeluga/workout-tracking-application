@@ -73,6 +73,19 @@ const TabLayout = () => {
         )}
       >
         <Tabs.Screen
+          name="workout"
+          options={{
+            title: "Workout",
+            tabBarLabel: "Workout",
+            tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerTitleStyle: {
+              fontSize: 18,
+              fontFamily: "Inter_400Regular",
+            },
+          }}
+        />
+        <Tabs.Screen
           name="index"
           options={{
             headerTitle: user?.first_name,
@@ -122,19 +135,7 @@ const TabLayout = () => {
             ),
           }}
         />
-        <Tabs.Screen
-          name="workout"
-          options={{
-            title: "Workout",
-            tabBarLabel: "Workout",
-            tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
-            headerTitleAlign: "center",
-            headerTitleStyle: {
-              fontSize: 18,
-              fontFamily: "Inter_400Regular",
-            },
-          }}
-        />
+
         <Tabs.Screen
           name="profile"
           options={{
@@ -170,14 +171,14 @@ const TabLayout = () => {
 
 const styles = StyleSheet.create({
   avatarContainer: {
-    marginLeft: 10, // Add margin to space it out a bit
+    marginLeft: 10,
     backgroundColor: "red",
     borderRadius: "50%",
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 20, // Creates the circular shape
+    borderRadius: 20,
   },
 });
 

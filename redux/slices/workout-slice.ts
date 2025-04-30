@@ -7,6 +7,7 @@ import { AxiosError } from "axios";
 import { getAuthToken } from "@/services/get-token";
 
 import Constants from "expo-constants";
+import { WorkoutSets } from "@/custom-types/exercise-type";
 
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
@@ -52,18 +53,28 @@ interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
+  workoutSets: WorkoutSets | null;
 }
 
 const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
   workout: null,
+  workoutSets: null,
 };
 
 const WorkoutSlice = createSlice({
   name: "workout",
   initialState,
-  reducers: {},
+  reducers: {
+    updateWorkoutSets(state, action) {
+      const newSets: WorkoutSets = action.payload;
+      state.workoutSets = {
+        ...state.workoutSets,
+        ...newSets,
+      };
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(createWorkout.pending, (state) => {
@@ -96,5 +107,7 @@ const WorkoutSlice = createSlice({
       });
   },
 });
+
+export const { updateWorkoutSets } = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;
