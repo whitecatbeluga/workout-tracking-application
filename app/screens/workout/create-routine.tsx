@@ -23,7 +23,12 @@ const CreateRoutine = () => {
         </Text>
         <TouchableOpacity
           style={styles.addExerciseButton}
-          onPress={() => router.push("/screens/workout/add-exercise")}
+          onPress={() =>
+            router.push({
+              pathname: "/screens/workout/add-exercise",
+              params: { previousRoute: "/screens/workout/create-routine" },
+            })
+          }
         >
           <Ionicons name="add-outline" size={20} color="#FFFFFF" />
           <Text
