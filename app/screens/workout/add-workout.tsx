@@ -41,6 +41,13 @@ const AddWorkout = () => {
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
+  const [localWorkoutSets, setLocalWorkoutSets] = useState<WorkoutSets | null>(
+    workoutSets
+  );
+
+  useEffect(() => {
+    setLocalWorkoutSets(workoutSets);
+  }, [workoutSets]);
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -103,11 +110,7 @@ const AddWorkout = () => {
   };
 
   const handleExercises = async () => {
-    if (workoutSets) {
-      saveWorkoutToFirestore(workoutSets);
-    } else {
-      console.error("Error: workoutSets is null.");
-    }
+    if (localWorkoutSets !== null) saveWorkoutToFirestore(localWorkoutSets);
   };
 
   useLayoutEffect(() => {
@@ -136,7 +139,9 @@ const AddWorkout = () => {
               paddingVertical: 8,
               borderRadius: 8,
             }}
-            onPress={handleExercises}
+            onPress={() => {
+              handleExercises();
+            }}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
               Finish
@@ -145,8 +150,8 @@ const AddWorkout = () => {
         </View>
       ),
     });
-  }, [selectedExercises, duration, navigation]);
-  console.log("add-workout->workoutSets->", workoutSets);
+  }, [selectedExercises, duration, navigation, workoutSets]);
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
