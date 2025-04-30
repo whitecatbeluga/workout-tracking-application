@@ -1,3 +1,6 @@
+import { Swipeable, RectButton } from "react-native-gesture-handler";
+import Animated from "react-native-reanimated";
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -118,6 +121,18 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     setRestTimer(seconds);
     setIsRestModalVisible(false);
   };
+
+  const handleDeleteSet = (exerciseId: string, index: number) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
+    });
+  };
+
   return (
     <View style={styles.container}>
       <ExerciseSetCardHeader />
@@ -151,54 +166,65 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         </View>
 
         {setsByExercise[exercise.id].sets.map((set, index) => (
-          <View
+          <Swipeable
             key={set.set}
-            style={[
-              styles.tableRow,
-              focusedRowIndex === index && styles.selectedRow,
-            ]}
+            renderRightActions={() => (
+              <RectButton
+                style={styles.deleteButton}
+                onPress={() => handleDeleteSet(exercise.id, index)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </RectButton>
+            )}
           >
-            <Text style={styles.tableCell}>{set.set}</Text>
-
-            <TextInput
-              style={[styles.tableCell, styles.inputTextCenter]}
-              value={set.previous}
-              onChangeText={(text) =>
-                handleInputChange(exercise.id, index, "previous", text)
-              }
-              onFocus={() => setFocusedRowIndex(index)}
-              placeholder="-"
-            />
-            <TextInput
-              style={[styles.tableCell, styles.inputTextCenter]}
-              value={set.kg}
-              onChangeText={(text) =>
-                handleInputChange(exercise.id, index, "kg", text)
-              }
-              onFocus={() => setFocusedRowIndex(index)}
-              placeholder="0"
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.tableCell, styles.inputTextCenter]}
-              value={set.reps}
-              onChangeText={(text) =>
-                handleInputChange(exercise.id, index, "reps", text)
-              }
-              onFocus={() => setFocusedRowIndex(index)}
-              placeholder="0"
-              keyboardType="numeric"
-            />
-
-            <TouchableOpacity
-              style={styles.tableCell}
-              onPress={() => handleToggleCheck(exercise.id, index)}
+            <View
+              style={[
+                styles.tableRow,
+                focusedRowIndex === index && styles.selectedRow,
+              ]}
             >
-              <Text style={{ fontSize: 16, textAlign: "center" }}>
-                {set.checked ? "✔️" : ""}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.tableCell}>{set.set}</Text>
+
+              <TextInput
+                style={[styles.tableCell, styles.inputTextCenter]}
+                value={set.previous}
+                onChangeText={(text) =>
+                  handleInputChange(exercise.id, index, "previous", text)
+                }
+                onFocus={() => setFocusedRowIndex(index)}
+                placeholder="-"
+              />
+              <TextInput
+                style={[styles.tableCell, styles.inputTextCenter]}
+                value={set.kg}
+                onChangeText={(text) =>
+                  handleInputChange(exercise.id, index, "kg", text)
+                }
+                onFocus={() => setFocusedRowIndex(index)}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={[styles.tableCell, styles.inputTextCenter]}
+                value={set.reps}
+                onChangeText={(text) =>
+                  handleInputChange(exercise.id, index, "reps", text)
+                }
+                onFocus={() => setFocusedRowIndex(index)}
+                placeholder="0"
+                keyboardType="numeric"
+              />
+
+              <TouchableOpacity
+                style={styles.tableCell}
+                onPress={() => handleToggleCheck(exercise.id, index)}
+              >
+                <Text style={{ fontSize: 16, textAlign: "center" }}>
+                  {set.checked ? "✔️" : ""}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Swipeable>
         ))}
       </View>
 
@@ -336,6 +362,19 @@ const styles = StyleSheet.create({
   restTimerContainer: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#ff3b30",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 76,
+    marginTop: 4,
+    height: "78%",
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 
