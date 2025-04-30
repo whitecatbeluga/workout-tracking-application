@@ -9,6 +9,9 @@ import { ApiError } from "@/custom-types/api-error-type";
 import { refreshUserToken } from "@/services/api";
 import Constants from "expo-constants";
 import { getAuthToken } from "@/services/get-token";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth, db } from "@/utils/firebase-config";
 
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
@@ -110,6 +113,44 @@ export const setUserToken = createAsyncThunk(
     }
   }
 );
+
+export const resetPassword = createAsyncThunk<
+  void,
+  string,
+  { rejectValue: string }
+>("auth/resetPassword", async (email, { rejectWithValue }) => {
+  try {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return rejectWithValue(
+        "Invalid email format. Please enter a valid email."
+      );
+    }
+
+    const usersCollectionRef = collection(db, "users");
+    const userSnapshot = await getDocs(
+      query(usersCollectionRef, where("email", "==", email))
+    );
+
+    if (!userSnapshot.empty) {
+      await sendPasswordResetEmail(auth, email);
+    } else {
+      return rejectWithValue(
+        "No account found with this email. Please check and try again."
+      );
+    }
+  } catch (error: any) {
+    if (error.code === "auth/invalid-email") {
+      return rejectWithValue(
+        "Invalid email format. Please enter a valid email."
+      );
+    }
+    return rejectWithValue(
+      "An error occurred while trying to send the reset email. Please try again."
+    );
+  }
+});
 
 // State
 interface InitialState {

@@ -36,6 +36,17 @@ import Input from "@/components/input-text";
 import { Loading } from "@/custom-types/loading-type";
 import { SkeletonLoader } from "@/components/workout-skeleton";
 import { useRouter } from "expo-router";
+import { BtnTitle, CustomBtn } from "@/components/custom-btn";
+import Collapsible from "react-native-collapsible";
+import RoutineFolderCard from "@/components/routine-folder-card";
+import {
+  fetchPrograms,
+  deleteRoutine,
+  Routine,
+  Program,
+} from "@/redux/slices/routine-slice";
+import { auth } from "@/utils/firebase-config";
+import CustomModal from "@/components/custom-modal";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -93,22 +104,29 @@ const WorkoutPage = () => {
   const offset = useRef(0);
   const { setTabVisible } = useTabVisibility();
   const dispatch = useAppDispatch();
-  const workout = useAppSelector((state) => state.workout.workout);
-  const loading = useAppSelector((state) => state.workout.loading);
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState<number | null>(
-    null
-  );
-  const [selectedWorkoutDetails, setSelectedWorkoutDetails] = useState<
-    any | null
-  >(null);
+
+  const userId = auth.currentUser?.uid;
+
+  const loading = useAppSelector((state) => state.routine.loading);
+
+  const programs = useAppSelector((state) => state.routine.programs);
+
+  const [selectedRoutineDetails, setSelectedRoutineDetails] =
+    useState<Routine | null>(null);
+
+  const [selectedProgramDetails, setSelectedProgramDetails] =
+    useState<Program | null>(null);
+
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
   const [refreshing, setRefreshing] = useState(false);
 
-  const workoutRef = useRef<BottomSheet>(null);
+  const routineRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
   useEffect(() => {
-    dispatch(getWorkout());
-  }, []);
+    dispatch(fetchPrograms({ userId: userId as string }));
+  }, [fetchPrograms]);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentOffset = event.nativeEvent.contentOffset.y;
@@ -132,13 +150,34 @@ const WorkoutPage = () => {
     }, 2000);
   };
 
-  const openWorkoutMenu = (id: number) => {
-    setSelectedWorkoutId(id);
-    const selectedWorkout = workout?.find((item) => item.id === id);
-    if (selectedWorkout) {
-      setSelectedWorkoutDetails(selectedWorkout);
-      workoutRef.current?.expand();
+  const openRoutineMenu = (id: string) => {
+    const program = programs.find((p) =>
+      p.routines.some((routine) => routine.id === id)
+    );
+
+    if (program) {
+      setSelectedProgramDetails(program);
     }
+
+    const selectedRoutine = program?.routines.find(
+      (routine) => routine.id === id
+    );
+
+    if (selectedRoutine) {
+      setSelectedRoutineDetails(selectedRoutine);
+
+      routineRef.current?.expand();
+    }
+  };
+
+  const handleDeleteRoutine = (
+    userId: string,
+    programId: string,
+    routineId: string
+  ) => {
+    dispatch(deleteRoutine({ userId, programId, routineId }));
+
+    dispatch(fetchPrograms({ userId: userId as string }));
   };
 
   return (
@@ -158,8 +197,10 @@ const WorkoutPage = () => {
           <View
             style={{ paddingTop: 20, width: "100%", backgroundColor: "white" }}
           >
-            <View style={{ gap: 20, flexDirection: "column", width: "100%" }}>
-              <WorkoutHeader />
+            <View style={{ gap: 20, width: "100%" }}>
+              <View style={{ gap: 10 }}>
+                <WorkoutHeader />
+              </View>
 
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
@@ -168,48 +209,131 @@ const WorkoutPage = () => {
                     onPress={() =>
                       router.push("/screens/workout/create-routine")
                     }
-                  >
-                    <Ionicons name="add" size={28} color="#48A6A7" />
-                  </TouchableOpacity>
-                  <Ionicons name="folder-open" size={28} color="#48A6A7" />
+                  ></TouchableOpacity>
+                  <Ionicons name="folder-outline" size={28} color="#323232" />
                 </View>
               </View>
 
               <View style={styles.newRoutineSearch}>
-                <Input
-                  value={""}
-                  icon="search-circle"
-                  placeholder="Explore"
-                  onChangeText={(value) => {}}
-                />
+                {/* new routine button */}
+                <CustomBtn
+                  onPress={() => router.push("/screens/workout/create-routine")}
+                  buttonStyle={{
+                    borderRadius: 6,
+                    width: "48.5%",
+                    backgroundColor: "#48A6A7",
+                  }}
+                >
+                  <Ionicons name="grid-outline" size={18} color="white" />
+
+                  <BtnTitle title="New Routine" textStyle={{ fontSize: 14 }} />
+                </CustomBtn>
+
+                {/* explore button */}
+                <CustomBtn
+                  onPress={() => {}}
+                  buttonStyle={{
+                    borderRadius: 6,
+                    width: "48.5%",
+                    backgroundColor: "#48A6A7",
+                  }}
+                >
+                  <Ionicons name="search" size={18} color="white" />
+
+                  <BtnTitle title="Explore" textStyle={{ fontSize: 14 }} />
+                </CustomBtn>
               </View>
             </View>
           </View>
-          <View style={styles.cardList}>
-            {loading == Loading.Pending ? (
-              <>
-                <Text>Loading...</Text>
-                <SkeletonLoader />
-                <SkeletonLoader />
-                <SkeletonLoader />
-              </>
-            ) : (
-              workout?.map((item) => (
-                <WorkoutCard
-                  handleOpenWorkoutMenu={openWorkoutMenu}
-                  key={item.id}
-                  card={item}
-                  isEditable={false}
-                />
-              ))
-            )}
-          </View>
-        </ScrollView>
 
-        <BottomSheetOverlay
-          ref={workoutRef}
-          workoutDetails={selectedWorkoutDetails}
-        />
+          {loading == Loading.Pending ? (
+            <View
+              style={{
+                marginTop: 20,
+                width: "100%",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <Text>Loading...</Text>
+              <SkeletonLoader />
+              <SkeletonLoader />
+              <SkeletonLoader />
+            </View>
+          ) : (
+            <View style={{ marginTop: 20, width: "100%", gap: 8 }}>
+              {programs.map((program, index) => (
+                <RoutineFolderCard
+                  openRoutineMenu={openRoutineMenu}
+                  program={program}
+                  key={index}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+        {isModalVisible ? (
+          <CustomModal
+            isModalVisible={isModalVisible}
+            setIsModalVisible={setIsModalVisible}
+            modalTitle="Delete Routine"
+            modalDescription="Are you sure you want to delete this routine?"
+            modalActionButtonText="Confirm Deletion"
+            modalActionButton={() => {
+              handleDeleteRoutine(
+                userId as string,
+                selectedProgramDetails?.id as string,
+                selectedRoutineDetails?.id as string
+              );
+            }}
+          />
+        ) : (
+          <BottomSheetOverlay ref={routineRef}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                textAlign: "center",
+                fontFamily: "Inter_600SemiBold",
+              }}
+            >
+              {selectedRoutineDetails?.routine_name}
+            </Text>
+            <CustomBtn
+              onPress={() => {}}
+              buttonStyle={{
+                borderRadius: 6,
+                width: "100%",
+                backgroundColor: "white",
+              }}
+            >
+              <Ionicons name="pencil" size={18} color="black" />
+
+              <BtnTitle
+                title="Edit Routine"
+                textStyle={{ fontSize: 14, color: "black" }}
+              />
+            </CustomBtn>
+            <CustomBtn
+              onPress={() => {
+                setIsModalVisible((prev) => !prev);
+                routineRef.current?.close();
+              }}
+              buttonStyle={{
+                borderRadius: 6,
+                width: "100%",
+                backgroundColor: "white",
+              }}
+            >
+              <Ionicons name="trash" size={18} color="#991B1B" />
+
+              <BtnTitle
+                title="Delete Routine"
+                textStyle={{ fontSize: 14, color: "#991B1B" }}
+              />
+            </CustomBtn>
+          </BottomSheetOverlay>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -240,8 +364,9 @@ const styles = StyleSheet.create({
     alignContent: "center",
   },
   newRoutineSearch: {
-    marginTop: 10,
-    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    gap: 10,
   },
   cardList: {
     gap: 10,
@@ -251,21 +376,18 @@ const styles = StyleSheet.create({
 });
 
 interface BottomSheetProps {
-  workoutDetails: any | null;
+  children: React.ReactNode;
 }
 
 const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
-  ({ workoutDetails }, ref) => {
-    const snapPoints = useMemo(() => [screenHeight * 0.65, "90%"], []);
-
-    const handleSheetChanges = useCallback((index: number) => {}, []);
+  ({ children }, ref) => {
+    const snapPoints = useMemo(() => [screenHeight * 0.65, "50%"], []);
 
     return (
       <BottomSheet
         ref={ref}
         index={-1}
         snapPoints={snapPoints}
-        onChange={handleSheetChanges}
         enablePanDownToClose={true}
         handleStyle={{
           backgroundColor: "#F4F4F4",
@@ -281,56 +403,20 @@ const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
           />
         )}
       >
-        <BottomSheetView
-          style={{ backgroundColor: "#F4F4F4", paddingHorizontal: 20, gap: 20 }}
-        >
-          <ActionButtons />
-          <View>
-            {workoutDetails ? (
-              <View style={{ gap: 10 }}>
-                <View style={{ gap: 5 }}>
-                  <Text style={{ fontWeight: "bold", fontSize: 22 }}>
-                    {workoutDetails.name}
-                  </Text>
-                  <Text style={{ fontWeight: "500", fontSize: 14 }}>
-                    {workoutDetails.description}
-                  </Text>
-                  <Text style={{ fontSize: 14 }}>
-                    Duration: {workoutDetails.duration}
-                  </Text>
-                  <Text style={{ fontSize: 14 }}>
-                    Intensity: {workoutDetails.intensity}
-                  </Text>
-                  <Text style={{ fontSize: 14 }}>
-                    Volume: {workoutDetails.intensity}
-                  </Text>
-                  <Text style={{ fontSize: 14 }}>
-                    Set: {workoutDetails.intensity}
-                  </Text>
-                </View>
-
-                <Text style={overlayStyles.sectionTitle}>Exercise Details</Text>
-              </View>
-            ) : (
-              <Text>Loading workout details...</Text>
-            )}
-          </View>
-        </BottomSheetView>
-
         <BottomSheetScrollView
           bounces={false}
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingBottom: 30,
+            paddingTop: 20,
             backgroundColor: "#F4F4F4",
-            gap: 20,
+            gap: 10,
+            flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}
         >
-          {workoutDetails?.exercises?.map((item: WorkoutExercise) => (
-            <ExerciseCard key={item.id} card={item} />
-          ))}
+          {children}
         </BottomSheetScrollView>
       </BottomSheet>
     );
