@@ -13,6 +13,7 @@ export type Routine = {
 
 export type Program = {
   id: string;
+  routine_ids?: string[];
   program_name?: string;
   createdAt?: string;
   routines: Routine[];
@@ -31,13 +32,13 @@ const initialState: ProgramState = {
 };
 
 // Async thunks
-export const fetchRoutines = createAsyncThunk(
-  "routines/fetchAll",
-  async ({ userId, programId }: { userId: string; programId: string }) => {
-    const routines = await RoutineService.getRoutines(userId, programId);
-    return routines;
-  }
-);
+// export const fetchRoutines = createAsyncThunk(
+//   "routines/fetchAll",
+//   async ({ userId, programId }: { userId: string; programId: string }) => {
+//     const routines = await RoutineService.getRoutines(userId, programId);
+//     return routines;
+//   }
+// );
 
 export const fetchPrograms = createAsyncThunk(
   "programs/fetchAll",
@@ -48,23 +49,28 @@ export const fetchPrograms = createAsyncThunk(
   }
 );
 
-export const createRoutine = createAsyncThunk(
-  "routines/create",
+export const createRoutineWithoutProgram = createAsyncThunk(
+  "routines/create-without-program",
   async ({
     userId,
     programId,
     routineData,
+    programData,
   }: {
     userId: string;
-    programId: string;
+    programId?: string;
     routineData: any;
+    programData: any;
   }) => {
     const newRoutine = await RoutineService.addRoutine(
       userId,
-      programId,
-      routineData
+      programId ?? "",
+      routineData,
+      programData
     );
-    return newRoutine;
+
+    console.log(newRoutine);
+    // return newRoutine;
   }
 );
 
@@ -92,7 +98,7 @@ export const updateRoutine = createAsyncThunk(
 );
 
 export const deleteRoutine = createAsyncThunk(
-  "routines/delete",
+  "routines/delete-routine",
   async ({
     userId,
     programId,
@@ -104,6 +110,34 @@ export const deleteRoutine = createAsyncThunk(
   }) => {
     await RoutineService.deleteRoutine(userId, programId, routineId);
     return routineId;
+  }
+);
+
+export const deleteProgram = createAsyncThunk(
+  "routines/delete-program",
+  async ({ userId, programId }: { userId: string; programId: string }) => {
+    await RoutineService.deleteProgram(userId, programId);
+    return programId;
+  }
+);
+
+export const deleteProgramAndRoutines = createAsyncThunk(
+  "routines/delete-program-and-routines",
+  async ({
+    userId,
+    programId,
+    routineIds,
+  }: {
+    userId: string;
+    programId: string;
+    routineIds: string[];
+  }) => {
+    await RoutineService.deleteProgramAndRoutines(
+      userId,
+      programId,
+      routineIds
+    );
+    return routineIds;
   }
 );
 
@@ -159,6 +193,16 @@ export const routineSlice = createSlice({
       .addCase(deleteRoutine.fulfilled, (state, action) => {
         state.programs = state.programs.filter((p) =>
           p.routines.every((r) => r.id !== action.payload)
+        );
+      })
+      // deleteProgram
+      .addCase(deleteProgram.fulfilled, (state, action) => {
+        state.programs = state.programs.filter((p) => p.id !== action.payload);
+      })
+      // deleteProgramAndRoutines
+      .addCase(deleteProgramAndRoutines.fulfilled, (state, action) => {
+        state.programs = state.programs.filter(
+          (p) => !action.payload.includes(p.id)
         );
       });
   },

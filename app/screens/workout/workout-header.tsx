@@ -9,7 +9,10 @@ const WorkoutHeader = () => {
   const router = useRouter();
 
   const startEmptyWorkout = () => {
-    router.push("/screens/workout/add-workout");
+    router.push({
+      pathname: "/screens/workout/add-workout",
+      params: { type: "add-workout" },
+    });
   };
 
   return (

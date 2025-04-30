@@ -9,6 +9,7 @@ import {
   NativeScrollEvent,
   Dimensions,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import React, {
   forwardRef,
@@ -44,11 +45,13 @@ import {
   deleteRoutine,
   Routine,
   Program,
+  deleteProgram,
+  deleteProgramAndRoutines,
 } from "@/redux/slices/routine-slice";
 import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
 
-const { height: screenHeight } = Dimensions.get("window");
+const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
 const ActionButtons = () => {
   const buttonDetails = [
@@ -117,11 +120,17 @@ const WorkoutPage = () => {
   const [selectedProgramDetails, setSelectedProgramDetails] =
     useState<Program | null>(null);
 
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isModalRoutineVisible, setIsModalRoutineVisible] =
+    useState<boolean>(false);
+  const [isModalProgramVisible, setIsModalProgramVisible] =
+    useState<boolean>(false);
+  const [isModalProgramRoutineVisible, setIsModalProgramRoutineVisible] =
+    useState<boolean>(false);
 
   const [refreshing, setRefreshing] = useState(false);
 
   const routineRef = useRef<BottomSheet>(null);
+  const programRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -141,10 +150,10 @@ const WorkoutPage = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const result = await dispatch(getWorkout());
-    // if (result.type === "workout/getWorkout/fulfilled") {
-    //   setRefreshing(false);
-    // }
+    const result = await dispatch(fetchPrograms({ userId: userId as string }));
+    if (result.type === "programs/fetchAll/fulfilled") {
+      setRefreshing(false);
+    }
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
@@ -170,12 +179,38 @@ const WorkoutPage = () => {
     }
   };
 
-  const handleDeleteRoutine = (
+  const openProgramMenu = (id: string) => {
+    const program = programs.find((p) => p.id === id);
+
+    if (program) {
+      setSelectedProgramDetails(program);
+
+      programRef.current?.expand();
+    }
+  };
+
+  const handleDeleteRoutine = async (
     userId: string,
     programId: string,
     routineId: string
   ) => {
-    dispatch(deleteRoutine({ userId, programId, routineId }));
+    await dispatch(deleteRoutine({ userId, programId, routineId }));
+
+    dispatch(fetchPrograms({ userId: userId as string }));
+  };
+
+  const handleDeleteProgram = async (userId: string, programId: string) => {
+    await dispatch(deleteProgram({ userId, programId }));
+
+    dispatch(fetchPrograms({ userId: userId as string }));
+  };
+
+  const handleDeleteProgramRoutine = async (
+    userId: string,
+    programId: string,
+    routineIds: string[]
+  ) => {
+    await dispatch(deleteProgramAndRoutines({ userId, programId, routineIds }));
 
     dispatch(fetchPrograms({ userId: userId as string }));
   };
@@ -195,7 +230,12 @@ const WorkoutPage = () => {
           }
         >
           <View
-            style={{ paddingTop: 20, width: "100%", backgroundColor: "white" }}
+            style={{
+              paddingTop: 20,
+              paddingBottom: 20,
+              width: "100%",
+              backgroundColor: "white",
+            }}
           >
             <View style={{ gap: 20, width: "100%" }}>
               <View style={{ gap: 10 }}>
@@ -217,7 +257,12 @@ const WorkoutPage = () => {
               <View style={styles.newRoutineSearch}>
                 {/* new routine button */}
                 <CustomBtn
-                  onPress={() => router.push("/screens/workout/create-routine")}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/screens/workout/create-routine",
+                      params: { type: "create-routine" },
+                    })
+                  }
                   buttonStyle={{
                     borderRadius: 6,
                     width: "48.5%",
@@ -260,11 +305,37 @@ const WorkoutPage = () => {
               <SkeletonLoader />
               <SkeletonLoader />
             </View>
+          ) : programs.length == 0 ? (
+            <View
+              style={{
+                marginTop: 20,
+                width: "100%",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <Image
+                source={require("../../../assets/images/empty-state.png")}
+                style={{ width: 250, height: 200, alignSelf: "center" }}
+              />
+              <Text
+                style={{
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 16,
+                  textAlign: "center",
+                  color: "#323232",
+                }}
+              >
+                It looks like you don't have any routines yet. Create a new one
+                to get started!
+              </Text>
+            </View>
           ) : (
             <View style={{ marginTop: 20, width: "100%", gap: 8 }}>
               {programs.map((program, index) => (
                 <RoutineFolderCard
                   openRoutineMenu={openRoutineMenu}
+                  openProgramMenu={openProgramMenu}
                   program={program}
                   key={index}
                 />
@@ -272,67 +343,174 @@ const WorkoutPage = () => {
             </View>
           )}
         </ScrollView>
-        {isModalVisible ? (
-          <CustomModal
-            isModalVisible={isModalVisible}
-            setIsModalVisible={setIsModalVisible}
-            modalTitle="Delete Routine"
-            modalDescription="Are you sure you want to delete this routine?"
-            modalActionButtonText="Confirm Deletion"
-            modalActionButton={() => {
-              handleDeleteRoutine(
-                userId as string,
-                selectedProgramDetails?.id as string,
-                selectedRoutineDetails?.id as string
-              );
-            }}
-          />
+        {isModalRoutineVisible ||
+        isModalProgramVisible ||
+        isModalProgramRoutineVisible ? (
+          <>
+            {/* routine modal */}
+            <CustomModal
+              isModalVisible={isModalRoutineVisible}
+              setIsModalVisible={setIsModalRoutineVisible}
+              modalTitle="Delete Routine"
+              modalDescription="Are you sure you want to delete this routine?"
+              modalActionButtonText="Confirm Deletion"
+              modalActionButton={() => {
+                handleDeleteRoutine(
+                  userId as string,
+                  selectedProgramDetails?.id as string,
+                  selectedRoutineDetails?.id as string
+                );
+              }}
+            />
+
+            {/* program modal */}
+            <CustomModal
+              isModalVisible={isModalProgramVisible}
+              setIsModalVisible={setIsModalProgramVisible}
+              modalTitle="Delete Program"
+              modalDescription="Are you sure you want to delete this program?"
+              modalActionButtonText="Confirm Deletion"
+              modalActionButton={() => {
+                handleDeleteProgram(
+                  userId as string,
+                  selectedProgramDetails?.id as string
+                );
+              }}
+            />
+
+            {/* program and routines modal */}
+            <CustomModal
+              isModalVisible={isModalProgramRoutineVisible}
+              setIsModalVisible={setIsModalProgramRoutineVisible}
+              modalTitle="Delete Program and Routines"
+              modalDescription="Are you sure you want to delete this program and routines?"
+              modalActionButtonText="Confirm Deletion"
+              modalActionButton={() => {
+                handleDeleteProgramRoutine(
+                  userId as string,
+                  selectedProgramDetails?.id as string,
+                  selectedProgramDetails?.routine_ids as string[]
+                );
+              }}
+            />
+          </>
         ) : (
-          <BottomSheetOverlay ref={routineRef}>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "bold",
-                textAlign: "center",
-                fontFamily: "Inter_600SemiBold",
-              }}
-            >
-              {selectedRoutineDetails?.routine_name}
-            </Text>
-            <CustomBtn
-              onPress={() => {}}
-              buttonStyle={{
-                borderRadius: 6,
-                width: "100%",
-                backgroundColor: "white",
-              }}
-            >
-              <Ionicons name="pencil" size={18} color="black" />
+          <>
+            {/* routine menu */}
+            <BottomSheetOverlay ref={routineRef}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontFamily: "Inter_600SemiBold",
+                }}
+              >
+                {selectedRoutineDetails?.routine_name}
+              </Text>
+              <CustomBtn
+                onPress={() => {}}
+                buttonStyle={{
+                  borderRadius: 6,
+                  width: "100%",
+                  backgroundColor: "white",
+                }}
+              >
+                <Ionicons name="pencil" size={18} color="black" />
 
-              <BtnTitle
-                title="Edit Routine"
-                textStyle={{ fontSize: 14, color: "black" }}
-              />
-            </CustomBtn>
-            <CustomBtn
-              onPress={() => {
-                setIsModalVisible((prev) => !prev);
-                routineRef.current?.close();
-              }}
-              buttonStyle={{
-                borderRadius: 6,
-                width: "100%",
-                backgroundColor: "white",
-              }}
-            >
-              <Ionicons name="trash" size={18} color="#991B1B" />
+                <BtnTitle
+                  title="Edit Routine"
+                  textStyle={{ fontSize: 14, color: "black" }}
+                />
+              </CustomBtn>
+              <CustomBtn
+                onPress={() => {
+                  setIsModalRoutineVisible((prev) => !prev);
+                  routineRef.current?.close();
+                }}
+                buttonStyle={{
+                  borderRadius: 6,
+                  width: "100%",
+                  backgroundColor: "white",
+                }}
+              >
+                <Ionicons name="trash" size={18} color="#991B1B" />
 
-              <BtnTitle
-                title="Delete Routine"
-                textStyle={{ fontSize: 14, color: "#991B1B" }}
-              />
-            </CustomBtn>
-          </BottomSheetOverlay>
+                <BtnTitle
+                  title="Delete Routine"
+                  textStyle={{ fontSize: 14, color: "#991B1B" }}
+                />
+              </CustomBtn>
+            </BottomSheetOverlay>
+
+            {/* program menu */}
+            <BottomSheetOverlay ref={programRef}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  fontFamily: "Inter_600SemiBold",
+                }}
+              >
+                {selectedProgramDetails?.program_name}
+              </Text>
+              <CustomBtn
+                onPress={() => {}}
+                buttonStyle={{
+                  borderRadius: 6,
+                  width: "100%",
+                  backgroundColor: "white",
+                }}
+              >
+                <Ionicons name="pencil" size={18} color="black" />
+
+                <BtnTitle
+                  title="Edit Program"
+                  textStyle={{ fontSize: 14, color: "black" }}
+                />
+              </CustomBtn>
+              {selectedProgramDetails?.routines.length === 0 ? (
+                <CustomBtn
+                  onPress={() => {
+                    setIsModalProgramVisible((prev) => !prev);
+                    routineRef.current?.close();
+                  }}
+                  buttonStyle={{
+                    borderRadius: 6,
+                    width: "100%",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <Ionicons name="trash" size={18} color="#991B1B" />
+
+                  <BtnTitle
+                    title="Delete Program"
+                    textStyle={{ fontSize: 14, color: "#991B1B" }}
+                  />
+                </CustomBtn>
+              ) : (
+                <CustomBtn
+                  onPress={() => {
+                    setIsModalProgramRoutineVisible((prev) => !prev);
+                    routineRef.current?.close();
+                  }}
+                  buttonStyle={{
+                    borderRadius: 6,
+                    width: "100%",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <Ionicons name="trash" size={18} color="#991B1B" />
+
+                  <BtnTitle
+                    title="Delete Program and Routines"
+                    textStyle={{ fontSize: 14, color: "#991B1B" }}
+                  />
+                </CustomBtn>
+              )}
+            </BottomSheetOverlay>
+          </>
         )}
       </View>
     </SafeAreaView>

@@ -33,22 +33,6 @@ export default function Workout() {
                 </Text>
               </TouchableOpacity>
             ),
-            headerRight: () => (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#48A6A7",
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 8,
-                }}
-              >
-                <Text
-                  style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
-                >
-                  Save
-                </Text>
-              </TouchableOpacity>
-            ),
           }}
         />
         <Stack.Screen

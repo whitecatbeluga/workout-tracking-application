@@ -10,47 +10,71 @@ import {
   updateDoc,
   deleteDoc,
   Timestamp,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 
 export const RoutineService = {
-  async getRoutines(userId: string, programId: string) {
-    const routinesRef = collection(
-      db,
-      "users",
-      userId,
-      "programs",
-      programId,
-      "routines"
-    );
-    const snapshot = await getDocs(routinesRef);
-
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      exercise_id: doc.data().exercise_id,
-      ...doc.data(),
-    }));
-  },
-
-  async getExercisesByIds(exerciseIds: string[]) {
-    if (!exerciseIds || exerciseIds.length === 0) return [];
-
-    const exercisesRef = collection(db, "exercises");
+  async getExercisesById(routine_id: string) {
+    const exercisesRef = collection(db, "routines", routine_id, "exercises");
     const snapshot = await getDocs(exercisesRef);
 
-    return snapshot.docs
-      .filter((doc) => exerciseIds.includes(doc.id))
-      .map((doc) => {
-        const data = doc.data();
+    const exercises = await Promise.all(
+      snapshot.docs.map(async (exerciseDoc) => {
+        const exerciseData = exerciseDoc.data();
+
+        // get exercise
+        const exerciseRef = doc(db, "exercises", exerciseData.exercise_id);
+        const exerciseSnapshot = await getDoc(exerciseRef);
+        const fullData = exerciseSnapshot.data();
+
+        // get sets
+        const setsRef = collection(
+          db,
+          "routines",
+          routine_id,
+          "exercises",
+          exerciseDoc.id,
+          "sets"
+        );
+        const setsSnapshot = await getDocs(setsRef);
 
         return {
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-          category: data.category,
-          with_out_equipment: data.with_out_equipment,
-          image_url: data.image_url,
+          id: exerciseDoc.id,
+          exercise_id: exerciseData.exercise_id,
+          name: fullData?.name,
+          description: fullData?.description,
+          category: fullData?.category,
+          with_out_equipment: fullData?.with_out_equipment,
+          image_url: fullData?.image_url,
+          sets: setsSnapshot.docs.map((setDoc) => setDoc.data()),
         } as Exercise;
-      });
+      })
+    );
+
+    return exercises;
+  },
+
+  async getRoutinesByIds(routineIds: string[]) {
+    const routineRef = collection(db, "routines");
+    const snapshot = await getDocs(routineRef);
+
+    const routines = await Promise.all(
+      snapshot.docs
+        .filter((doc) => routineIds.includes(doc.id))
+        .map(async (doc) => {
+          const routineData = doc.data();
+          const exercises = await this.getExercisesById(doc.id);
+
+          return {
+            id: doc.id,
+            ...routineData,
+            exercises,
+          };
+        })
+    );
+
+    return routines;
   },
 
   async getPrograms(userId: string) {
@@ -59,26 +83,16 @@ export const RoutineService = {
 
     const programs = await Promise.all(
       snapshot.docs.map(async (doc) => {
-        const routines = await this.getRoutines(userId, doc.id);
-
-        const routinesWithExercises = await Promise.all(
-          routines.map(async (routine) => {
-            const exercises = await this.getExercisesByIds(routine.exercise_id);
-
-            return {
-              ...routine,
-              exercises,
-            };
-          })
-        );
+        const programData = doc.data();
+        const routines = await this.getRoutinesByIds(programData.routine_ids);
 
         return {
           id: doc.id,
-          ...doc.data(),
-          routines: routinesWithExercises,
+          ...programData,
+          routines,
           createdAt:
-            doc.data().createdAt instanceof Timestamp
-              ? doc.data().createdAt.toDate().toISOString()
+            programData.createdAt instanceof Timestamp
+              ? programData.createdAt.toDate().toISOString()
               : undefined,
         };
       })
@@ -88,17 +102,37 @@ export const RoutineService = {
   },
 
   // routines
-  async addRoutine(userId: string, programId: string, routineData: any) {
-    const routinesRef = collection(
-      db,
-      "users",
-      userId,
-      "programs",
-      programId,
-      "routines"
-    );
-    const docRef = await addDoc(routinesRef, routineData);
-    return { id: docRef.id, ...routineData };
+  async addRoutine(
+    userId: string,
+    routineData: any,
+    programId?: string,
+    programData?: any
+  ) {
+    let finalProgramId = programId;
+
+    // Step 1: Create the routine
+    const routinesRef = collection(db, "routines");
+    const routineDoc = await addDoc(routinesRef, routineData);
+
+    // Step 2: If no program exists, create one and add the routine ID
+    if (!programId) {
+      const programsRef = collection(db, "users", userId, "programs");
+      const newProgramDoc = await addDoc(programsRef, {
+        ...programData,
+        routine_ids: [routineDoc.id],
+      });
+      finalProgramId = newProgramDoc.id;
+    } else {
+      finalProgramId = programId;
+
+      // Step 3: Update the existing program with new routine ID
+      const programRef = doc(db, "users", userId, "programs", finalProgramId);
+      await updateDoc(programRef, {
+        routine_ids: arrayUnion(routineDoc.id),
+      });
+    }
+
+    return { id: routineDoc.id, ...routineData };
   },
 
   async updateRoutine(
@@ -120,15 +154,31 @@ export const RoutineService = {
   },
 
   async deleteRoutine(userId: string, programId: string, routineId: string) {
-    const routineRef = doc(
-      db,
-      "users",
-      userId,
-      "programs",
-      programId,
-      "routines",
-      routineId
-    );
+    const programRef = doc(db, "users", userId, "programs", programId);
+    await updateDoc(programRef, {
+      routine_ids: arrayRemove(routineId),
+    });
+
+    const routineRef = doc(db, "routines", routineId);
     await deleteDoc(routineRef);
+  },
+
+  async deleteProgram(userId: string, programId: string) {
+    const programRef = doc(db, "users", userId, "programs", programId);
+    await deleteDoc(programRef);
+  },
+
+  async deleteProgramAndRoutines(
+    userId: string,
+    programId: string,
+    routineIds: string[]
+  ) {
+    const programRef = doc(db, "users", userId, "programs", programId);
+    await deleteDoc(programRef);
+
+    routineIds.forEach((routineId) => {
+      const routineRef = doc(db, "routines", routineId);
+      deleteDoc(routineRef);
+    });
   },
 };
