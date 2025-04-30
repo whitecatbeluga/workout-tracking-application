@@ -139,7 +139,6 @@ const AddExercise = () => {
               {selectedExercise.length > 1 ? "s" : ""}
             </Text>
           </TouchableOpacity>
-          
         </View>
       )}
     </View>
@@ -179,18 +178,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 16,
+    width: "100%",
   },
   buttonAllEquipment: {
     backgroundColor: "#f0f0f0",
-    paddingHorizontal: 36,
+    width: "49%",
     paddingVertical: 10,
     borderRadius: 8,
+    alignItems: "center",
   },
   buttonAllMuscle: {
     backgroundColor: "#f0f0f0",
-    paddingHorizontal: 46,
+    width: "49%",
     paddingVertical: 10,
     borderRadius: 8,
+    alignItems: "center",
   },
   buttonText: {
     fontFamily: "Inter_500Medium",

@@ -14,7 +14,15 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
-import { addDoc, collection } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 
@@ -61,9 +69,32 @@ const AddWorkout = () => {
     setElapsedTime(0);
   };
 
+  const deleteSubCollection = async (parentRef: any, subCollection: string) => {
+    const subRef = collection(parentRef, subCollection);
+    const snapshot = await getDocs(subRef);
+
+    for (const docItem of snapshot.docs) {
+      const setsRef = collection(docItem.ref, "sets");
+      const setsSnapshot = await getDocs(setsRef);
+      for (const set of setsSnapshot.docs) {
+        await deleteDoc(set.ref);
+      }
+      await deleteDoc(docItem.ref);
+    }
+  };
+
   const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
     try {
-      const workoutRef = await addDoc(collection(db, "workouts"), {
+      const workoutRef = doc(collection(db, "workouts"));
+      const workoutSnapshot = await getDoc(workoutRef);
+
+      if (workoutSnapshot.exists()) {
+        await deleteSubCollection(workoutRef, "exercises");
+        await deleteDoc(workoutRef);
+        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
+      }
+
+      await setDoc(workoutRef, {
         timestamp: new Date(),
       });
 
@@ -75,10 +106,13 @@ const AddWorkout = () => {
           );
           continue;
         }
-        const exerciseRef = await addDoc(collection(workoutRef, "exercises"), {
+
+        const exerciseRef = doc(collection(workoutRef, "exercises"));
+        await setDoc(exerciseRef, {
           name,
           exerciseId,
         });
+
         if (sets && Array.isArray(sets)) {
           for (const set of sets) {
             const { reps, kg, checked, previous } = set;
@@ -92,18 +126,22 @@ const AddWorkout = () => {
               reps,
               kg,
               checked: checked || false,
-              previous: previous || false,
+              previous: previous || "",
             });
           }
         }
       }
+
+      console.log(`Workout saved`);
     } catch (e) {
       console.error("Error saving workout to Firestore: ", e);
     }
   };
 
   const handleExercises = async () => {
-    if (workoutSets !== null) saveWorkoutToFirestore(workoutSets);
+    if (workoutSets !== null) {
+      saveWorkoutToFirestore(workoutSets);
+    }
   };
 
   useLayoutEffect(() => {
@@ -235,7 +273,7 @@ const AddWorkout = () => {
       </View>
       <Modal
         isVisible={isModalVisible}
-        onBackdropPress={() => setIsModalVisible(false)}
+        onBackdropPress={() => setIsModalVisible((prev) => !prev)}
       >
         <View style={styles.modalContainer}>
           <Text
@@ -264,7 +302,7 @@ const AddWorkout = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.modalSettingsDiscardButton}
-              onPress={() => setIsModalVisible(false)}
+              onPress={() => setIsModalVisible((prev) => !prev)}
             >
               <Text style={{ fontFamily: "Inter_500Medium", fontSize: 16 }}>
                 Cancel
@@ -510,7 +548,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
-    width: 175,
+    width: "49%",
     borderRadius: 8,
   },
 
