@@ -41,13 +41,6 @@ const AddWorkout = () => {
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
-  const [localWorkoutSets, setLocalWorkoutSets] = useState<WorkoutSets | null>(
-    workoutSets
-  );
-
-  useEffect(() => {
-    setLocalWorkoutSets(workoutSets);
-  }, [workoutSets]);
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -110,7 +103,7 @@ const AddWorkout = () => {
   };
 
   const handleExercises = async () => {
-    if (localWorkoutSets !== null) saveWorkoutToFirestore(localWorkoutSets);
+    if (workoutSets !== null) saveWorkoutToFirestore(workoutSets);
   };
 
   useLayoutEffect(() => {
