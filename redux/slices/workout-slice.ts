@@ -74,6 +74,9 @@ const WorkoutSlice = createSlice({
         ...newSets,
       };
     },
+    clearWorkoutSets(state) {
+      state.workoutSets = null;
+    },
   },
   extraReducers: (builder) => {
     // builder
@@ -107,6 +110,6 @@ const WorkoutSlice = createSlice({
   },
 });
 
-export const { updateWorkoutSets } = WorkoutSlice.actions;
+export const { updateWorkoutSets, clearWorkoutSets } = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;

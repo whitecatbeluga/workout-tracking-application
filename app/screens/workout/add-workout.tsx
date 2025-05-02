@@ -25,6 +25,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
+import { clearWorkoutSets } from "@/redux/slices/workout-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -43,6 +45,7 @@ const AddWorkout = () => {
   // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
   //   null
   // );
+  const dispatch = useAppDispatch();
 
   const exercises = useAppSelector((state) => state.exercise.exercise);
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
@@ -52,6 +55,45 @@ const AddWorkout = () => {
 
   const router = useRouter();
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 12,
+          }}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back-outline" size={20} />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => setIsClockModal((prev) => !prev)}>
+            <Ionicons name="alarm-outline" size={34} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#48A6A7",
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 8,
+            }}
+            onPress={() => {
+              handleExercises();
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
+              Finish
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [selectedExercises, duration, navigation, workoutSets]);
 
   const handleCancel = () => {
     setIsTimerPlaying(false);
@@ -144,44 +186,10 @@ const AddWorkout = () => {
     }
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 12,
-          }}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back-outline" size={20} />
-        </TouchableOpacity>
-      ),
-      headerRight: () => (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <TouchableOpacity onPress={() => setIsClockModal((prev) => !prev)}>
-            <Ionicons name="alarm-outline" size={34} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "#48A6A7",
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 8,
-            }}
-            onPress={() => {
-              handleExercises();
-            }}
-          >
-            <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
-              Finish
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ),
-    });
-  }, [selectedExercises, duration, navigation, workoutSets]);
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearWorkoutSets());
+  };
 
   return (
     <View style={styles.container}>
@@ -257,7 +265,7 @@ const AddWorkout = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.settingsDiscardButton}
-            onPress={() => setIsModalVisible((prev) => !prev)}
+            onPress={() => discardWorkout()}
           >
             <Text
               style={{
