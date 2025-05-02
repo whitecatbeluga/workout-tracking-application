@@ -153,7 +153,7 @@ const AddWorkout = () => {
             justifyContent: "center",
             marginRight: 12,
           }}
-          onPress={() => setIsModalVisible((prev) => !prev)}
+          onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back-outline" size={20} />
         </TouchableOpacity>
