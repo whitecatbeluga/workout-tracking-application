@@ -1,11 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
-import { useNavigation, useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ScrollView } from "react-native";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 import { createRoutineWithoutProgram } from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
@@ -19,6 +24,25 @@ const CreateRoutine = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const navigation = useNavigation();
+
+  const [routineName, setRoutineName] = useState<string>("");
+
+  const { programId } = useLocalSearchParams();
+
+  const handleSaveRoutine = async () => {
+    await dispatch(
+      createRoutineWithoutProgram({
+        userId: userId as string,
+        routineName: routineName,
+        sets: workoutSets,
+        programId: (programId as string) || "",
+      })
+    );
+
+    setRoutineName("");
+
+    router.replace("/(tabs)/workout");
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -38,24 +62,16 @@ const CreateRoutine = () => {
         </TouchableOpacity>
       ),
     });
-  }, [selectedExercises, navigation]);
-
-  const handleSaveRoutine = () => {
-    // console.log(selectedExercises);
-    console.log(workoutSets);
-    // console.log(
-    //   dispatch(
-    //     createRoutineWithoutProgram({
-    //       userId: userId as string,
-    //       routineData: selectedExercises,
-    //     })
-    //   )
-    // );
-  };
+  }, [selectedExercises, navigation, workoutSets, routineName]);
 
   return (
     <View style={styles.container}>
-      <TextInput placeholder="Routine Title" style={styles.routineTitleInput} />
+      <TextInput
+        onChangeText={(value) => setRoutineName(value)}
+        value={routineName}
+        placeholder="Routine Title"
+        style={styles.routineTitleInput}
+      />
       <View style={styles.addExerciseContainer}>
         <ScrollView overScrollMode="never">
           {selectedExercises.length === 0 ? (

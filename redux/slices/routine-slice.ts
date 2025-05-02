@@ -1,7 +1,7 @@
 // store/routineSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { RoutineService } from "../../services/routine-service";
-import { Exercise } from "@/custom-types/exercise-type";
+import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import { Loading } from "@/custom-types/loading-type";
 
 export type Routine = {
@@ -32,14 +32,6 @@ const initialState: ProgramState = {
 };
 
 // Async thunks
-// export const fetchRoutines = createAsyncThunk(
-//   "routines/fetchAll",
-//   async ({ userId, programId }: { userId: string; programId: string }) => {
-//     const routines = await RoutineService.getRoutines(userId, programId);
-//     return routines;
-//   }
-// );
-
 export const fetchPrograms = createAsyncThunk(
   "programs/fetchAll",
   async ({ userId }: { userId: string }) => {
@@ -49,28 +41,52 @@ export const fetchPrograms = createAsyncThunk(
   }
 );
 
+export const createProgram = createAsyncThunk(
+  "programs/create-program",
+  async ({ userId, programName }: { userId: string; programName: string }) => {
+    const program = await RoutineService.createNewProgram(userId, programName);
+
+    return program;
+  }
+);
+
 export const createRoutineWithoutProgram = createAsyncThunk(
   "routines/create-without-program",
   async ({
     userId,
+    routineName,
+    sets,
     programId,
-    routineData,
-    programData,
   }: {
     userId: string;
+    routineName: string;
+    sets: WorkoutSets | null;
     programId?: string;
-    routineData: any;
-    programData: any;
   }) => {
-    const newRoutine = await RoutineService.addRoutine(
+    const newRoutine = await RoutineService.createNewRoutine(
       userId,
-      programId ?? "",
-      routineData,
-      programData
+      routineName,
+      sets,
+      programId ?? ""
     );
 
-    console.log(newRoutine);
-    // return newRoutine;
+    return newRoutine;
+  }
+);
+
+export const updateProgramName = createAsyncThunk(
+  "routines/update-program-name",
+  async ({
+    userId,
+    programId,
+    programName,
+  }: {
+    userId: string;
+    programId: string;
+    programName: string;
+  }) => {
+    await RoutineService.updateProgramName(userId, programId, programName);
+    return { programId, programName };
   }
 );
 
@@ -152,19 +168,6 @@ export const routineSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      //   // fetchRoutines
-      //   .addCase(fetchRoutines.pending, (state) => {
-      //     state.loading = true;
-      //     state.error = null;
-      //   })
-      //   .addCase(fetchRoutines.fulfilled, (state, action) => {
-      //     state.programs.routines = action.payload;
-      //     state.loading = false;
-      //   })
-      //   .addCase(fetchRoutines.rejected, (state, action) => {
-      //     state.loading = false;
-      //     state.error = action.error.message || "Failed to fetch routines";
-      //   })
       //   // fetchPrograms
       .addCase(fetchPrograms.pending, (state) => {
         state.loading = Loading.Pending;
@@ -173,14 +176,34 @@ export const routineSlice = createSlice({
         state.programs = action.payload;
         state.loading = Loading.Fulfilled;
       })
-      //   .addCase(fetchPrograms.rejected, (state, action) => {
-      //     state.error = action.error.message || "Failed to fetch routines";
-      //     state.loading = false;
-      //   })
-      //   // createRoutine
-      //   .addCase(createRoutine.fulfilled, (state, action) => {
-      //     state.routines.push(action.payload);
-      //   })
+      .addCase(fetchPrograms.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to fetch routines";
+        state.loading = Loading.Rejected;
+      })
+
+      // createProgram
+      .addCase(createProgram.fulfilled, (state, action) => {
+        state.programs.push(action.payload);
+      })
+
+      // createRoutineWithoutProgram
+      .addCase(createRoutineWithoutProgram.fulfilled, (state, action) => {
+        state.programs = action.payload;
+        state.loading = Loading.Fulfilled;
+      })
+
+      // updateProgramName
+      .addCase(updateProgramName.fulfilled, (state, action) => {
+        const { programId, programName } = action.payload;
+        const index = state.programs.findIndex((p) => p.id === programId);
+        if (index !== -1) {
+          state.programs[index] = {
+            ...state.programs[index],
+            program_name: programName,
+          };
+        }
+      })
+
       //   // updateRoutine
       //   .addCase(updateRoutine.fulfilled, (state, action) => {
       //     const { routineId, updatedData } = action.payload;
@@ -189,6 +212,7 @@ export const routineSlice = createSlice({
       //       state.routines[index] = { ...state.routines[index], ...updatedData };
       //     }
       //   })
+
       // deleteRoutine
       .addCase(deleteRoutine.fulfilled, (state, action) => {
         state.programs = state.programs.filter((p) =>

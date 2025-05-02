@@ -2,25 +2,34 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
 import Modal from "react-native-modal";
 import { router } from "expo-router";
+import Input from "./input-text";
 
 type CustomModalProps = {
   isModalVisible: boolean;
+  allowInput?: boolean;
   setIsModalVisible: (value: boolean) => void;
-  modalActionButton: () => void;
+  modalActionButton?: () => void;
 
   modalTitle?: string;
   modalDescription?: string;
   modalActionButtonText?: string;
+  modalActionButtonColor?: string;
+
+  children?: React.ReactNode;
 };
 
 const CustomModal = ({
   isModalVisible,
+  allowInput,
   setIsModalVisible,
   modalActionButton,
 
   modalTitle,
   modalDescription,
   modalActionButtonText,
+  modalActionButtonColor,
+
+  children,
 }: CustomModalProps) => {
   return (
     <Modal
@@ -44,33 +53,40 @@ const CustomModal = ({
             backgroundColor: "#CCC",
           }}
         />
-        <Text
-          style={{
-            fontFamily: "Inter_400Regular",
-            fontSize: 14,
-            textAlign: "center",
-          }}
-        >
-          {modalDescription}
-        </Text>
-        <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
-          <TouchableOpacity
-            style={styles.modalSettingsDiscardButton}
-            onPress={() => {
-              modalActionButton();
-              setIsModalVisible(false);
+        {modalDescription && (
+          <Text
+            style={{
+              fontFamily: "Inter_400Regular",
+              fontSize: 14,
+              textAlign: "center",
             }}
           >
-            <Text
-              style={{
-                fontFamily: "Inter_500Medium",
-                fontSize: 16,
-                color: "#ED1010",
+            {modalDescription}
+          </Text>
+        )}
+        <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
+          {allowInput ? (
+            <View style={{ width: "100%" }}>{children}</View>
+          ) : (
+            <TouchableOpacity
+              style={styles.modalSettingsDiscardButton}
+              onPress={() => {
+                modalActionButton!();
+                setIsModalVisible(false);
               }}
             >
-              {modalActionButtonText}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 16,
+                  color: modalActionButtonColor || "#ED1010",
+                }}
+              >
+                {modalActionButtonText}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={styles.modalSettingsDiscardButton}
             onPress={() => setIsModalVisible(false)}
