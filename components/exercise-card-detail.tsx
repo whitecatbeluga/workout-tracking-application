@@ -1,5 +1,4 @@
 import { Swipeable, RectButton } from "react-native-gesture-handler";
-import Animated from "react-native-reanimated";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -299,7 +298,9 @@ const ExerciseSetCardHeader = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 1,
+    marginTop: 3,
+    width: "100%",
   },
   header: {
     marginBottom: 10,

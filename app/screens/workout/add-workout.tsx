@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import {
   Text,
   StyleSheet,
   View,
   TouchableOpacity,
-  ScrollViewComponent,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -42,12 +41,9 @@ const AddWorkout = () => {
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
-  //   null
-  // );
+
   const dispatch = useAppDispatch();
 
-  const exercises = useAppSelector((state) => state.exercise.exercise);
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
@@ -65,7 +61,7 @@ const AddWorkout = () => {
             justifyContent: "center",
             marginRight: 12,
           }}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.replace("/(tabs)/workout")}
         >
           <Ionicons name="arrow-back-outline" size={20} />
         </TouchableOpacity>
@@ -189,6 +185,7 @@ const AddWorkout = () => {
   const discardWorkout = () => {
     setIsModalVisible((prev) => !prev);
     dispatch(clearWorkoutSets());
+    router.replace("/(tabs)/workout");
   };
 
   return (
@@ -217,7 +214,11 @@ const AddWorkout = () => {
       </View>
       {/* Show here the added exercise */}
 
-      <ScrollView overScrollMode="never">
+      <ScrollView
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {selectedExercises.length === 0 ? (
           <View style={styles.getStartedContainer}>
             <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
@@ -265,7 +266,7 @@ const AddWorkout = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.settingsDiscardButton}
-            onPress={() => discardWorkout()}
+            onPress={() => setIsModalVisible((prev) => !prev)}
           >
             <Text
               style={{
@@ -296,7 +297,7 @@ const AddWorkout = () => {
           <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
             <TouchableOpacity
               style={styles.modalSettingsDiscardButton}
-              onPress={() => router.back()}
+              onPress={() => discardWorkout()}
             >
               <Text
                 style={{
