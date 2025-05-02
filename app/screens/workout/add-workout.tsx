@@ -24,7 +24,11 @@ import {
 } from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
-import { clearWorkoutSets } from "@/redux/slices/workout-slice";
+import {
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 
@@ -62,7 +66,10 @@ const AddWorkout = () => {
             justifyContent: "center",
             marginRight: 12,
           }}
-          onPress={() => router.replace("/(tabs)/workout")}
+          onPress={() => {
+            dispatch(drarfWorkout());
+            router.replace("/(tabs)/workout");
+          }}
         >
           <Ionicons name="arrow-back-outline" size={20} />
         </TouchableOpacity>
@@ -187,9 +194,9 @@ const AddWorkout = () => {
     setIsModalVisible((prev) => !prev);
     dispatch(clearSelectedExercises());
     dispatch(clearWorkoutSets());
+    dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
