@@ -53,7 +53,7 @@ interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
-  workoutSets: WorkoutSets | null;
+  workoutSets: WorkoutSets;
   draftWorkout: boolean;
 }
 
@@ -61,7 +61,7 @@ const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
   workout: null,
-  workoutSets: null,
+  workoutSets: {},
   draftWorkout: false,
 };
 
@@ -77,7 +77,7 @@ const WorkoutSlice = createSlice({
       };
     },
     clearWorkoutSets(state) {
-      state.workoutSets = null;
+      state.workoutSets = {};
     },
     drarfWorkout(state) {
       state.draftWorkout = true;

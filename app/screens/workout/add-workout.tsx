@@ -50,7 +50,6 @@ const AddWorkout = () => {
   const dispatch = useAppDispatch();
 
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
-  const draftWorkout = useAppSelector((state) => state.workout.draftWorkout);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
@@ -186,10 +185,7 @@ const AddWorkout = () => {
   };
 
   const handleExercises = async () => {
-    console.log("finish outside");
-    console.log("workoutsets", workoutSets);
     if (workoutSets !== null) {
-      console.log("finish inside");
       saveWorkoutToFirestore(workoutSets);
     }
   };
@@ -201,7 +197,6 @@ const AddWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
-  console.log("workout", workoutSets);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>

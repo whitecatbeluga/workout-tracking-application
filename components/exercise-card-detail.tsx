@@ -40,18 +40,6 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
 
   const dispatch = useAppDispatch();
   const { type } = useLocalSearchParams();
-
-  useEffect(() => {
-    if (workoutSets != null) {
-      const saveSets = workoutSets[exercise.id];
-      if (saveSets) {
-        setSetsByExercise({
-          [exercise.id]: saveSets,
-        });
-      }
-      console.log("saveSets", saveSets);
-    }
-  }, []);
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({
@@ -68,6 +56,17 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
       ],
     },
   });
+
+  useEffect(() => {
+    if (workoutSets != null) {
+      const saveSets = workoutSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (workoutSets != null) {
