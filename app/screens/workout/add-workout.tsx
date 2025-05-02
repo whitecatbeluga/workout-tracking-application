@@ -26,6 +26,7 @@ import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 import { clearWorkoutSets } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -184,6 +185,7 @@ const AddWorkout = () => {
 
   const discardWorkout = () => {
     setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
     dispatch(clearWorkoutSets());
     router.replace("/(tabs)/workout");
   };

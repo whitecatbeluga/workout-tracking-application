@@ -34,6 +34,13 @@ interface SetData {
 
 const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+  const [isRestModalVisible, setIsRestModalVisible] = useState(false);
+  const [restTimer, setRestTimer] = useState<number>(34);
+
+  const dispatch = useAppDispatch();
+  const { type } = useLocalSearchParams();
+
   useEffect(() => {
     if (workoutSets != null) {
       const saveSets = workoutSets[exercise.id];
@@ -42,6 +49,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           [exercise.id]: saveSets,
         });
       }
+      console.log("saveSets", saveSets);
     }
   }, []);
   const [setsByExercise, setSetsByExercise] = useState<{
@@ -61,25 +69,20 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     },
   });
 
-  const { type } = useLocalSearchParams();
-
-  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
-  const [isRestModalVisible, setIsRestModalVisible] = useState(false);
-  const [restTimer, setRestTimer] = useState<number>(34);
-  const dispatch = useAppDispatch();
-
   useEffect(() => {
-    const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
-      (acc, exerciseId) => {
-        acc[exerciseId] = {
-          name: setsByExercise[exerciseId].name,
-          sets: setsByExercise[exerciseId].sets,
-        };
-        return acc;
-      },
-      {} as WorkoutSets
-    );
-    dispatch(updateWorkoutSets(setsObject));
+    if (workoutSets != null) {
+      const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
+        (acc, exerciseId) => {
+          acc[exerciseId] = {
+            name: setsByExercise[exerciseId].name,
+            sets: setsByExercise[exerciseId].sets,
+          };
+          return acc;
+        },
+        {} as WorkoutSets
+      );
+      dispatch(updateWorkoutSets(setsObject));
+    }
   }, [setsByExercise]);
 
   const handleInputChange = (
@@ -298,7 +301,7 @@ const ExerciseSetCardHeader = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 1,
+    // padding: 1,
     marginTop: 3,
     width: "100%",
   },
@@ -318,7 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     padding: 5,
     borderRadius: 5,
-    marginBottom: 10,
+    // marginBottom: 10,
   },
   tableHeaderText: {
     flex: 1,
@@ -330,7 +333,9 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 5,
+    // padding: 5,
+    paddingTop: 5,
+    paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
