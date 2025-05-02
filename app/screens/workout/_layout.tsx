@@ -134,6 +134,10 @@ export default function Workout() {
           headerTitleAlign: "center",
         }}
       />
+      <Stack.Screen
+        name="workout-confirmation"
+        options={{ headerShown: false }}
+      />
     </ExerciseProvider>
   );
 }
