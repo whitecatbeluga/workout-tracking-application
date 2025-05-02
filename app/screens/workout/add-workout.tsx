@@ -232,7 +232,7 @@ const AddWorkout = () => {
         <View>
           <TouchableOpacity
             style={styles.addExerciseButton}
-            onPress={() => router.push("/screens/workout/add-exercise")}
+            onPress={() => router.replace("/screens/workout/add-exercise")}
           >
             <Ionicons name="add-outline" size={20} color="#FFFFFF" />
             <Text
