@@ -33,7 +33,8 @@ const AddWorkout = () => {
     "timer"
   );
 
-  const [duration, setDuration] = useState<number>(60);
+  // const [duration, setDuration] = useState<number>(60);
+  const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
@@ -117,7 +118,7 @@ const AddWorkout = () => {
   const calculateWorkoutStats = (workoutSets?: WorkoutSets | null) => {
     let totalVolume = 0;
     let totalSets = 0;
-
+    console.log("workoutSets in calculate", workoutSets);
     if (!workoutSets) return { totalVolume, totalSets };
 
     for (const exercise of Object.values(workoutSets)) {
@@ -129,7 +130,6 @@ const AddWorkout = () => {
         totalSets += 1;
       }
     }
-
     return { totalVolume, totalSets };
   };
 
@@ -155,7 +155,6 @@ const AddWorkout = () => {
     console.log("Total Volume: ", totalVolume);
     console.log("Total Sets: ", totalSets);
     console.log("Total Duration: ", workoutDuration);
-
     // dispatch(resetDuration());
   };
 
@@ -166,6 +165,8 @@ const AddWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
+
+  // console.log("duration", duration);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -347,7 +348,7 @@ const AddWorkout = () => {
             <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
                 </TouchableOpacity>
@@ -376,7 +377,7 @@ const AddWorkout = () => {
                   )}
                 </CountdownCircleTimer>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => prev + 15)}
+                // onPress={() => setDuration((prev) => prev + 15)}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
                 </TouchableOpacity>

@@ -9,30 +9,30 @@ const Timer = () => {
   const dispatch = useDispatch();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setDisplayTime((prev) => prev + 1);
-    }, 1000);
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
   // useEffect(() => {
   //   intervalRef.current = setInterval(() => {
-  //     setDisplayTime((prev) => {
-  //       const updated = prev + 1;
-  //       dispatch(setDuration(updated));
-  //       return updated;
-  //     });
+  //     setDisplayTime((prev) => prev + 1);
   //   }, 1000);
-
   //   return () => {
-  //     if (intervalRef.current) clearInterval(intervalRef.current);
+  //     if (intervalRef.current) {
+  //       clearInterval(intervalRef.current);
+  //     }
   //   };
-  // }, [dispatch]);
+  // }, []);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setDisplayTime((prev) => {
+        const updated = prev + 1;
+        dispatch(setDuration(updated));
+        return updated;
+      });
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [dispatch]);
 
   return (
     <View>

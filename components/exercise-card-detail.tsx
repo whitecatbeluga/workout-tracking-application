@@ -332,9 +332,9 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: "row",
     alignItems: "center",
-    // padding: 5,
-    paddingTop: 5,
-    paddingBottom: 5,
+    padding: 5,
+    // paddingTop: 5,
+    // paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },

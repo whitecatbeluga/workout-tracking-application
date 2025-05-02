@@ -1,6 +1,10 @@
 import { ApiError } from "@/custom-types/api-error-type";
 import { Loading } from "@/custom-types/loading-type";
-import { Workout, WorkoutFormData } from "@/custom-types/workout-type";
+import {
+  DurationVolumeSets,
+  Workout,
+  WorkoutFormData,
+} from "@/custom-types/workout-type";
 import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
@@ -55,6 +59,7 @@ interface InitialState {
   workout: Workout[] | null;
   workoutSets: WorkoutSets;
   draftWorkout: boolean;
+  volumeSets: DurationVolumeSets;
 }
 
 const initialState: InitialState = {
@@ -63,6 +68,10 @@ const initialState: InitialState = {
   workout: null,
   workoutSets: {},
   draftWorkout: false,
+  volumeSets: {
+    volume: "",
+    sets: 0,
+  },
 };
 
 const WorkoutSlice = createSlice({
@@ -85,37 +94,9 @@ const WorkoutSlice = createSlice({
     undraftWorkout(state) {
       state.draftWorkout = false;
     },
+    volumnSets(state, action) {},
   },
-  extraReducers: (builder) => {
-    // builder
-    //   .addCase(createWorkout.pending, (state) => {
-    //     state.loading = Loading.Pending;
-    //     state.error = null;
-    //   })
-    //   .addCase(createWorkout.fulfilled, (state, action) => {
-    //     state.loading = Loading.Fulfilled;
-    //     state.error = null;
-    //     state.workout = [action.payload, ...(state.workout ?? [])];
-    //   })
-    //   .addCase(createWorkout.rejected, (state, action) => {
-    //     state.loading = Loading.Rejected;
-    //     state.error = action.payload as string;
-    //   });
-    // builder
-    //   .addCase(getWorkout.pending, (state) => {
-    //     state.loading = Loading.Pending;
-    //     state.error = null;
-    //   })
-    //   .addCase(getWorkout.fulfilled, (state, action) => {
-    //     state.loading = Loading.Fulfilled;
-    //     state.error = null;
-    //     state.workout = action.payload;
-    //   })
-    //   .addCase(getWorkout.rejected, (state, action) => {
-    //     state.loading = Loading.Rejected;
-    //     state.error = action.payload as string;
-    //   });
-  },
+  extraReducers: () => {},
 });
 
 export const {
