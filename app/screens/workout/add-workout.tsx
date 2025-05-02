@@ -182,7 +182,7 @@ const AddWorkout = () => {
       ),
     });
   }, [selectedExercises, duration, navigation, workoutSets]);
-  console.log("workoutSets", JSON.stringify(workoutSets, null, 2));
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>

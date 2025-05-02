@@ -26,7 +26,7 @@ export default function LandingLayout() {
       <Stack.Screen
         name="login-page"
         options={{
-          title: "Logins",
+          title: "Login",
           headerTitleAlign: "center",
           headerTitleStyle: {
             fontSize: 18,
