@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useRef } from "react";
+import { useLayoutEffect, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,10 @@ import {
 import { db, storage, auth } from "@/utils/firebase-config";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { ActivityIndicator } from "react-native";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { clearWorkoutSets, undraftWorkout } from "@/redux/slices/workout-slice";
 
 const SaveWorkout = () => {
   const {
@@ -56,6 +60,10 @@ const SaveWorkout = () => {
   const [triggerMissing, setTriggerMissing] = useState<boolean>(false);
   const [triggerMessage, setTriggerMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [timeSnapshot, setTimeSnapshot] = useState<number>(0);
+
+  const duration = useAppSelector((state) => state.timer.duration);
+  const dispatch = useAppDispatch();
 
   const handleVisibilityChange = (
     selectedVisibility: "private" | "everyone"
@@ -70,7 +78,9 @@ const SaveWorkout = () => {
 
   const navigation = useNavigation();
   const router = useRouter();
-
+  useEffect(() => {
+    setTimeSnapshot(duration);
+  }, []);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -245,6 +255,14 @@ const SaveWorkout = () => {
     }
   };
 
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
+    dispatch(clearWorkoutSets());
+    dispatch(undraftWorkout());
+    router.replace("/(tabs)/workout");
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -271,9 +289,10 @@ const SaveWorkout = () => {
               fontSize: 16,
               fontFamily: "Inter_400Regular",
               color: "#48A6A7",
+              width: "100%",
             }}
           >
-            {formatTime(Number(totalDuration))}
+            {formatTime(Number(timeSnapshot))}
           </Text>
         </View>
         <View>
@@ -387,7 +406,7 @@ const SaveWorkout = () => {
           paddingVertical: 15,
         }}
       >
-        <TouchableOpacity onPress={() => setIsModalVisible((prev) => !prev)}>
+        <TouchableOpacity onPress={discardWorkout}>
           <Text
             style={{
               fontFamily: "Inter_400Regular",

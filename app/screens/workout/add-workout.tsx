@@ -43,7 +43,7 @@ const AddWorkout = () => {
 
   const dispatch = useAppDispatch();
   // To be passed to save workout
-  const workoutDuration = useSelector(
+  const workoutDuration = useAppSelector(
     (state: RootState) => state.timer.duration
   );
 
@@ -148,7 +148,7 @@ const AddWorkout = () => {
         workoutSets: JSON.stringify(workoutSets),
         totalVolume: totalVolume.toString(),
         totalSets: totalSets.toString(),
-        totalDuration: workoutDuration,
+        totalDuration: duration,
       },
     });
     console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
