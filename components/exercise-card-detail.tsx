@@ -19,6 +19,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useLocalSearchParams } from "expo-router";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -33,6 +34,17 @@ interface SetData {
 }
 
 const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
+  const workoutSets = useAppSelector((state) => state.workout.workoutSets);
+  useEffect(() => {
+    if (workoutSets != null) {
+      const saveSets = workoutSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+  }, []);
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({

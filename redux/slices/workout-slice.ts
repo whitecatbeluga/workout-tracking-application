@@ -76,35 +76,34 @@ const WorkoutSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder
-      .addCase(createWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(createWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = [action.payload, ...(state.workout ?? [])];
-      })
-      .addCase(createWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
-
-    builder
-      .addCase(getWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(getWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = action.payload;
-      })
-      .addCase(getWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
+    // builder
+    //   .addCase(createWorkout.pending, (state) => {
+    //     state.loading = Loading.Pending;
+    //     state.error = null;
+    //   })
+    //   .addCase(createWorkout.fulfilled, (state, action) => {
+    //     state.loading = Loading.Fulfilled;
+    //     state.error = null;
+    //     state.workout = [action.payload, ...(state.workout ?? [])];
+    //   })
+    //   .addCase(createWorkout.rejected, (state, action) => {
+    //     state.loading = Loading.Rejected;
+    //     state.error = action.payload as string;
+    //   });
+    // builder
+    //   .addCase(getWorkout.pending, (state) => {
+    //     state.loading = Loading.Pending;
+    //     state.error = null;
+    //   })
+    //   .addCase(getWorkout.fulfilled, (state, action) => {
+    //     state.loading = Loading.Fulfilled;
+    //     state.error = null;
+    //     state.workout = action.payload;
+    //   })
+    //   .addCase(getWorkout.rejected, (state, action) => {
+    //     state.loading = Loading.Rejected;
+    //     state.error = action.payload as string;
+    //   });
   },
 });
 
