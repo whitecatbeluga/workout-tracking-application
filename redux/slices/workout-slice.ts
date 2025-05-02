@@ -54,6 +54,7 @@ interface InitialState {
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
   workoutSets: WorkoutSets | null;
+  draftWorkout: boolean;
 }
 
 const initialState: InitialState = {
@@ -61,6 +62,7 @@ const initialState: InitialState = {
   error: null,
   workout: null,
   workoutSets: null,
+  draftWorkout: false,
 };
 
 const WorkoutSlice = createSlice({
@@ -76,6 +78,12 @@ const WorkoutSlice = createSlice({
     },
     clearWorkoutSets(state) {
       state.workoutSets = null;
+    },
+    drarfWorkout(state) {
+      state.draftWorkout = true;
+    },
+    undraftWorkout(state) {
+      state.draftWorkout = false;
     },
   },
   extraReducers: (builder) => {
@@ -110,6 +118,11 @@ const WorkoutSlice = createSlice({
   },
 });
 
-export const { updateWorkoutSets, clearWorkoutSets } = WorkoutSlice.actions;
+export const {
+  updateWorkoutSets,
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+} = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;
