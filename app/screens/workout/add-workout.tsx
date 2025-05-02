@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useMemo } from "react";
 import {
   Text,
   StyleSheet,
@@ -13,16 +13,6 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 import {
   clearWorkoutSets,
@@ -31,10 +21,14 @@ import {
 } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store";
+import { resetDuration } from "@/redux/slices/timer-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
+  const [addExerciseModal, setAddExerciseModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
@@ -48,7 +42,12 @@ const AddWorkout = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const dispatch = useAppDispatch();
+  // To be passed to save workout
+  const workoutDuration = useSelector(
+    (state: RootState) => state.timer.duration
+  );
 
+  const exercises = useAppSelector((state) => state.exercise.exercise);
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
@@ -87,7 +86,7 @@ const AddWorkout = () => {
               borderRadius: 8,
             }}
             onPress={() => {
-              handleExercises();
+              handleFinish();
             }}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
@@ -115,79 +114,49 @@ const AddWorkout = () => {
     setElapsedTime(0);
   };
 
-  const deleteSubCollection = async (parentRef: any, subCollection: string) => {
-    const subRef = collection(parentRef, subCollection);
-    const snapshot = await getDocs(subRef);
+  const calculateWorkoutStats = (workoutSets?: WorkoutSets | null) => {
+    let totalVolume = 0;
+    let totalSets = 0;
 
-    for (const docItem of snapshot.docs) {
-      const setsRef = collection(docItem.ref, "sets");
-      const setsSnapshot = await getDocs(setsRef);
-      for (const set of setsSnapshot.docs) {
-        await deleteDoc(set.ref);
+    if (!workoutSets) return { totalVolume, totalSets };
+
+    for (const exercise of Object.values(workoutSets)) {
+      for (const set of exercise.sets || []) {
+        const kg = Number(set.kg) || 0;
+        const reps = Number(set.reps) || 0;
+        const volume = kg * reps;
+        totalVolume += volume;
+        totalSets += 1;
       }
-      await deleteDoc(docItem.ref);
     }
+
+    return { totalVolume, totalSets };
   };
 
-  const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
-    try {
-      const workoutRef = doc(collection(db, "workouts"));
-      const workoutSnapshot = await getDoc(workoutRef);
-
-      if (workoutSnapshot.exists()) {
-        await deleteSubCollection(workoutRef, "exercises");
-        await deleteDoc(workoutRef);
-        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
-      }
-
-      await setDoc(workoutRef, {
-        timestamp: new Date(),
-      });
-
-      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-        const { name, sets } = exercise;
-        if (!name) {
-          console.error(
-            `Error: 'name' is missing in exercise with ID: ${exerciseId}`
-          );
-          continue;
-        }
-
-        const exerciseRef = doc(collection(workoutRef, "exercises"));
-        await setDoc(exerciseRef, {
-          name,
-          exerciseId,
-        });
-
-        if (sets && Array.isArray(sets)) {
-          for (const set of sets) {
-            const { reps, kg, checked, previous } = set;
-
-            if (reps === undefined || kg === undefined) {
-              console.error(`Error: reps or kg is undefined. Skipping set.`);
-              continue;
-            }
-
-            await addDoc(collection(exerciseRef, "sets"), {
-              reps,
-              kg,
-              checked: checked || false,
-              previous: previous || "",
-            });
-          }
-        }
-      }
-
-      console.log(`Workout saved`);
-    } catch (e) {
-      console.error("Error saving workout to Firestore: ", e);
+  const handleFinish = () => {
+    if (!workoutSets) {
+      setAddExerciseModal(true);
+      console.error("Error: workoutSets is null or undefined");
+      return;
     }
-  };
 
-  const handleExercises = async () => {
-    if (workoutSets !== null) {
-      saveWorkoutToFirestore(workoutSets);
-    }
+    const { totalVolume, totalSets } = calculateWorkoutStats(workoutSets);
+
+    router.push({
+      pathname: "/screens/workout/save-workout",
+      params: {
+        workoutSets: JSON.stringify(workoutSets),
+        totalVolume: totalVolume.toString(),
+        totalSets: totalSets.toString(),
+        totalDuration: workoutDuration,
+      },
+    });
+    console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
+    console.log("Total Volume: ", totalVolume);
+    console.log("Total Sets: ", totalSets);
+    console.log("Total Duration: ", workoutDuration);
+
+    // dispatch(resetDuration());
   };
 
   const discardWorkout = () => {
@@ -509,6 +478,38 @@ const AddWorkout = () => {
           )}
         </View>
       </Modal>
+      <Modal
+        isVisible={addExerciseModal}
+        onBackdropPress={() => setAddExerciseModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <Text
+            style={{
+              fontFamily: "Inter_400Regular",
+              fontSize: 16,
+              textAlign: "center",
+            }}
+          >
+            Add an exercise
+          </Text>
+          <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
+            <TouchableOpacity
+              style={styles.addExerciseModalButton}
+              onPress={() => setAddExerciseModal((prev) => !prev)}
+            >
+              <Text
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 16,
+                  color: "#FFFFFF",
+                }}
+              >
+                Ok
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -581,6 +582,14 @@ const styles = StyleSheet.create({
   },
   modalSettingsDiscardButton: {
     backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: "100%",
+    borderRadius: 8,
+  },
+  addExerciseModalButton: {
+    backgroundColor: "#48A6A7",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
