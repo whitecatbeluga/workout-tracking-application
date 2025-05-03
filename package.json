@@ -51,6 +51,7 @@
     "react-native-calendars": "^1.1310.0",
     "react-native-chart-kit": "^6.12.0",
     "react-native-collapsible": "^1.6.2",
+    "react-native-confetti-cannon": "^1.5.2",
     "react-native-countdown-circle-timer": "^3.2.1",
     "react-native-dialog": "^9.3.0",
     "react-native-element-dropdown": "^2.12.4",
@@ -67,7 +68,8 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

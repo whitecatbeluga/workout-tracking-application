@@ -85,3 +85,11 @@ git checkout -b home-screen-branch
 
 ICON used
 https://icons.expo.fyi/
+
+## DELETE LOCAL BRANCH AND KEEP MASTER AND BETA
+
+Note: You can also keep other branch just add the [ grep -v "you-branch" ] this command only works on bash and linux or mac
+
+```
+git branch | grep -v "master" | grep -v "beta" | xargs git branch -D
+```

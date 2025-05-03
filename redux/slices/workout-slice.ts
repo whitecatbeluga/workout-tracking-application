@@ -53,14 +53,16 @@ interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
-  workoutSets: WorkoutSets | null;
+  workoutSets: WorkoutSets;
+  draftWorkout: boolean;
 }
 
 const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
   workout: null,
-  workoutSets: null,
+  workoutSets: {},
+  draftWorkout: false,
 };
 
 const WorkoutSlice = createSlice({
@@ -74,40 +76,53 @@ const WorkoutSlice = createSlice({
         ...newSets,
       };
     },
+    clearWorkoutSets(state) {
+      state.workoutSets = {};
+    },
+    drarfWorkout(state) {
+      state.draftWorkout = true;
+    },
+    undraftWorkout(state) {
+      state.draftWorkout = false;
+    },
   },
   extraReducers: (builder) => {
-    builder
-      .addCase(createWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(createWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = [action.payload, ...(state.workout ?? [])];
-      })
-      .addCase(createWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
-
-    builder
-      .addCase(getWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(getWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = action.payload;
-      })
-      .addCase(getWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
+    // builder
+    //   .addCase(createWorkout.pending, (state) => {
+    //     state.loading = Loading.Pending;
+    //     state.error = null;
+    //   })
+    //   .addCase(createWorkout.fulfilled, (state, action) => {
+    //     state.loading = Loading.Fulfilled;
+    //     state.error = null;
+    //     state.workout = [action.payload, ...(state.workout ?? [])];
+    //   })
+    //   .addCase(createWorkout.rejected, (state, action) => {
+    //     state.loading = Loading.Rejected;
+    //     state.error = action.payload as string;
+    //   });
+    // builder
+    //   .addCase(getWorkout.pending, (state) => {
+    //     state.loading = Loading.Pending;
+    //     state.error = null;
+    //   })
+    //   .addCase(getWorkout.fulfilled, (state, action) => {
+    //     state.loading = Loading.Fulfilled;
+    //     state.error = null;
+    //     state.workout = action.payload;
+    //   })
+    //   .addCase(getWorkout.rejected, (state, action) => {
+    //     state.loading = Loading.Rejected;
+    //     state.error = action.payload as string;
+    //   });
   },
 });
 
-export const { updateWorkoutSets } = WorkoutSlice.actions;
+export const {
+  updateWorkoutSets,
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+} = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;
