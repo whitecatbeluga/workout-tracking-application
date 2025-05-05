@@ -1,5 +1,5 @@
 // services/routineService.ts
-import { Exercise } from "@/custom-types/exercise-type";
+import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import { db } from "@/utils/firebase-config";
 import {
   collection,
@@ -12,6 +12,8 @@ import {
   Timestamp,
   arrayUnion,
   arrayRemove,
+  writeBatch,
+  setDoc,
 } from "firebase/firestore";
 
 export const RoutineService = {
@@ -55,13 +57,13 @@ export const RoutineService = {
     return exercises;
   },
 
-  async getRoutinesByIds(routineIds: string[]) {
+  async getRoutinesByIds(routineId: string) {
     const routineRef = collection(db, "routines");
     const snapshot = await getDocs(routineRef);
 
     const routines = await Promise.all(
       snapshot.docs
-        .filter((doc) => routineIds.includes(doc.id))
+        .filter((doc) => routineId.includes(doc.id))
         .map(async (doc) => {
           const routineData = doc.data();
           const exercises = await this.getExercisesById(doc.id);
@@ -70,6 +72,10 @@ export const RoutineService = {
             id: doc.id,
             ...routineData,
             exercises,
+            createdAt:
+              routineData.createdAt instanceof Timestamp
+                ? routineData.createdAt.toDate().toISOString()
+                : undefined,
           };
         })
     );
@@ -101,38 +107,124 @@ export const RoutineService = {
     return programs;
   },
 
+  async getRoutine(routineId: string) {
+    const routineRef = doc(db, "routines", routineId);
+    const snapshot = await getDoc(routineRef);
+
+    if (!snapshot.exists()) {
+      throw new Error("Routine not found");
+    }
+
+    const routineData = snapshot.data();
+    const exercises = await this.getExercisesById(routineId);
+
+    return {
+      id: snapshot.id,
+      ...routineData,
+      exercises,
+    };
+  },
+
+  // program
+  async createNewProgram(userId: string, programName: string) {
+    const programsRef = collection(db, "users", userId, "programs");
+
+    const newProgramData = {
+      program_name: programName,
+      createdAt: Timestamp.now(),
+      routine_ids: [],
+    };
+
+    const newProgramRef = await addDoc(programsRef, newProgramData);
+
+    return {
+      id: newProgramRef.id,
+      ...newProgramData,
+      routines: [],
+      createdAt: newProgramData.createdAt.toDate().toISOString(),
+    };
+  },
+
   // routines
-  async addRoutine(
+  async createNewRoutine(
     userId: string,
-    routineData: any,
-    programId?: string,
-    programData?: any
+    routineName: string,
+    sets: WorkoutSets | null,
+    programId?: string
   ) {
     let finalProgramId = programId;
 
-    // Step 1: Create the routine
-    const routinesRef = collection(db, "routines");
-    const routineDoc = await addDoc(routinesRef, routineData);
+    try {
+      if (!finalProgramId) {
+        const programsRef = collection(db, "users", userId, "programs");
+        const programsSnap = await getDocs(programsRef);
 
-    // Step 2: If no program exists, create one and add the routine ID
-    if (!programId) {
-      const programsRef = collection(db, "users", userId, "programs");
-      const newProgramDoc = await addDoc(programsRef, {
-        ...programData,
-        routine_ids: [routineDoc.id],
+        if (!programsSnap.empty) {
+          finalProgramId = programsSnap.docs[0].id;
+        } else {
+          const newProgramRef = await addDoc(programsRef, {
+            program_name: "Default Program",
+            createdAt: Timestamp.now(),
+            routine_ids: [],
+          });
+          finalProgramId = newProgramRef.id;
+        }
+      }
+
+      const routineRef = await addDoc(collection(db, "routines"), {
+        routine_name: routineName,
       });
-      finalProgramId = newProgramDoc.id;
-    } else {
-      finalProgramId = programId;
 
-      // Step 3: Update the existing program with new routine ID
+      if (sets) {
+        for (const [exerciseId, exercise] of Object.entries(sets)) {
+          const { name, sets: exerciseSets } = exercise;
+          if (!name) {
+            console.warn(`Missing 'name' in exercise ID: ${exerciseId}`);
+            continue;
+          }
+
+          const exerciseRef = doc(collection(routineRef, "exercises"));
+          await setDoc(exerciseRef, {
+            exercise_id: exerciseId,
+          });
+
+          if (Array.isArray(exerciseSets)) {
+            for (const set of exerciseSets) {
+              const { reps, kg, previous } = set;
+              if (reps === undefined || kg === undefined) {
+                console.warn("Skipping invalid set", set);
+                continue;
+              }
+
+              await addDoc(collection(exerciseRef, "sets"), {
+                reps,
+                kg,
+                previous: previous ?? "",
+              });
+            }
+          }
+        }
+      }
+
       const programRef = doc(db, "users", userId, "programs", finalProgramId);
       await updateDoc(programRef, {
-        routine_ids: arrayUnion(routineDoc.id),
+        routine_ids: arrayUnion(routineRef.id),
       });
-    }
 
-    return { id: routineDoc.id, ...routineData };
+      return this.getPrograms(userId);
+    } catch (err) {
+      console.error("Error in createNewRoutine:", err);
+      throw err;
+    }
+  },
+
+  async updateProgramName(
+    userId: string,
+    programId: string,
+    programName: String
+  ) {
+    const programRef = doc(db, "users", userId, "programs", programId);
+    await updateDoc(programRef, { program_name: programName });
   },
 
   async updateRoutine(
@@ -160,9 +252,21 @@ export const RoutineService = {
     });
 
     const routineRef = doc(db, "routines", routineId);
-    await deleteDoc(routineRef);
-  },
+    const exercisesSnap = await getDocs(collection(routineRef, "exercises"));
 
+    for (const exerciseDoc of exercisesSnap.docs) {
+      const setsRef = collection(exerciseDoc.ref, "sets");
+      const setsSnap = await getDocs(setsRef);
+
+      for (const setDoc of setsSnap.docs) {
+        await deleteDoc(setDoc.ref);
+      }
+
+      await deleteDoc(exerciseDoc.ref); // delete exercise after its sets
+    }
+
+    await deleteDoc(routineRef); // finally delete the routine
+  },
   async deleteProgram(userId: string, programId: string) {
     const programRef = doc(db, "users", userId, "programs", programId);
     await deleteDoc(programRef);
@@ -176,9 +280,21 @@ export const RoutineService = {
     const programRef = doc(db, "users", userId, "programs", programId);
     await deleteDoc(programRef);
 
-    routineIds.forEach((routineId) => {
+    for (const routineId of routineIds) {
       const routineRef = doc(db, "routines", routineId);
-      deleteDoc(routineRef);
-    });
+      const exercisesSnap = await getDocs(collection(routineRef, "exercises"));
+
+      for (const exerciseDoc of exercisesSnap.docs) {
+        const setsSnap = await getDocs(collection(exerciseDoc.ref, "sets"));
+
+        for (const setDoc of setsSnap.docs) {
+          await deleteDoc(setDoc.ref);
+        }
+
+        await deleteDoc(exerciseDoc.ref);
+      }
+
+      await deleteDoc(routineRef);
+    }
   },
 };
