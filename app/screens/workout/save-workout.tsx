@@ -41,6 +41,9 @@ const SaveWorkout = () => {
     totalSets,
     totalDuration,
   } = useLocalSearchParams();
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
+  );
 
   const parsedWorkoutSets: WorkoutSets = JSON.parse(workoutSetsParam as string);
 
@@ -193,8 +196,8 @@ const SaveWorkout = () => {
 
         await setDoc(workoutRef, {
           workout_duration: "TBD",
-          total_volume: totalVolume,
-          total_sets: totalSets,
+          total_volume: totalVolumeSets.totalVolume,
+          total_sets: totalVolumeSets.totalSets,
           workout_title: workoutTitle,
           created_at: serverTimestamp(),
           workout_description: workoutDescription,
@@ -300,12 +303,14 @@ const SaveWorkout = () => {
         <View>
           <Text style={styles.title}>Volume</Text>
           {/* <Text style={styles.volumeSets}>50 kg</Text> */}
-          <Text style={styles.volumeSets}>{totalVolume} kg</Text>
+          <Text style={styles.volumeSets}>
+            {totalVolumeSets.totalVolume} kg
+          </Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
           {/* <Text style={styles.volumeSets}>1</Text> */}
-          <Text style={styles.volumeSets}>{totalSets}</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       <View style={{ paddingVertical: 20 }}>

@@ -12,6 +12,7 @@ import { getAuthToken } from "@/services/get-token";
 
 import Constants from "expo-constants";
 import { WorkoutSets } from "@/custom-types/exercise-type";
+import { RootState } from "../store";
 
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
@@ -53,13 +54,30 @@ export const createWorkout = createAsyncThunk(
   }
 );
 
+export const selectTotalVolumeSets = (state: RootState) => {
+  const workoutSets = state.workout.workoutSets;
+  let totalVolume = 0;
+  let totalSets = 0;
+  Object.values(workoutSets).forEach((exercise) => {
+    exercise.sets.forEach((set) => {
+      if (set.checked) {
+        const kg = parseFloat(set.kg) || 0;
+        const reps = parseFloat(set.reps) || 0;
+        totalVolume += kg * reps;
+        totalSets += 1;
+      }
+    });
+  });
+  return { totalVolume, totalSets };
+};
+
 interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
   workoutSets: WorkoutSets;
   draftWorkout: boolean;
-  volumeSets: DurationVolumeSets;
+  totalVolumeSets: { totalVolume: number; totalSets: number };
 }
 
 const initialState: InitialState = {
@@ -68,9 +86,9 @@ const initialState: InitialState = {
   workout: null,
   workoutSets: {},
   draftWorkout: false,
-  volumeSets: {
-    volume: "",
-    sets: 0,
+  totalVolumeSets: {
+    totalVolume: 0,
+    totalSets: 0,
   },
 };
 
@@ -94,7 +112,9 @@ const WorkoutSlice = createSlice({
     undraftWorkout(state) {
       state.draftWorkout = false;
     },
-    volumnSets(state, action) {},
+    updateTotalVolumeSets(state, action) {
+      state.totalVolumeSets = action.payload;
+    },
   },
   extraReducers: () => {},
 });
@@ -104,6 +124,7 @@ export const {
   clearWorkoutSets,
   drarfWorkout,
   undraftWorkout,
+  updateTotalVolumeSets,
 } = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;

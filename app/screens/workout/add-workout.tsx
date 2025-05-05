@@ -23,7 +23,6 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import { resetDuration } from "@/redux/slices/timer-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -52,6 +51,10 @@ const AddWorkout = () => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
+  );
+
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
   );
 
   const router = useRouter();
@@ -166,7 +169,7 @@ const AddWorkout = () => {
     router.replace("/(tabs)/workout");
   };
 
-  // console.log("duration", duration);
+  // console.log("totalVolumeSets", totalVolumeSets);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -179,16 +182,16 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            <Timer />
+            {/* <Timer /> */}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>0 kg</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalVolume}kg</Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>0</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       {/* Show here the added exercise */}
