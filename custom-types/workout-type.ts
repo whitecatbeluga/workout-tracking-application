@@ -40,3 +40,8 @@ export interface WorkoutExercise {
     with_out_equipment: boolean;
   };
 }
+
+export interface DurationVolumeSets {
+  volume: string;
+  sets: number;
+}

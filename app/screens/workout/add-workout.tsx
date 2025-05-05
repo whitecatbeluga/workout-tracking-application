@@ -1,10 +1,15 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useLayoutEffect,
+  useMemo,
+  forwardRef,
+  useRef,
+} from "react";
 import {
   Text,
   StyleSheet,
   View,
   TouchableOpacity,
-  ScrollViewComponent,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,35 +19,48 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
 import { WorkoutSets } from "@/custom-types/exercise-type";
+import {
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { RootState } from "@/redux/store";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetProps,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { BtnTitle, CustomBtn } from "@/components/custom-btn";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
+  const [addExerciseModal, setAddExerciseModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
+  const createNewRoutineRef = useRef<BottomSheet>(null);
 
-  const [duration, setDuration] = useState<number>(60);
+  // const [duration, setDuration] = useState<number>(60);
+  const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
-  //   null
-  // );
+
+  const dispatch = useAppDispatch();
+  const openCreateNewRoutine = () => {
+    createNewRoutineRef.current?.expand();
+  };
+  // To be passed to save workout
+  const workoutDuration = useAppSelector(
+    (state: RootState) => state.timer.duration
+  );
 
   const exercises = useAppSelector((state) => state.exercise.exercise);
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
@@ -50,99 +68,12 @@ const AddWorkout = () => {
     (state) => state.exercise.selectedExercise
   );
 
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
+  );
+
   const router = useRouter();
   const navigation = useNavigation();
-
-  const handleCancel = () => {
-    setIsTimerPlaying(false);
-    setKey((prev) => prev + 1);
-  };
-
-  const formatTime = (seconds: number) => {
-    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const secs = String(seconds % 60).padStart(2, "0");
-    return `${minutes}:${secs}`;
-  };
-
-  const handleReset = () => {
-    setIsRunning(false);
-    setElapsedTime(0);
-  };
-
-  const deleteSubCollection = async (parentRef: any, subCollection: string) => {
-    const subRef = collection(parentRef, subCollection);
-    const snapshot = await getDocs(subRef);
-
-    for (const docItem of snapshot.docs) {
-      const setsRef = collection(docItem.ref, "sets");
-      const setsSnapshot = await getDocs(setsRef);
-      for (const set of setsSnapshot.docs) {
-        await deleteDoc(set.ref);
-      }
-      await deleteDoc(docItem.ref);
-    }
-  };
-
-  const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
-    try {
-      const workoutRef = doc(collection(db, "workouts"));
-      const workoutSnapshot = await getDoc(workoutRef);
-
-      if (workoutSnapshot.exists()) {
-        await deleteSubCollection(workoutRef, "exercises");
-        await deleteDoc(workoutRef);
-        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
-      }
-
-      await setDoc(workoutRef, {
-        timestamp: new Date(),
-      });
-
-      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-        const { name, sets } = exercise;
-        if (!name) {
-          console.error(
-            `Error: 'name' is missing in exercise with ID: ${exerciseId}`
-          );
-          continue;
-        }
-
-        const exerciseRef = doc(collection(workoutRef, "exercises"));
-        await setDoc(exerciseRef, {
-          name,
-          exerciseId,
-        });
-
-        if (sets && Array.isArray(sets)) {
-          for (const set of sets) {
-            const { reps, kg, checked, previous } = set;
-
-            if (reps === undefined || kg === undefined) {
-              console.error(`Error: reps or kg is undefined. Skipping set.`);
-              continue;
-            }
-
-            await addDoc(collection(exerciseRef, "sets"), {
-              reps,
-              kg,
-              checked: checked || false,
-              previous: previous || "",
-            });
-          }
-        }
-      }
-
-      console.log(`Workout saved`);
-    } catch (e) {
-      console.error("Error saving workout to Firestore: ", e);
-    }
-  };
-
-  const handleExercises = async () => {
-    if (workoutSets !== null) {
-      saveWorkoutToFirestore(workoutSets);
-    }
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -153,7 +84,10 @@ const AddWorkout = () => {
             justifyContent: "center",
             marginRight: 12,
           }}
-          onPress={() => setIsModalVisible((prev) => !prev)}
+          onPress={() => {
+            dispatch(drarfWorkout());
+            router.replace("/(tabs)/workout");
+          }}
         >
           <Ionicons name="arrow-back-outline" size={20} />
         </TouchableOpacity>
@@ -171,7 +105,7 @@ const AddWorkout = () => {
               borderRadius: 8,
             }}
             onPress={() => {
-              handleExercises();
+              handleFinish();
             }}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
@@ -183,6 +117,73 @@ const AddWorkout = () => {
     });
   }, [selectedExercises, duration, navigation, workoutSets]);
 
+  const handleCancel = () => {
+    setIsTimerPlaying(false);
+    setKey((prev) => prev + 1);
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    return `${minutes}:${secs}`;
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setElapsedTime(0);
+  };
+
+  const calculateWorkoutStats = (workoutSets?: WorkoutSets | null) => {
+    let totalVolume = 0;
+    let totalSets = 0;
+
+    if (!workoutSets) return { totalVolume, totalSets };
+
+    for (const exercise of Object.values(workoutSets)) {
+      for (const set of exercise.sets || []) {
+        const kg = Number(set.kg) || 0;
+        const reps = Number(set.reps) || 0;
+        const volume = kg * reps;
+        totalVolume += volume;
+        totalSets += 1;
+      }
+    }
+    return { totalVolume, totalSets };
+  };
+
+  const handleFinish = () => {
+    if (!workoutSets) {
+      setAddExerciseModal(true);
+      console.error("Error: workoutSets is null or undefined");
+      return;
+    }
+
+    const { totalVolume, totalSets } = calculateWorkoutStats(workoutSets);
+
+    router.push({
+      pathname: "/screens/workout/save-workout",
+      params: {
+        workoutSets: JSON.stringify(workoutSets),
+        totalVolume: totalVolume.toString(),
+        totalSets: totalSets.toString(),
+        totalDuration: duration,
+      },
+    });
+    console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
+    console.log("Total Volume: ", totalVolume);
+    console.log("Total Sets: ", totalSets);
+    console.log("Total Duration: ", workoutDuration);
+    // dispatch(resetDuration());
+  };
+
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
+    dispatch(clearWorkoutSets());
+    dispatch(undraftWorkout());
+    router.replace("/(tabs)/workout");
+  };
+  // console.log("counter-add workout");
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -195,21 +196,25 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            <Timer />
+            {/* <Timer /> */}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>0 kg</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalVolume}kg</Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>0</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       {/* Show here the added exercise */}
 
-      <ScrollView overScrollMode="never">
+      <ScrollView
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {selectedExercises.length === 0 ? (
           <View style={styles.getStartedContainer}>
             <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
@@ -222,6 +227,7 @@ const AddWorkout = () => {
           selectedExercises.map((selectedExercise) => (
             <ExerciseDetailCard
               key={selectedExercise.id}
+              openRoutine={openCreateNewRoutine}
               exercise={selectedExercise}
             />
           ))
@@ -232,7 +238,7 @@ const AddWorkout = () => {
         <View>
           <TouchableOpacity
             style={styles.addExerciseButton}
-            onPress={() => router.push("/screens/workout/add-exercise")}
+            onPress={() => router.replace("/screens/workout/add-exercise")}
           >
             <Ionicons name="add-outline" size={20} color="#FFFFFF" />
             <Text
@@ -288,7 +294,7 @@ const AddWorkout = () => {
           <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
             <TouchableOpacity
               style={styles.modalSettingsDiscardButton}
-              onPress={() => router.back()}
+              onPress={() => discardWorkout()}
             >
               <Text
                 style={{
@@ -360,7 +366,7 @@ const AddWorkout = () => {
             <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
                 </TouchableOpacity>
@@ -389,7 +395,7 @@ const AddWorkout = () => {
                   )}
                 </CountdownCircleTimer>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => prev + 15)}
+                // onPress={() => setDuration((prev) => prev + 15)}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
                 </TouchableOpacity>
@@ -491,6 +497,54 @@ const AddWorkout = () => {
           )}
         </View>
       </Modal>
+      <Modal
+        isVisible={addExerciseModal}
+        onBackdropPress={() => setAddExerciseModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <Text
+            style={{
+              fontFamily: "Inter_400Regular",
+              fontSize: 16,
+              textAlign: "center",
+            }}
+          >
+            Add an exercise
+          </Text>
+          <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
+            <TouchableOpacity
+              style={styles.addExerciseModalButton}
+              onPress={() => setAddExerciseModal((prev) => !prev)}
+            >
+              <Text
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 16,
+                  color: "#FFFFFF",
+                }}
+              >
+                Ok
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <BottomSheetOverlay ref={createNewRoutineRef}>
+        <CustomBtn
+          // key=
+          onPress={() => {}}
+          buttonStyle={{
+            borderRadius: 6,
+            width: "100%",
+            backgroundColor: "white",
+          }}
+        >
+          <BtnTitle
+            title={"Delete" as string}
+            textStyle={{ fontSize: 14, color: "red" }}
+          />
+        </CustomBtn>
+      </BottomSheetOverlay>
     </View>
   );
 };
@@ -563,6 +617,14 @@ const styles = StyleSheet.create({
   },
   modalSettingsDiscardButton: {
     backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: "100%",
+    borderRadius: 8,
+  },
+  addExerciseModalButton: {
+    backgroundColor: "#48A6A7",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
@@ -659,3 +721,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
+  ({ children }, ref) => {
+    const snapPoints = useMemo(() => ["50%"], []);
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        handleStyle={{
+          backgroundColor: "#F4F4F4",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            pressBehavior="close"
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+        <BottomSheetScrollView
+          bounces={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            paddingTop: 20,
+            backgroundColor: "#F4F4F4",
+            gap: 10,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </BottomSheetScrollView>
+      </BottomSheet>
+    );
+  }
+);

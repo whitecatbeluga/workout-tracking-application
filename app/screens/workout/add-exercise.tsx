@@ -75,9 +75,15 @@ const AddExercise = () => {
   };
   const handleAddExercise = () => {
     if (previousRoute === "/screens/workout/create-routine") {
-      router.replace("/screens/workout/create-routine");
+      router.replace({
+        pathname: "/screens/workout/create-routine",
+        params: { type: "add-routine" },
+      });
     } else {
-      router.replace("/screens/workout/add-workout");
+      router.replace({
+        pathname: "/screens/workout/add-workout",
+        params: { type: "add-workout" },
+      });
     }
   };
 

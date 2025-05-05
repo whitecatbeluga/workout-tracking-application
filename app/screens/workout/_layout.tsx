@@ -33,19 +33,37 @@ export default function Workout() {
                 </Text>
               </TouchableOpacity>
             ),
-            headerRight: () => (
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#48A6A7",
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 8,
-                }}
-              >
+          }}
+        />
+        <Stack.Screen
+          name="view-routine"
+          options={{
+            title: "View Routine",
+            headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.push("/(tabs)/workout")}>
                 <Text
-                  style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
+                  style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
                 >
-                  Save
+                  Back
+                </Text>
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="explore-routines"
+          options={{
+            title: "Explore Routines",
+            headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.push("/(tabs)/workout")}>
+                <Text
+                  style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
+                >
+                  Back
                 </Text>
               </TouchableOpacity>
             ),
@@ -149,6 +167,10 @@ export default function Workout() {
           headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
           headerTitleAlign: "center",
         }}
+      />
+      <Stack.Screen
+        name="workout-confirmation"
+        options={{ headerShown: false }}
       />
     </ExerciseProvider>
   );
