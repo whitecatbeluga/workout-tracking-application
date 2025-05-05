@@ -57,13 +57,13 @@ export const RoutineService = {
     return exercises;
   },
 
-  async getRoutinesByIds(routineIds: string[]) {
+  async getRoutinesByIds(routineId: string) {
     const routineRef = collection(db, "routines");
     const snapshot = await getDocs(routineRef);
 
     const routines = await Promise.all(
       snapshot.docs
-        .filter((doc) => routineIds.includes(doc.id))
+        .filter((doc) => routineId.includes(doc.id))
         .map(async (doc) => {
           const routineData = doc.data();
           const exercises = await this.getExercisesById(doc.id);
@@ -72,6 +72,10 @@ export const RoutineService = {
             id: doc.id,
             ...routineData,
             exercises,
+            createdAt:
+              routineData.createdAt instanceof Timestamp
+                ? routineData.createdAt.toDate().toISOString()
+                : undefined,
           };
         })
     );
@@ -101,6 +105,24 @@ export const RoutineService = {
     );
 
     return programs;
+  },
+
+  async getRoutine(routineId: string) {
+    const routineRef = doc(db, "routines", routineId);
+    const snapshot = await getDoc(routineRef);
+
+    if (!snapshot.exists()) {
+      throw new Error("Routine not found");
+    }
+
+    const routineData = snapshot.data();
+    const exercises = await this.getExercisesById(routineId);
+
+    return {
+      id: snapshot.id,
+      ...routineData,
+      exercises,
+    };
   },
 
   // program

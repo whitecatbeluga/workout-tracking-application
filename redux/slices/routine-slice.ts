@@ -20,18 +20,29 @@ export type Program = {
 };
 
 interface ProgramState {
+  singleRoutine: Routine | null;
   programs: Program[];
   loading: Loading;
   error: string | null;
 }
 
 const initialState: ProgramState = {
+  singleRoutine: null,
   programs: [],
   loading: Loading.Idle,
   error: null,
 };
 
 // Async thunks
+export const fetchRoutine = createAsyncThunk(
+  "routines/fetch",
+  async ({ routineId }: { routineId: string }) => {
+    const routine = await RoutineService.getRoutine(routineId);
+
+    return routine;
+  }
+);
+
 export const fetchPrograms = createAsyncThunk(
   "programs/fetchAll",
   async ({ userId }: { userId: string }) => {
@@ -168,6 +179,19 @@ export const routineSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchProgram
+      .addCase(fetchRoutine.pending, (state) => {
+        state.loading = Loading.Pending;
+      })
+      .addCase(fetchRoutine.fulfilled, (state, action) => {
+        state.singleRoutine = action.payload;
+        state.loading = Loading.Fulfilled;
+      })
+      .addCase(fetchRoutine.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to fetch routines";
+        state.loading = Loading.Rejected;
+      })
+
       //   // fetchPrograms
       .addCase(fetchPrograms.pending, (state) => {
         state.loading = Loading.Pending;
@@ -187,9 +211,16 @@ export const routineSlice = createSlice({
       })
 
       // createRoutineWithoutProgram
+      .addCase(createRoutineWithoutProgram.pending, (state) => {
+        state.loading = Loading.Pending;
+      })
       .addCase(createRoutineWithoutProgram.fulfilled, (state, action) => {
         state.programs = action.payload;
         state.loading = Loading.Fulfilled;
+      })
+      .addCase(createRoutineWithoutProgram.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to create routine";
+        state.loading = Loading.Rejected;
       })
 
       // updateProgramName

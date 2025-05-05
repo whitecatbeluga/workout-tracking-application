@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ScrollView } from "react-native";
@@ -14,34 +15,66 @@ import { useLayoutEffect, useState } from "react";
 import { createRoutineWithoutProgram } from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
+import { clearWorkoutSets } from "@/redux/slices/workout-slice";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 
 const CreateRoutine = () => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const navigation = useNavigation();
+
   const userId = auth.currentUser?.uid;
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
-  const dispatch = useAppDispatch();
-  const router = useRouter();
-  const navigation = useNavigation();
 
   const [routineName, setRoutineName] = useState<string>("");
+  const [errors, setErrors] = useState<string[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const { programId } = useLocalSearchParams();
 
   const handleSaveRoutine = async () => {
-    await dispatch(
-      createRoutineWithoutProgram({
-        userId: userId as string,
-        routineName: routineName,
-        sets: workoutSets,
-        programId: (programId as string) || "",
-      })
-    );
+    try {
+      const validationErrors = [];
 
-    setRoutineName("");
+      if (routineName.trim() === "") {
+        validationErrors.push("Please enter a routine name.");
+      }
 
-    router.replace("/(tabs)/workout");
+      if (!workoutSets || Object.keys(workoutSets).length === 0) {
+        validationErrors.push("Please select at least one exercise.");
+      }
+
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      setLoading(true);
+
+      await dispatch(
+        createRoutineWithoutProgram({
+          userId: userId as string,
+          routineName,
+          sets: workoutSets,
+          programId: (programId as string) || "",
+        })
+      );
+
+      dispatch(clearWorkoutSets());
+      dispatch(clearSelectedExercises());
+      setRoutineName("");
+      setErrors([]);
+      setLoading(false);
+
+      router.replace("/(tabs)/workout");
+    } catch (error) {
+      console.error("Routine creation error:", error);
+      setErrors(["Something went wrong while creating the routine."]);
+      setLoading(false);
+    }
   };
 
   useLayoutEffect(() => {
@@ -54,15 +87,20 @@ const CreateRoutine = () => {
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 8,
+            width: 65,
           }}
         >
-          <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
-            Save
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
+              Save
+            </Text>
+          )}
         </TouchableOpacity>
       ),
     });
-  }, [selectedExercises, navigation, workoutSets, routineName]);
+  }, [selectedExercises, navigation, workoutSets, routineName, loading]);
 
   return (
     <View style={styles.container}>
@@ -72,6 +110,16 @@ const CreateRoutine = () => {
         placeholder="Routine Title"
         style={styles.routineTitleInput}
       />
+
+      {errors?.map((error) => (
+        <Text
+          key={error}
+          style={{ color: "#991B1B", fontFamily: "Inter_400Regular" }}
+        >
+          {error}
+        </Text>
+      ))}
+
       <View style={styles.addExerciseContainer}>
         <ScrollView overScrollMode="never">
           {selectedExercises.length === 0 ? (

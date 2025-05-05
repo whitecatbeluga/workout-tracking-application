@@ -24,7 +24,7 @@ import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { getWorkout } from "@/redux/slices/workout-slice";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import WorkoutCard from "@/components/workout-card";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -55,56 +55,6 @@ import CustomModal from "@/components/custom-modal";
 import { seedFirestore } from "@/utils/seeders";
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
-
-const ActionButtons = () => {
-  const buttonDetails = [
-    { label: "Edit Workout", icon: "create", color: "#006A71", onpress: "" },
-    {
-      label: "Delete Workout",
-      icon: "close-circle",
-      color: "#991919",
-      onpress: "",
-    },
-  ];
-  const user = useAppSelector((state) => state.auth.user);
-  const access_token = useAppSelector((state) => state.auth.access_token);
-
-  return (
-    <View
-      style={{
-        marginTop: 20,
-        flexDirection: "row",
-        gap: 5,
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      {buttonDetails.map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          style={{
-            width: "48%",
-            borderRadius: 8,
-            display: "flex",
-            flexDirection: "row",
-            gap: 5,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: item.color,
-            paddingVertical: 14,
-          }}
-        >
-          <Ionicons
-            name={item.icon as keyof typeof Ionicons.glyphMap}
-            size={22}
-            color="white"
-          />
-          <Text style={{ color: "white" }}>{item.label}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
 
 const WorkoutPage = () => {
   const offset = useRef(0);
@@ -305,7 +255,12 @@ const WorkoutPage = () => {
                       setIsModalCreateProgramVisible(true);
                     }}
                   >
-                    <Ionicons name="folder-outline" size={28} color="#323232" />
+                    <MaterialIcons
+                      name="create-new-folder"
+                      size={32}
+                      color="#323232"
+                    />
+                    {/* <Ionicons name="folder-outline" size={28} color="#323232" /> */}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -335,7 +290,9 @@ const WorkoutPage = () => {
 
                 {/* explore button */}
                 <CustomBtn
-                  onPress={() => {}}
+                  onPress={() => {
+                    router.push("/screens/workout/explore-routines");
+                  }}
                   buttonStyle={{
                     borderRadius: 6,
                     width: "48.5%",
