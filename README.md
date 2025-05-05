@@ -27,7 +27,7 @@ Then list all the emulator installed
 Run the Immulator
 
 ```
-./emulator -avd Medium_Phone_API_36
+./emulator -avd Medium_Phone
 ./emulator -avd Pixel_7_Pro
 ```
 

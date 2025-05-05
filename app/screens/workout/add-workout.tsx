@@ -1,4 +1,10 @@
-import React, { useState, useLayoutEffect, useMemo } from "react";
+import React, {
+  useState,
+  useLayoutEffect,
+  useMemo,
+  forwardRef,
+  useRef,
+} from "react";
 import {
   Text,
   StyleSheet,
@@ -21,8 +27,13 @@ import {
 } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
-import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetProps,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { BtnTitle, CustomBtn } from "@/components/custom-btn";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -31,6 +42,7 @@ const AddWorkout = () => {
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
+  const createNewRoutineRef = useRef<BottomSheet>(null);
 
   // const [duration, setDuration] = useState<number>(60);
   const duration = useAppSelector((state) => state.timer.duration);
@@ -42,6 +54,9 @@ const AddWorkout = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const dispatch = useAppDispatch();
+  const openCreateNewRoutine = () => {
+    createNewRoutineRef.current?.expand();
+  };
   // To be passed to save workout
   const workoutDuration = useAppSelector(
     (state: RootState) => state.timer.duration
@@ -168,8 +183,7 @@ const AddWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
-
-  // console.log("totalVolumeSets", totalVolumeSets);
+  // console.log("counter-add workout");
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -213,6 +227,7 @@ const AddWorkout = () => {
           selectedExercises.map((selectedExercise) => (
             <ExerciseDetailCard
               key={selectedExercise.id}
+              openRoutine={openCreateNewRoutine}
               exercise={selectedExercise}
             />
           ))
@@ -514,6 +529,22 @@ const AddWorkout = () => {
           </View>
         </View>
       </Modal>
+      <BottomSheetOverlay ref={createNewRoutineRef}>
+        <CustomBtn
+          // key=
+          onPress={() => {}}
+          buttonStyle={{
+            borderRadius: 6,
+            width: "100%",
+            backgroundColor: "white",
+          }}
+        >
+          <BtnTitle
+            title={"Delete" as string}
+            textStyle={{ fontSize: 14, color: "red" }}
+          />
+        </CustomBtn>
+      </BottomSheetOverlay>
     </View>
   );
 };
@@ -690,3 +721,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
+  ({ children }, ref) => {
+    const snapPoints = useMemo(() => ["50%"], []);
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        handleStyle={{
+          backgroundColor: "#F4F4F4",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            pressBehavior="close"
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+        <BottomSheetScrollView
+          bounces={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            paddingTop: 20,
+            backgroundColor: "#F4F4F4",
+            gap: 10,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </BottomSheetScrollView>
+      </BottomSheet>
+    );
+  }
+);
