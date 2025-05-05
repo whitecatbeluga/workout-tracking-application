@@ -2,11 +2,12 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import Collapsible from "react-native-collapsible";
 import { Ionicons } from "@expo/vector-icons";
-import { Program } from "@/redux/slices/routine-slice";
+import { Program, setRoutineParams } from "@/redux/slices/routine-slice";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { BtnTitle, CustomBtn } from "./custom-btn";
 import { router } from "expo-router";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
 
 type RoutineFolderCardProps = {
   program: Program;
@@ -20,6 +21,16 @@ const RoutineFolderCard = ({
   openProgramMenu,
 }: RoutineFolderCardProps) => {
   const [collapsed, setCollapsed] = useState(true);
+
+  const dispatch = useAppDispatch();
+
+  const handleAddExercise = (programId: string) => {
+    dispatch(setRoutineParams({ programId: programId }));
+    router.push({
+      pathname: "/screens/workout/create-routine",
+      params: { type: "create-routine" },
+    });
+  };
 
   return (
     <View style={{ width: "100%", gap: 8, marginBottom: collapsed ? 0 : 10 }}>
@@ -155,12 +166,7 @@ const RoutineFolderCard = ({
         ) : (
           <View>
             <CustomBtn
-              onPress={() =>
-                router.push({
-                  pathname: "/screens/workout/create-routine",
-                  params: { type: "create-routine", programId: program.id },
-                })
-              }
+              onPress={() => handleAddExercise(program.id)}
               buttonStyle={{
                 borderRadius: 6,
                 marginTop: 10,
