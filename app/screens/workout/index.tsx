@@ -24,7 +24,7 @@ import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { getWorkout } from "@/redux/slices/workout-slice";
 import { useAppSelector } from "@/hooks/use-app-selector";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import WorkoutCard from "@/components/workout-card";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -47,61 +47,14 @@ import {
   Program,
   deleteProgram,
   deleteProgramAndRoutines,
+  createProgram,
+  updateProgramName,
 } from "@/redux/slices/routine-slice";
 import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
+import { seedFirestore } from "@/utils/seeders";
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
-
-const ActionButtons = () => {
-  const buttonDetails = [
-    { label: "Edit Workout", icon: "create", color: "#006A71", onpress: "" },
-    {
-      label: "Delete Workout",
-      icon: "close-circle",
-      color: "#991919",
-      onpress: "",
-    },
-  ];
-  const user = useAppSelector((state) => state.auth.user);
-  const access_token = useAppSelector((state) => state.auth.access_token);
-
-  return (
-    <View
-      style={{
-        marginTop: 20,
-        flexDirection: "row",
-        gap: 5,
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      {buttonDetails.map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          style={{
-            width: "48%",
-            borderRadius: 8,
-            display: "flex",
-            flexDirection: "row",
-            gap: 5,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: item.color,
-            paddingVertical: 14,
-          }}
-        >
-          <Ionicons
-            name={item.icon as keyof typeof Ionicons.glyphMap}
-            size={22}
-            color="white"
-          />
-          <Text style={{ color: "white" }}>{item.label}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
 
 const WorkoutPage = () => {
   const offset = useRef(0);
@@ -111,14 +64,16 @@ const WorkoutPage = () => {
   const userId = auth.currentUser?.uid;
 
   const loading = useAppSelector((state) => state.routine.loading);
-
   const programs = useAppSelector((state) => state.routine.programs);
 
   const [selectedRoutineDetails, setSelectedRoutineDetails] =
     useState<Routine | null>(null);
-
   const [selectedProgramDetails, setSelectedProgramDetails] =
     useState<Program | null>(null);
+
+  const [programName, setProgramName] = useState<string>("");
+  const [newProgramName, setNewProgramName] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const [isModalRoutineVisible, setIsModalRoutineVisible] =
     useState<boolean>(false);
@@ -126,11 +81,16 @@ const WorkoutPage = () => {
     useState<boolean>(false);
   const [isModalProgramRoutineVisible, setIsModalProgramRoutineVisible] =
     useState<boolean>(false);
+  const [isModalCreateProgramVisible, setIsModalCreateProgramVisible] =
+    useState<boolean>(false);
+  const [isModalUpdateProgramVisible, setIsModalUpdateProgramVisible] =
+    useState<boolean>(false);
 
   const [refreshing, setRefreshing] = useState(false);
 
   const routineRef = useRef<BottomSheet>(null);
   const programRef = useRef<BottomSheet>(null);
+  const createNewRoutineRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -159,6 +119,7 @@ const WorkoutPage = () => {
     }, 2000);
   };
 
+  // modal functions
   const openRoutineMenu = (id: string) => {
     const program = programs.find((p) =>
       p.routines.some((routine) => routine.id === id)
@@ -189,6 +150,11 @@ const WorkoutPage = () => {
     }
   };
 
+  const openCreateNewRoutine = () => {
+    createNewRoutineRef.current?.expand();
+  };
+
+  // handle functions
   const handleDeleteRoutine = async (
     userId: string,
     programId: string,
@@ -213,6 +179,41 @@ const WorkoutPage = () => {
     await dispatch(deleteProgramAndRoutines({ userId, programId, routineIds }));
 
     dispatch(fetchPrograms({ userId: userId as string }));
+  };
+
+  const handleCreateProgram = async (userId: string, programName: string) => {
+    if (programName === "") {
+      setError("Please enter a program name.");
+      return;
+    }
+
+    await dispatch(createProgram({ userId, programName }));
+
+    dispatch(fetchPrograms({ userId: userId as string }));
+
+    setError("");
+    setProgramName("");
+
+    setIsModalCreateProgramVisible(false);
+  };
+
+  const handleUpdateProgramName = async (
+    userId: string,
+    programId: string,
+    programName: string
+  ) => {
+    if (programName === "") {
+      setError("Please enter a program name.");
+      return;
+    }
+
+    await dispatch(updateProgramName({ userId, programId, programName }));
+
+    dispatch(fetchPrograms({ userId: userId as string }));
+
+    setError("");
+    setNewProgramName("");
+    setIsModalUpdateProgramVisible(false);
   };
 
   return (
@@ -242,26 +243,39 @@ const WorkoutPage = () => {
                 <WorkoutHeader />
               </View>
 
+              <TouchableOpacity onPress={seedFirestore}>
+                <Text>Seeders</Text>
+              </TouchableOpacity>
+
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
                 <View style={styles.routineIcon}>
                   <TouchableOpacity
-                    onPress={() =>
-                      router.push("/screens/workout/create-routine")
-                    }
-                  ></TouchableOpacity>
-                  <Ionicons name="folder-outline" size={28} color="#323232" />
+                    onPress={() => {
+                      setIsModalCreateProgramVisible(true);
+                    }}
+                  >
+                    <MaterialIcons
+                      name="create-new-folder"
+                      size={32}
+                      color="#323232"
+                    />
+                    {/* <Ionicons name="folder-outline" size={28} color="#323232" /> */}
+                  </TouchableOpacity>
                 </View>
               </View>
 
               <View style={styles.newRoutineSearch}>
                 {/* new routine button */}
                 <CustomBtn
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/workout/create-routine",
-                      params: { type: "create-routine" },
-                    })
+                  onPress={
+                    programs.length === 0
+                      ? () =>
+                          router.push({
+                            pathname: "/screens/workout/create-routine",
+                            params: { type: "create-routine" },
+                          })
+                      : openCreateNewRoutine
                   }
                   buttonStyle={{
                     borderRadius: 6,
@@ -276,7 +290,9 @@ const WorkoutPage = () => {
 
                 {/* explore button */}
                 <CustomBtn
-                  onPress={() => {}}
+                  onPress={() => {
+                    router.push("/screens/workout/explore-routines");
+                  }}
                   buttonStyle={{
                     borderRadius: 6,
                     width: "48.5%",
@@ -343,11 +359,15 @@ const WorkoutPage = () => {
             </View>
           )}
         </ScrollView>
+
+        {/* modals */}
         {isModalRoutineVisible ||
         isModalProgramVisible ||
-        isModalProgramRoutineVisible ? (
+        isModalProgramRoutineVisible ||
+        isModalCreateProgramVisible ||
+        isModalUpdateProgramVisible ? (
           <>
-            {/* routine modal */}
+            {/* routine deletion modal */}
             <CustomModal
               isModalVisible={isModalRoutineVisible}
               setIsModalVisible={setIsModalRoutineVisible}
@@ -363,7 +383,81 @@ const WorkoutPage = () => {
               }}
             />
 
-            {/* program modal */}
+            {/* create program modal */}
+            <CustomModal
+              isModalVisible={isModalCreateProgramVisible}
+              setIsModalVisible={setIsModalCreateProgramVisible}
+              modalTitle="Create Program"
+              modalActionButtonText="Create Program"
+              modalActionButtonColor="#48A6A7"
+              allowInput
+            >
+              <Input
+                placeholder="Program Name"
+                value={programName}
+                onChangeText={setProgramName}
+                icon={"folder-outline"}
+                error={error}
+              />
+              <CustomBtn
+                onPress={() =>
+                  handleCreateProgram(userId as string, programName)
+                }
+                buttonStyle={{
+                  borderRadius: 6,
+                  width: "100%",
+                  backgroundColor: "#48A6A7",
+                }}
+              >
+                <Ionicons name="add" size={18} color="white" />
+
+                <BtnTitle
+                  title="Create Program"
+                  textStyle={{ fontSize: 14, color: "white" }}
+                />
+              </CustomBtn>
+            </CustomModal>
+
+            {/* update program modal */}
+            <CustomModal
+              isModalVisible={isModalUpdateProgramVisible}
+              setIsModalVisible={setIsModalUpdateProgramVisible}
+              modalTitle="Update Program"
+              modalActionButtonText="UpdateProgram"
+              modalActionButtonColor="#48A6A7"
+              allowInput
+            >
+              <Input
+                placeholder="Update Program Name"
+                value={newProgramName}
+                onChangeText={setNewProgramName}
+                icon={"folder-outline"}
+                error={error}
+              />
+              <CustomBtn
+                onPress={() =>
+                  handleUpdateProgramName(
+                    userId as string,
+                    selectedProgramDetails?.id as string,
+                    newProgramName
+                  )
+                }
+                buttonStyle={{
+                  borderRadius: 6,
+                  width: "100%",
+                  backgroundColor: "#48A6A7",
+                }}
+              >
+                <Ionicons name="pencil" size={18} color="white" />
+
+                <BtnTitle
+                  title="Update Program Name"
+                  textStyle={{ fontSize: 14, color: "white" }}
+                />
+              </CustomBtn>
+            </CustomModal>
+
+            {/* program deletion modal */}
             <CustomModal
               isModalVisible={isModalProgramVisible}
               setIsModalVisible={setIsModalProgramVisible}
@@ -383,7 +477,7 @@ const WorkoutPage = () => {
               isModalVisible={isModalProgramRoutineVisible}
               setIsModalVisible={setIsModalProgramRoutineVisible}
               modalTitle="Delete Program and Routines"
-              modalDescription="Are you sure you want to delete this program and routines?"
+              modalDescription="Are you sure you want to delete this program and routines"
               modalActionButtonText="Confirm Deletion"
               modalActionButton={() => {
                 handleDeleteProgramRoutine(
@@ -456,7 +550,13 @@ const WorkoutPage = () => {
                 {selectedProgramDetails?.program_name}
               </Text>
               <CustomBtn
-                onPress={() => {}}
+                onPress={() => {
+                  setIsModalUpdateProgramVisible((prev) => !prev);
+                  setNewProgramName(
+                    selectedProgramDetails?.program_name as string
+                  );
+                  programRef.current?.close();
+                }}
                 buttonStyle={{
                   borderRadius: 6,
                   width: "100%",
@@ -509,6 +609,31 @@ const WorkoutPage = () => {
                   />
                 </CustomBtn>
               )}
+            </BottomSheetOverlay>
+
+            {/* new routine */}
+            <BottomSheetOverlay ref={createNewRoutineRef}>
+              {programs.map((program, index) => (
+                <CustomBtn
+                  key={index}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/screens/workout/create-routine",
+                      params: { id: "create-routine", programId: program.id },
+                    })
+                  }
+                  buttonStyle={{
+                    borderRadius: 6,
+                    width: "100%",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <BtnTitle
+                    title={program.program_name as string}
+                    textStyle={{ fontSize: 14, color: "black" }}
+                  />
+                </CustomBtn>
+              ))}
             </BottomSheetOverlay>
           </>
         )}

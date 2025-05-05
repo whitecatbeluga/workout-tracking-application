@@ -76,51 +76,11 @@ const data: PostItem[] = [
   },
 ];
 
-const routines = [
-  {
-    id: 1,
-    name: "Push (Chest, Shoulders, Triceps)",
-    image: require("../../../assets/images/push-day.jpg"),
-    imageKey: "push",
-  },
-  {
-    id: 2,
-    name: "Pull (Back, Biceps)",
-    image: require("../../../assets/images/Pull day.png"),
-    imageKey: "pull",
-  },
-  {
-    id: 3,
-    name: "Legs (Quads, Hamstrings, Glutes)",
-    image: require("../../../assets/images/leg-day.jpg"),
-    imageKey: "legs",
-  },
-  {
-    id: 4,
-    name: "Core Focus",
-    image: require("../../../assets/images/core-focus.jpg"),
-    imageKey: "core",
-  },
-  {
-    id: 5,
-    name: "HIIT Session",
-    image: require("../../../assets/images/hiit-session.webp"),
-    imageKey: "hiit",
-  },
-  {
-    id: 6,
-    name: "Stretch & Recovery",
-    image: require("../../../assets/images/stretch-recovery.webp"),
-    imageKey: "stretch",
-  },
-];
-
 const HomeScreen = () => {
   const [activeButton, setActiveButton] = useState<"following" | "discover">(
     "discover"
   );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
-  const [seeAllButton, setSeeAllButton] = useState(false);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
@@ -190,283 +150,195 @@ const HomeScreen = () => {
     bottomSheetRef.current?.expand();
   };
 
-  const handleSeeAllPressed = () => {
-    setSeeAllButton((prevState) => !prevState);
-  };
-
   return (
     <View>
-      <TouchableOpacity
-        onPress={handleSeeAllPressed}
-        style={{ alignItems: "flex-end", marginRight: 10, marginTop: 10 }}
-      >
-        <Text style={styles.seeAllText}>
-          {seeAllButton ? "Back" : "See All"}
-        </Text>
-      </TouchableOpacity>
-
-      <View style={seeAllButton ? { paddingHorizontal: 40 } : null}>
-        {seeAllButton ? (
-          // Vertical scroll grid view (2 columns)
-          <View style={{ flexGrow: 1, paddingBottom: 80 }}>
-            <FlatList
-              data={routines}
-              overScrollMode="never"
-              numColumns={2}
-              keyExtractor={(item) => item.id.toString()}
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.gridCard}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/home/routine-screen",
-                      params: {
-                        id: item.id,
-                        name: item.name,
-                        image: item.image,
-                        imageKey: item.imageKey,
-                      },
-                    })
-                  }
-                >
-                  <Image style={styles.gridCardImg} source={item.image} />
-                  <Text style={styles.cardTitleSmall}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        ) : (
-          // Horizontal scroll view
-          <ScrollView
-            horizontal
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContainer}
-            showsHorizontalScrollIndicator={false}
-            overScrollMode="never"
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.followingButton,
+            activeButton === "following" && styles.activeButton,
+          ]}
+          onPress={() => setActiveButton("following")}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              activeButton === "following" && styles.activeText,
+            ]}
           >
-            {routines.map((routine) => (
+            Following
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.discoverButton,
+            activeButton === "discover" && styles.activeButton,
+          ]}
+          onPress={() => setActiveButton("discover")}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              activeButton === "discover" && styles.activeText,
+            ]}
+          >
+            Discover
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ flexGrow: 1, paddingBottom: 485, paddingTop: 16 }}>
+        <FlatList
+          data={data}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingVertical: 16 }}
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
+          renderItem={({ item }) => (
+            <View style={{ paddingVertical: 6 }}>
               <TouchableOpacity
-                key={routine.id}
-                style={styles.card}
                 onPress={() =>
                   router.push({
-                    pathname: "/screens/home/routine-screen",
+                    pathname: "/screens/home/view-post",
                     params: {
-                      id: routine.id,
-                      name: routine.name,
-                      image: routine.image,
-                      imageKey: routine.imageKey,
+                      id: item.id,
+                      name: item.name,
+                      fullName: item.fullName,
+                      email: item.email,
+                      postTitle: item.postTitle,
+                      description: item.description,
+                      time: item.time,
+                      volume: item.volume,
+                      likes: item.likes,
+                      comments: item.comments,
+                      date: item.date,
+                      profilePicture: item.profilePicture,
+                      postedPicture: item.postedPicture,
+                      sets: item.sets,
+                      records: item.records,
+                      isLiked: likedPosts[item.id] ? "true" : "false",
                     },
                   })
                 }
               >
-                <Image style={styles.cardImg} source={routine.image} />
-                <Text style={styles.cardTitle}>{routine.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-      </View>
-
-      {!seeAllButton ? (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.followingButton,
-              activeButton === "following" && styles.activeButton,
-            ]}
-            onPress={() => setActiveButton("following")}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                activeButton === "following" && styles.activeText,
-              ]}
-            >
-              Following
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.discoverButton,
-              activeButton === "discover" && styles.activeButton,
-            ]}
-            onPress={() => setActiveButton("discover")}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                activeButton === "discover" && styles.activeText,
-              ]}
-            >
-              Discover
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {!seeAllButton ? (
-        <View style={{ flexGrow: 1, paddingBottom: 485, paddingTop: 16 }}>
-          <FlatList
-            data={data}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingVertical: 16 }}
-            showsVerticalScrollIndicator={false}
-            overScrollMode="never"
-            renderItem={({ item }) => (
-              <View style={{ paddingVertical: 6 }}>
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/home/view-post",
-                      params: {
-                        id: item.id,
-                        name: item.name,
-                        fullName: item.fullName,
-                        email: item.email,
-                        postTitle: item.postTitle,
-                        description: item.description,
-                        time: item.time,
-                        volume: item.volume,
-                        likes: item.likes,
-                        comments: item.comments,
-                        date: item.date,
-                        profilePicture: item.profilePicture,
-                        postedPicture: item.postedPicture,
-                        sets: item.sets,
-                        records: item.records,
-                        isLiked: likedPosts[item.id] ? "true" : "false",
-                      },
-                    })
-                  }
-                >
-                  <View style={{ paddingHorizontal: 16 }}>
-                    <View
+                <View style={{ paddingHorizontal: 16 }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <TouchableOpacity
                       style={{
                         flexDirection: "row",
-                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 5,
                       }}
-                    >
-                      <TouchableOpacity
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 5,
-                        }}
-                        onPress={() =>
-                          router.push({
-                            pathname: "/screens/home/visit-profile",
-                            params: {
-                              id: item.id,
-                              name: item.name,
-                              postTitle: item.postTitle,
-                              description: item.description,
-                              time: item.time,
-                              volume: item.volume,
-                              likes: item.likes,
-                              comments: item.comments,
-                              date: item.date,
-                              profilePicture: item.profilePicture,
-                              postedPicture: item.postedPicture,
-                              sets: item.sets,
-                              records: item.records,
-                              fullName: item.fullName,
-                              email: item.email,
-                              isLiked: likedPosts[item.id] ? "true" : "false",
-                            },
-                          })
-                        }
-                      >
-                        <Image
-                          style={styles.profileImage}
-                          source={item.profilePicture}
-                        />
-                        <View>
-                          <Text style={styles.name}>{item.name}</Text>
-                          <Text style={styles.active}>{item.active}</Text>
-                        </View>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={{ flexDirection: "row" }}>
-                        <Ionicons
-                          name="add-outline"
-                          size={20}
-                          color="#48A6A7"
-                        />
-                        <Text style={styles.followButton}>Follow</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.postTitle}>{item.postTitle}</Text>
-                    <Text style={styles.postDescription}>
-                      {item.description}
-                    </Text>
-                    <View style={{ flexDirection: "row", gap: 40 }}>
-                      <View>
-                        <Text style={styles.timevolume}>Time</Text>
-                        <Text style={styles.itemTimeVolume}>{item.time}</Text>
-                      </View>
-                      <View>
-                        <Text style={styles.timevolume}>Volume</Text>
-                        <Text style={styles.itemTimeVolume}>{item.volume}</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <View style={{ alignItems: "center" }}>
-                    <Image
-                      style={styles.postedPicture}
-                      source={item.postedPicture}
-                    />
-                  </View>
-                </TouchableOpacity>
-
-                <View style={styles.likesContainer}>
-                  <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
-                    <Text style={styles.likesText}>{item.likes}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
-                    <Text style={styles.likesText}>{item.comments}</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.likeCommentShareContainer}>
-                  <TouchableOpacity onPress={() => toggleLike(item.id)}>
-                    <Ionicons
-                      style={styles.icons}
-                      name={
-                        likedPosts[item.id]
-                          ? "thumbs-up-sharp"
-                          : "thumbs-up-outline"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/screens/home/visit-profile",
+                          params: {
+                            id: item.id,
+                            name: item.name,
+                            postTitle: item.postTitle,
+                            description: item.description,
+                            time: item.time,
+                            volume: item.volume,
+                            likes: item.likes,
+                            comments: item.comments,
+                            date: item.date,
+                            profilePicture: item.profilePicture,
+                            postedPicture: item.postedPicture,
+                            sets: item.sets,
+                            records: item.records,
+                            fullName: item.fullName,
+                            email: item.email,
+                            isLiked: likedPosts[item.id] ? "true" : "false",
+                          },
+                        })
                       }
-                      size={24}
-                      color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
-                    <Ionicons
-                      style={styles.icons}
-                      name="chatbubble-outline"
-                      size={24}
-                      color="#606060"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons
-                      style={styles.icons}
-                      name="share-outline"
-                      size={24}
-                      color="#606060"
-                    />
-                  </TouchableOpacity>
+                    >
+                      <Image
+                        style={styles.profileImage}
+                        source={item.profilePicture}
+                      />
+                      <View>
+                        <Text style={styles.name}>{item.name}</Text>
+                        <Text style={styles.active}>{item.active}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ flexDirection: "row" }}>
+                      <Ionicons name="add-outline" size={20} color="#48A6A7" />
+                      <Text style={styles.followButton}>Follow</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.postTitle}>{item.postTitle}</Text>
+                  <Text style={styles.postDescription}>{item.description}</Text>
+                  <View style={{ flexDirection: "row", gap: 40 }}>
+                    <View>
+                      <Text style={styles.timevolume}>Time</Text>
+                      <Text style={styles.itemTimeVolume}>{item.time}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.timevolume}>Volume</Text>
+                      <Text style={styles.itemTimeVolume}>{item.volume}</Text>
+                    </View>
+                  </View>
                 </View>
+                <View style={{ alignItems: "center" }}>
+                  <Image
+                    style={styles.postedPicture}
+                    source={item.postedPicture}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.likesContainer}>
+                <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
+                  <Text style={styles.likesText}>{item.likes}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
+                  <Text style={styles.likesText}>{item.comments}</Text>
+                </TouchableOpacity>
               </View>
-            )}
-          />
-        </View>
-      ) : null}
+
+              <View style={styles.likeCommentShareContainer}>
+                <TouchableOpacity onPress={() => toggleLike(item.id)}>
+                  <Ionicons
+                    style={styles.icons}
+                    name={
+                      likedPosts[item.id]
+                        ? "thumbs-up-sharp"
+                        : "thumbs-up-outline"
+                    }
+                    size={24}
+                    color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
+                  <Ionicons
+                    style={styles.icons}
+                    name="chatbubble-outline"
+                    size={24}
+                    color="#606060"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Ionicons
+                    style={styles.icons}
+                    name="share-outline"
+                    size={24}
+                    color="#606060"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      </View>
+
       <BottomSheetComments
         title="sample"
         type={sheetType}

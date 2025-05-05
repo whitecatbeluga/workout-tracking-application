@@ -252,6 +252,7 @@ const SaveWorkout = () => {
   const handleExercises = async () => {
     if (parsedWorkoutSets) {
       handleSaveToFirebase(parsedWorkoutSets);
+      router.replace("/screens/workout/workout-confirmation");
     }
   };
 

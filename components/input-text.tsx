@@ -68,7 +68,7 @@ const Input = ({
           }}
           name={icon}
           size={24}
-          color="#6F7A88"
+          color={error ? "#721c24" : "#6F7A88"}
         />
         <TextInput
           editable={editable}
