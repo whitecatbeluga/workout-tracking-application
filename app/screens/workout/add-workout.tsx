@@ -23,7 +23,6 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import { resetDuration } from "@/redux/slices/timer-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -33,7 +32,8 @@ const AddWorkout = () => {
     "timer"
   );
 
-  const [duration, setDuration] = useState<number>(60);
+  // const [duration, setDuration] = useState<number>(60);
+  const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
@@ -43,7 +43,7 @@ const AddWorkout = () => {
 
   const dispatch = useAppDispatch();
   // To be passed to save workout
-  const workoutDuration = useSelector(
+  const workoutDuration = useAppSelector(
     (state: RootState) => state.timer.duration
   );
 
@@ -51,6 +51,10 @@ const AddWorkout = () => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
+  );
+
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
   );
 
   const router = useRouter();
@@ -129,7 +133,6 @@ const AddWorkout = () => {
         totalSets += 1;
       }
     }
-
     return { totalVolume, totalSets };
   };
 
@@ -148,14 +151,13 @@ const AddWorkout = () => {
         workoutSets: JSON.stringify(workoutSets),
         totalVolume: totalVolume.toString(),
         totalSets: totalSets.toString(),
-        totalDuration: workoutDuration,
+        totalDuration: duration,
       },
     });
     console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
     console.log("Total Volume: ", totalVolume);
     console.log("Total Sets: ", totalSets);
     console.log("Total Duration: ", workoutDuration);
-
     // dispatch(resetDuration());
   };
 
@@ -166,6 +168,8 @@ const AddWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
+
+  // console.log("totalVolumeSets", totalVolumeSets);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -178,16 +182,16 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            <Timer />
+            {/* <Timer /> */}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>0 kg</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalVolume}kg</Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>0</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       {/* Show here the added exercise */}
@@ -347,7 +351,7 @@ const AddWorkout = () => {
             <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
                 </TouchableOpacity>
@@ -376,7 +380,7 @@ const AddWorkout = () => {
                   )}
                 </CountdownCircleTimer>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => prev + 15)}
+                // onPress={() => setDuration((prev) => prev + 15)}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
                 </TouchableOpacity>
