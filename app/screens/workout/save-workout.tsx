@@ -266,8 +266,7 @@ const SaveWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
-  console.log("timeSnapshot", timeSnapshot);
-  console.log("duration", duration);
+
   return (
     <View style={styles.container}>
       <TextInput

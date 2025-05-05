@@ -121,7 +121,7 @@ const AddWorkout = () => {
   const calculateWorkoutStats = (workoutSets?: WorkoutSets | null) => {
     let totalVolume = 0;
     let totalSets = 0;
-    console.log("workoutSets in calculate", workoutSets);
+
     if (!workoutSets) return { totalVolume, totalSets };
 
     for (const exercise of Object.values(workoutSets)) {
