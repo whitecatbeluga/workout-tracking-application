@@ -17,8 +17,9 @@ import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
+import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -34,12 +35,15 @@ interface SetData {
 
 const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
+  const workoutRoutineSets = useAppSelector(
+    (state) => state.routine.workoutRoutineSets
+  );
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const [isRestModalVisible, setIsRestModalVisible] = useState(false);
   const [restTimer, setRestTimer] = useState<number>(34);
 
   const dispatch = useAppDispatch();
-  const { type } = useLocalSearchParams();
+  const pathname = usePathname();
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({
@@ -66,6 +70,15 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         });
       }
     }
+
+    if (workoutRoutineSets != null) {
+      const saveSets = workoutRoutineSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -81,6 +94,20 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         {} as WorkoutSets
       );
       dispatch(updateWorkoutSets(setsObject));
+    }
+
+    if (workoutRoutineSets != null) {
+      const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
+        (acc, exerciseId) => {
+          acc[exerciseId] = {
+            name: setsByExercise[exerciseId].name,
+            sets: setsByExercise[exerciseId].sets,
+          };
+          return acc;
+        },
+        {} as WorkoutSets
+      );
+      dispatch(updateWorkoutRoutineSets(setsObject));
     }
   }, [setsByExercise]);
 
@@ -178,7 +205,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           <Text style={styles.tableHeaderText}>Previous</Text>
           <Text style={styles.tableHeaderText}>KG</Text>
           <Text style={styles.tableHeaderText}>REPS</Text>
-          {type === "add-workout" && (
+          {pathname === "/screens/workout/add-workout" && (
             <Text style={styles.tableHeaderText}>CHECK</Text>
           )}
         </View>
@@ -233,7 +260,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
                 keyboardType="numeric"
               />
 
-              {type === "add-workout" && (
+              {pathname === "/screens/workout/add-workout" && (
                 <TouchableOpacity
                   style={styles.tableCell}
                   onPress={() => handleToggleCheck(exercise.id, index)}

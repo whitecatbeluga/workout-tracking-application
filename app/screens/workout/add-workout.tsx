@@ -24,6 +24,7 @@ import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { resetDuration } from "@/redux/slices/timer-slice";
+import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -163,6 +164,7 @@ const AddWorkout = () => {
     setIsModalVisible((prev) => !prev);
     dispatch(clearSelectedExercises());
     dispatch(clearWorkoutSets());
+    dispatch(clearWorkoutRoutineSets());
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
