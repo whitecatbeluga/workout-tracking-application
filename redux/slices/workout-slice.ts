@@ -115,6 +115,12 @@ const WorkoutSlice = createSlice({
     updateTotalVolumeSets(state, action) {
       state.totalVolumeSets = action.payload;
     },
+    clearTotalVolumeSets(state) {
+      state.totalVolumeSets = {
+        totalVolume: 0,
+        totalSets: 0,
+      };
+    },
   },
   extraReducers: () => {},
 });
@@ -125,6 +131,7 @@ export const {
   drarfWorkout,
   undraftWorkout,
   updateTotalVolumeSets,
+  clearTotalVolumeSets
 } = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;

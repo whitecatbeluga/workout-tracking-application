@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
+import Feather from "react-native-vector-icons/Feather";
+
 import {
   updateWorkoutSets,
   updateTotalVolumeSets,
@@ -24,6 +26,7 @@ import { useAppSelector } from "@/hooks/use-app-selector";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
+  openRoutine: () => void;
 }
 
 interface SetData {
@@ -34,7 +37,10 @@ interface SetData {
   checked: boolean;
 }
 
-const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
+const ExerciseDetailCard = ({
+  exercise,
+  openRoutine,
+}: ExerciseDetailCardProps) => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const [isRestModalVisible, setIsRestModalVisible] = useState(false);
@@ -179,10 +185,21 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
 
   return (
     <View style={styles.container}>
-      <ExerciseSetCardHeader />
-
-      <View style={{ marginBottom: 10 }}>
-        <Text>Title: {exercise.name}</Text>
+      <View
+        style={{
+          marginBottom: 10,
+          marginTop: 20,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
+          {exercise.name}
+        </Text>
+        <TouchableOpacity onPress={openRoutine}>
+          <Feather name="more-vertical" size={20} color="#000" />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
@@ -315,14 +332,6 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
-  );
-};
-
-const ExerciseSetCardHeader = () => {
-  return (
-    <View style={styles.header}>
-      <Text style={styles.headerText}>Header</Text>
     </View>
   );
 };

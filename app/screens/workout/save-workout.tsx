@@ -32,7 +32,11 @@ import { ActivityIndicator } from "react-native";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
-import { clearWorkoutSets, undraftWorkout } from "@/redux/slices/workout-slice";
+import {
+  clearTotalVolumeSets,
+  clearWorkoutSets,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
 
 const SaveWorkout = () => {
   const {
@@ -223,7 +227,9 @@ const SaveWorkout = () => {
           });
 
           if (sets && Array.isArray(sets)) {
-            for (const set of sets) {
+            const checkedSets = sets.filter((set) => set.checked === true);
+
+            for (const set of checkedSets) {
               const { reps, kg, checked, previous } = set;
               if (reps === undefined || kg === undefined) {
                 console.error(`Error: reps or kg is undefined. Skipping set.`);
@@ -255,6 +261,9 @@ const SaveWorkout = () => {
   const handleExercises = async () => {
     if (parsedWorkoutSets) {
       handleSaveToFirebase(parsedWorkoutSets);
+      dispatch(clearSelectedExercises());
+      dispatch(undraftWorkout());
+      dispatch(clearTotalVolumeSets());
       router.replace("/screens/workout/workout-confirmation");
     }
   };
