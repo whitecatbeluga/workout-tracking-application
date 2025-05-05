@@ -34,6 +34,8 @@ import BottomSheet, {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { BtnTitle, CustomBtn } from "@/components/custom-btn";
+import { resetDuration } from "@/redux/slices/timer-slice";
+import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -180,6 +182,7 @@ const AddWorkout = () => {
     setIsModalVisible((prev) => !prev);
     dispatch(clearSelectedExercises());
     dispatch(clearWorkoutSets());
+    dispatch(clearWorkoutRoutineSets());
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };

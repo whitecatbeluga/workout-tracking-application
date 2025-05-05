@@ -50,6 +50,9 @@ import {
   createProgram,
   updateProgramName,
   setRoutineParams,
+  fetchRoutine,
+  setSelectedRoutineExercises,
+  setWorkoutRoutineSets,
 } from "@/redux/slices/routine-slice";
 import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
@@ -222,6 +225,23 @@ const WorkoutPage = () => {
     router.push({
       pathname: "/screens/workout/create-routine",
       params: { type: "create-routine" },
+    });
+  };
+
+  const handleEditRoutine = async () => {
+    await dispatch(
+      fetchRoutine({
+        routineId: selectedRoutineDetails?.id as string,
+      })
+    );
+    dispatch(setSelectedRoutineExercises(selectedRoutineDetails?.exercises));
+    dispatch(setWorkoutRoutineSets(selectedRoutineDetails?.exercises));
+    router.push({
+      pathname: "/screens/workout/create-routine",
+      params: {
+        type: "edit",
+        routineId: selectedRoutineDetails?.id,
+      },
     });
   };
 
@@ -512,7 +532,7 @@ const WorkoutPage = () => {
                 {selectedRoutineDetails?.routine_name}
               </Text>
               <CustomBtn
-                onPress={() => {}}
+                onPress={handleEditRoutine}
                 buttonStyle={{
                   borderRadius: 6,
                   width: "100%",

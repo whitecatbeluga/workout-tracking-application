@@ -14,12 +14,14 @@ import ExerciseDetailCard from "@/components/exercise-card-detail";
 import { useLayoutEffect, useState } from "react";
 import {
   clearRoutineParams,
+  clearSelectedRoutineExercises,
+  clearSingleRoutine,
+  clearWorkoutRoutineSets,
   createRoutineWithoutProgram,
 } from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
 import { clearWorkoutSets } from "@/redux/slices/workout-slice";
-import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 
 const CreateRoutine = () => {
   const dispatch = useAppDispatch();
@@ -27,16 +29,24 @@ const CreateRoutine = () => {
   const navigation = useNavigation();
 
   const userId = auth.currentUser?.uid;
-  const selectedExercises = useAppSelector(
-    (state) => state.exercise.selectedExercise
+  const selectedRoutineExercises = useAppSelector(
+    (state) => state.routine.selectedRoutineExercises
   );
-  const workoutSets = useAppSelector((state) => state.workout.workoutSets);
+  const workoutRoutineSets = useAppSelector(
+    (state) => state.routine.workoutRoutineSets
+  );
 
-  const [routineName, setRoutineName] = useState<string>("");
+  const routine = useAppSelector((state) => state.routine.singleRoutine);
+
+  const [routineName, setRoutineName] = useState<string>(
+    routine?.routine_name || ""
+  );
   const [errors, setErrors] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const routineParams = useAppSelector((state) => state.routine.params);
+
+  const { type } = useLocalSearchParams();
 
   const handleSaveRoutine = async () => {
     try {
@@ -46,7 +56,7 @@ const CreateRoutine = () => {
         validationErrors.push("Please enter a routine name.");
       }
 
-      if (!workoutSets || Object.keys(workoutSets).length === 0) {
+      if (!workoutRoutineSets || Object.keys(workoutRoutineSets).length === 0) {
         validationErrors.push("Please select at least one exercise.");
       }
 
@@ -61,13 +71,14 @@ const CreateRoutine = () => {
         createRoutineWithoutProgram({
           userId: userId as string,
           routineName,
-          sets: workoutSets,
+          sets: workoutRoutineSets,
           programId: routineParams.programId,
         })
       );
 
       dispatch(clearWorkoutSets());
-      dispatch(clearSelectedExercises());
+      dispatch(clearWorkoutRoutineSets());
+      dispatch(clearSelectedRoutineExercises());
       dispatch(clearRoutineParams());
       setRoutineName("");
       setErrors([]);
@@ -81,30 +92,119 @@ const CreateRoutine = () => {
     }
   };
 
+  const handleUpdateRoutine = async () => {
+    try {
+      const validationErrors = [];
+
+      if (routineName.trim() === "") {
+        validationErrors.push("Please enter a routine name.");
+      }
+
+      if (!workoutRoutineSets || Object.keys(workoutRoutineSets).length === 0) {
+        validationErrors.push("Please select at least one exercise.");
+      }
+
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      setLoading(true);
+
+      await dispatch(
+        createRoutineWithoutProgram({
+          userId: userId as string,
+          routineName,
+          sets: workoutRoutineSets,
+          programId: routineParams.programId,
+        })
+      );
+
+      dispatch(clearWorkoutSets());
+      dispatch(clearWorkoutRoutineSets());
+      dispatch(clearSelectedRoutineExercises());
+      dispatch(clearRoutineParams());
+      setRoutineName("");
+      setErrors([]);
+      setLoading(false);
+
+      router.replace("/(tabs)/workout");
+    } catch (error) {
+      console.error("Routine creation error:", error);
+      setErrors(["Something went wrong while creating the routine."]);
+      setLoading(false);
+    }
+  };
+
+  const discardWorkout = () => {
+    dispatch(clearWorkoutRoutineSets());
+    dispatch(clearSelectedRoutineExercises());
+    dispatch(clearSingleRoutine());
+    router.replace("/(tabs)/workout");
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={handleSaveRoutine}
-          style={{
-            backgroundColor: "#48A6A7",
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 8,
-            width: 65,
-          }}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
-              Save
-            </Text>
-          )}
+      title: type === "edit" ? "Edit Routine" : "Create Routine",
+      headerLeft: () => (
+        <TouchableOpacity onPress={discardWorkout}>
+          <Text style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}>
+            Cancel
+          </Text>
         </TouchableOpacity>
       ),
+      headerRight: () =>
+        type === "edit" ? (
+          <TouchableOpacity
+            onPress={handleUpdateRoutine}
+            style={{
+              backgroundColor: "#48A6A7",
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 8,
+              width: 81,
+            }}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
+              >
+                Update
+              </Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleSaveRoutine}
+            style={{
+              backgroundColor: "#48A6A7",
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 8,
+              width: 65,
+            }}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text
+                style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}
+              >
+                Save
+              </Text>
+            )}
+          </TouchableOpacity>
+        ),
     });
-  }, [selectedExercises, navigation, workoutSets, routineName, loading]);
+  }, [
+    selectedRoutineExercises,
+    navigation,
+    workoutRoutineSets,
+    routineName,
+    loading,
+  ]);
 
   return (
     <View style={styles.container}>
@@ -126,7 +226,7 @@ const CreateRoutine = () => {
 
       <View style={styles.addExerciseContainer}>
         <ScrollView overScrollMode="never">
-          {selectedExercises.length === 0 ? (
+          {selectedRoutineExercises.length === 0 ? (
             <View style={styles.getStartedContainer}>
               <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
               <Text style={styles.getStartedText}>Get started</Text>
@@ -135,7 +235,7 @@ const CreateRoutine = () => {
               </Text>
             </View>
           ) : (
-            selectedExercises.map((selectedExercise) => (
+            selectedRoutineExercises.map((selectedExercise) => (
               <ExerciseDetailCard
                 key={selectedExercise.id}
                 exercise={selectedExercise}
@@ -149,7 +249,7 @@ const CreateRoutine = () => {
           onPress={() =>
             router.push({
               pathname: "/screens/workout/add-exercise",
-              params: { previousRoute: "/screens/workout/create-routine" },
+              params: { previousRoute: "create-routine" },
             })
           }
         >
