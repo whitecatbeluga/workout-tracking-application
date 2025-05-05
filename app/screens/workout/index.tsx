@@ -49,6 +49,7 @@ import {
   deleteProgramAndRoutines,
   createProgram,
   updateProgramName,
+  setRoutineParams,
 } from "@/redux/slices/routine-slice";
 import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
@@ -214,6 +215,14 @@ const WorkoutPage = () => {
     setError("");
     setNewProgramName("");
     setIsModalUpdateProgramVisible(false);
+  };
+
+  const handleAddExercise = (programId: string) => {
+    dispatch(setRoutineParams({ programId: programId }));
+    router.push({
+      pathname: "/screens/workout/create-routine",
+      params: { type: "create-routine" },
+    });
   };
 
   return (
@@ -616,12 +625,7 @@ const WorkoutPage = () => {
               {programs.map((program, index) => (
                 <CustomBtn
                   key={index}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/workout/create-routine",
-                      params: { id: "create-routine", programId: program.id },
-                    })
-                  }
+                  onPress={() => handleAddExercise(program.id)}
                   buttonStyle={{
                     borderRadius: 6,
                     width: "100%",

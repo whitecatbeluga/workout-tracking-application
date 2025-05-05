@@ -4,6 +4,11 @@ import { RoutineService } from "../../services/routine-service";
 import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import { Loading } from "@/custom-types/loading-type";
 
+type Params = {
+  routineId?: string;
+  programId?: string;
+};
+
 export type Routine = {
   id: string;
   routine_name?: string;
@@ -23,12 +28,14 @@ interface ProgramState {
   singleRoutine: Routine | null;
   programs: Program[];
   loading: Loading;
+  params: Params;
   error: string | null;
 }
 
 const initialState: ProgramState = {
   singleRoutine: null,
   programs: [],
+  params: { routineId: "", programId: "" },
   loading: Loading.Idle,
   error: null,
 };
@@ -176,6 +183,12 @@ export const routineSlice = createSlice({
     clearProgramsAndRoutines: (state) => {
       state.programs = [];
     },
+    setRoutineParams: (state, action) => {
+      state.params = action.payload;
+    },
+    clearRoutineParams: (state) => {
+      state.params = { routineId: "", programId: "" };
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -263,6 +276,10 @@ export const routineSlice = createSlice({
   },
 });
 
-export const { clearProgramsAndRoutines } = routineSlice.actions;
+export const {
+  clearProgramsAndRoutines,
+  setRoutineParams,
+  clearRoutineParams,
+} = routineSlice.actions;
 
 export default routineSlice.reducer;

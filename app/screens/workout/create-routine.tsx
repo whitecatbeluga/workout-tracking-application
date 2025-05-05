@@ -12,7 +12,10 @@ import { ScrollView } from "react-native";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
 import { useLayoutEffect, useState } from "react";
-import { createRoutineWithoutProgram } from "@/redux/slices/routine-slice";
+import {
+  clearRoutineParams,
+  createRoutineWithoutProgram,
+} from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
 import { clearWorkoutSets } from "@/redux/slices/workout-slice";
@@ -33,7 +36,7 @@ const CreateRoutine = () => {
   const [errors, setErrors] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { programId } = useLocalSearchParams();
+  const routineParams = useAppSelector((state) => state.routine.params);
 
   const handleSaveRoutine = async () => {
     try {
@@ -59,12 +62,13 @@ const CreateRoutine = () => {
           userId: userId as string,
           routineName,
           sets: workoutSets,
-          programId: (programId as string) || "",
+          programId: routineParams.programId,
         })
       );
 
       dispatch(clearWorkoutSets());
       dispatch(clearSelectedExercises());
+      dispatch(clearRoutineParams());
       setRoutineName("");
       setErrors([]);
       setLoading(false);
