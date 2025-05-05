@@ -1,5 +1,4 @@
 import { Swipeable, RectButton } from "react-native-gesture-handler";
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,7 +14,12 @@ import {
 } from "react-native";
 import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { updateWorkoutSets } from "@/redux/slices/workout-slice";
+import Feather from "react-native-vector-icons/Feather";
+
+import {
+  updateWorkoutSets,
+  updateTotalVolumeSets,
+} from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useLocalSearchParams, usePathname } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
@@ -23,6 +27,7 @@ import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
+  openRoutine: () => void;
 }
 
 interface SetData {
@@ -33,7 +38,10 @@ interface SetData {
   checked: boolean;
 }
 
-const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
+const ExerciseDetailCard = ({
+  exercise,
+  openRoutine,
+}: ExerciseDetailCardProps) => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const workoutRoutineSets = useAppSelector(
     (state) => state.routine.workoutRoutineSets
@@ -43,7 +51,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   const [restTimer, setRestTimer] = useState<number>(34);
 
   const dispatch = useAppDispatch();
-  const pathname = usePathname();
+  const { type } = useLocalSearchParams();
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({
@@ -111,6 +119,28 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     }
   }, [setsByExercise]);
 
+  const calculateTotalVolumeSets = (allWorkoutSets: WorkoutSets) => {
+    let totalVolume = 0;
+    let totalSets = 0;
+
+    Object.values(allWorkoutSets).forEach((exercise) => {
+      exercise.sets.forEach((set) => {
+        if (set.checked) {
+          const kg = parseFloat(set.kg) || 0;
+          const reps = parseFloat(set.reps) || 0;
+          totalVolume += kg * reps;
+          totalSets += 1;
+        }
+      });
+    });
+
+    return { totalVolume, totalSets };
+  };
+
+  useEffect(() => {
+    dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(workoutSets)));
+  }, [workoutSets]);
+
   const handleInputChange = (
     exerciseId: string,
     index: number,
@@ -132,7 +162,10 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     setSetsByExercise((prevSetsByExercise) => {
       const exerciseData = prevSetsByExercise[exerciseId];
       const updatedSets = [...exerciseData.sets];
-      updatedSets[index].checked = !updatedSets[index].checked;
+      updatedSets[index] = {
+        ...updatedSets[index],
+        checked: !updatedSets[index].checked,
+      };
       return {
         ...prevSetsByExercise,
         [exerciseId]: { ...exerciseData, sets: updatedSets },
@@ -178,10 +211,21 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
 
   return (
     <View style={styles.container}>
-      <ExerciseSetCardHeader />
-
-      <View style={{ marginBottom: 10 }}>
-        <Text>Title: {exercise.name}</Text>
+      <View
+        style={{
+          marginBottom: 10,
+          marginTop: 20,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
+          {exercise.name}
+        </Text>
+        <TouchableOpacity onPress={openRoutine}>
+          <Feather name="more-vertical" size={20} color="#000" />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
@@ -226,6 +270,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
               style={[
                 styles.tableRow,
                 focusedRowIndex === index && styles.selectedRow,
+                set.checked && styles.checkedRow,
               ]}
             >
               <Text style={styles.tableCell}>{set.set}</Text>
@@ -317,14 +362,6 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   );
 };
 
-const ExerciseSetCardHeader = () => {
-  return (
-    <View style={styles.header}>
-      <Text style={styles.headerText}>Header</Text>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     // padding: 1,
@@ -359,9 +396,9 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: "row",
     alignItems: "center",
-    // padding: 5,
-    paddingTop: 5,
-    paddingBottom: 5,
+    padding: 5,
+    // paddingTop: 5,
+    // paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
@@ -426,6 +463,9 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  checkedRow: {
+    backgroundColor: "#E6FBEF",
   },
 });
 

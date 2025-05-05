@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useRef } from "react";
+import { useLayoutEffect, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,14 @@ import {
 import { db, storage, auth } from "@/utils/firebase-config";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { ActivityIndicator } from "react-native";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import {
+  clearTotalVolumeSets,
+  clearWorkoutSets,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
 
 const SaveWorkout = () => {
   const {
@@ -37,6 +45,9 @@ const SaveWorkout = () => {
     totalSets,
     totalDuration,
   } = useLocalSearchParams();
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
+  );
 
   const parsedWorkoutSets: WorkoutSets = JSON.parse(workoutSetsParam as string);
 
@@ -56,6 +67,10 @@ const SaveWorkout = () => {
   const [triggerMissing, setTriggerMissing] = useState<boolean>(false);
   const [triggerMessage, setTriggerMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [timeSnapshot, setTimeSnapshot] = useState<number>(0);
+
+  const duration = useAppSelector((state) => state.timer.duration);
+  const dispatch = useAppDispatch();
 
   const handleVisibilityChange = (
     selectedVisibility: "private" | "everyone"
@@ -70,7 +85,9 @@ const SaveWorkout = () => {
 
   const navigation = useNavigation();
   const router = useRouter();
-
+  useEffect(() => {
+    setTimeSnapshot(duration);
+  }, []);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -183,8 +200,8 @@ const SaveWorkout = () => {
 
         await setDoc(workoutRef, {
           workout_duration: "TBD",
-          total_volume: totalVolume,
-          total_sets: totalSets,
+          total_volume: totalVolumeSets.totalVolume,
+          total_sets: totalVolumeSets.totalSets,
           workout_title: workoutTitle,
           created_at: serverTimestamp(),
           workout_description: workoutDescription,
@@ -210,7 +227,9 @@ const SaveWorkout = () => {
           });
 
           if (sets && Array.isArray(sets)) {
-            for (const set of sets) {
+            const checkedSets = sets.filter((set) => set.checked === true);
+
+            for (const set of checkedSets) {
               const { reps, kg, checked, previous } = set;
               if (reps === undefined || kg === undefined) {
                 console.error(`Error: reps or kg is undefined. Skipping set.`);
@@ -242,8 +261,19 @@ const SaveWorkout = () => {
   const handleExercises = async () => {
     if (parsedWorkoutSets) {
       handleSaveToFirebase(parsedWorkoutSets);
+      dispatch(clearSelectedExercises());
+      dispatch(undraftWorkout());
+      dispatch(clearTotalVolumeSets());
       router.replace("/screens/workout/workout-confirmation");
     }
+  };
+
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
+    dispatch(clearWorkoutSets());
+    dispatch(undraftWorkout());
+    router.replace("/(tabs)/workout");
   };
 
   return (
@@ -272,20 +302,23 @@ const SaveWorkout = () => {
               fontSize: 16,
               fontFamily: "Inter_400Regular",
               color: "#48A6A7",
+              width: "100%",
             }}
           >
-            {formatTime(Number(totalDuration))}
+            {formatTime(Number(timeSnapshot))}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
           {/* <Text style={styles.volumeSets}>50 kg</Text> */}
-          <Text style={styles.volumeSets}>{totalVolume} kg</Text>
+          <Text style={styles.volumeSets}>
+            {totalVolumeSets.totalVolume} kg
+          </Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
           {/* <Text style={styles.volumeSets}>1</Text> */}
-          <Text style={styles.volumeSets}>{totalSets}</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       <View style={{ paddingVertical: 20 }}>
@@ -388,7 +421,10 @@ const SaveWorkout = () => {
           paddingVertical: 15,
         }}
       >
-        <TouchableOpacity onPress={() => setIsModalVisible((prev) => !prev)}>
+        <TouchableOpacity
+          style={styles.modalSettingsDiscardButton}
+          onPress={discardWorkout}
+        >
           <Text
             style={{
               fontFamily: "Inter_400Regular",

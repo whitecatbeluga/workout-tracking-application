@@ -1,4 +1,10 @@
-import React, { useState, useLayoutEffect, useMemo } from "react";
+import React, {
+  useState,
+  useLayoutEffect,
+  useMemo,
+  forwardRef,
+  useRef,
+} from "react";
 import {
   Text,
   StyleSheet,
@@ -21,10 +27,15 @@ import {
 } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
-import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { resetDuration } from "@/redux/slices/timer-slice";
 import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetProps,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { BtnTitle, CustomBtn } from "@/components/custom-btn";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -33,8 +44,10 @@ const AddWorkout = () => {
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
+  const createNewRoutineRef = useRef<BottomSheet>(null);
 
-  const [duration, setDuration] = useState<number>(60);
+  // const [duration, setDuration] = useState<number>(60);
+  const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
@@ -43,8 +56,11 @@ const AddWorkout = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const dispatch = useAppDispatch();
+  const openCreateNewRoutine = () => {
+    createNewRoutineRef.current?.expand();
+  };
   // To be passed to save workout
-  const workoutDuration = useSelector(
+  const workoutDuration = useAppSelector(
     (state: RootState) => state.timer.duration
   );
 
@@ -52,6 +68,10 @@ const AddWorkout = () => {
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
+  );
+
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
   );
 
   const router = useRouter();
@@ -130,7 +150,6 @@ const AddWorkout = () => {
         totalSets += 1;
       }
     }
-
     return { totalVolume, totalSets };
   };
 
@@ -149,14 +168,13 @@ const AddWorkout = () => {
         workoutSets: JSON.stringify(workoutSets),
         totalVolume: totalVolume.toString(),
         totalSets: totalSets.toString(),
-        totalDuration: workoutDuration,
+        totalDuration: duration,
       },
     });
     console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
     console.log("Total Volume: ", totalVolume);
     console.log("Total Sets: ", totalSets);
     console.log("Total Duration: ", workoutDuration);
-
     // dispatch(resetDuration());
   };
 
@@ -168,6 +186,7 @@ const AddWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
+  // console.log("counter-add workout");
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -180,16 +199,16 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            <Timer />
+            {/* <Timer /> */}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>0 kg</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalVolume}kg</Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>0</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       {/* Show here the added exercise */}
@@ -211,6 +230,7 @@ const AddWorkout = () => {
           selectedExercises.map((selectedExercise) => (
             <ExerciseDetailCard
               key={selectedExercise.id}
+              openRoutine={openCreateNewRoutine}
               exercise={selectedExercise}
             />
           ))
@@ -349,7 +369,7 @@ const AddWorkout = () => {
             <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
                 </TouchableOpacity>
@@ -378,7 +398,7 @@ const AddWorkout = () => {
                   )}
                 </CountdownCircleTimer>
                 <TouchableOpacity
-                  onPress={() => setDuration((prev) => prev + 15)}
+                // onPress={() => setDuration((prev) => prev + 15)}
                 >
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
                 </TouchableOpacity>
@@ -512,6 +532,22 @@ const AddWorkout = () => {
           </View>
         </View>
       </Modal>
+      <BottomSheetOverlay ref={createNewRoutineRef}>
+        <CustomBtn
+          // key=
+          onPress={() => {}}
+          buttonStyle={{
+            borderRadius: 6,
+            width: "100%",
+            backgroundColor: "white",
+          }}
+        >
+          <BtnTitle
+            title={"Delete" as string}
+            textStyle={{ fontSize: 14, color: "red" }}
+          />
+        </CustomBtn>
+      </BottomSheetOverlay>
     </View>
   );
 };
@@ -688,3 +724,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
+  ({ children }, ref) => {
+    const snapPoints = useMemo(() => ["50%"], []);
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        handleStyle={{
+          backgroundColor: "#F4F4F4",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            pressBehavior="close"
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+        <BottomSheetScrollView
+          bounces={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            paddingTop: 20,
+            backgroundColor: "#F4F4F4",
+            gap: 10,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </BottomSheetScrollView>
+      </BottomSheet>
+    );
+  }
+);
