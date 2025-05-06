@@ -28,25 +28,6 @@ import {
 } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 
-type PostItem = {
-  id: string;
-  name: string;
-  fullName: string;
-  email: string;
-  active: string;
-  postTitle: string;
-  description: string;
-  profilePicture: any;
-  time: string;
-  volume: string;
-  postedPicture: any;
-  likes: string;
-  comments: string;
-  date: string;
-  sets: string;
-  records: string;
-};
-
 type Workout = {
   id: string;
   created_at: any;
@@ -84,6 +65,7 @@ const HomeScreen = () => {
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
@@ -297,7 +279,7 @@ const HomeScreen = () => {
                     router.push({
                       pathname: "/screens/home/view-post",
                       params: {
-                        id: item.id,
+                        post_id: item.id, // for fetching the posted images
                         name: item.userProfile?.username,
                         fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
                         email: item.userProfile?.email,
@@ -305,12 +287,12 @@ const HomeScreen = () => {
                         description: item.workout_description,
                         time: item.workout_duration,
                         volume: item.total_volume,
-                        // likes: item.likes,
-                        // comments: item.comments,
+                        likes: item.like_count,
+                        comments: item.comment_count,
                         date: item.created_at,
-                        profilePicture: item.userProfile?.profile_picture,
-                        // postedPicture: item.postedPicture,
+                        user_id: item.user_id, // for fetching the user profile picture
                         sets: item.total_sets,
+                        // image_urls: item.image_urls,
                         // records: item.records,
                         isLiked: likedPosts[item.id] ? "true" : "false",
                       },
@@ -334,16 +316,17 @@ const HomeScreen = () => {
                           router.push({
                             pathname: "/screens/home/visit-profile",
                             params: {
-                              id: item.id,
+                              post_id: item.id, // for fetching the posted images
                               name: item.userProfile?.username,
                               postTitle: item.workout_title,
                               description: item.workout_description,
-                              time: item.created_at,
+                              time: item.workout_duration,
                               volume: item.total_volume,
-                              // likes: item.likes,
-                              // comments: item.comments,
+                              likes: item.like_count,
+                              comments: item.comment_count,
                               date: item.created_at,
-                              profilePicture: item.userProfile?.profile_picture,
+                              user_id: item.user_id, // for fetching the user profile picture
+                              // profilePicture: item.userProfile?.profile_picture,
                               // postedPicture: item.postedPicture,
                               sets: item.total_sets,
                               // records: item.records,
@@ -411,8 +394,38 @@ const HomeScreen = () => {
                       horizontal
                       pagingEnabled
                       showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(event) => {
+                        const index = Math.round(
+                          event.nativeEvent.contentOffset.x /
+                            event.nativeEvent.layoutMeasurement.width
+                        );
+                        setCurrentImageIndex(index);
+                      }}
                     />
                   </View>
+                  {item.image_urls.length > 1 && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        marginTop: 8,
+                      }}
+                    >
+                      {item.image_urls.map((_, index) => (
+                        <View
+                          key={index}
+                          style={{
+                            height: 6,
+                            width: 6,
+                            borderRadius: 3,
+                            backgroundColor:
+                              currentImageIndex === index ? "#48A6A7" : "#ccc",
+                            marginHorizontal: 4,
+                          }}
+                        />
+                      ))}
+                    </View>
+                  )}
                 </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
