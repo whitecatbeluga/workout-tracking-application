@@ -26,7 +26,7 @@ import { useAppSelector } from "@/hooks/use-app-selector";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
-  openRoutine: () => void;
+  openRoutine?: () => void;
 }
 
 interface SetData {
