@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 5,
     padding: 10,
-    elevation: 1,
   },
   streakText: {
     fontSize: 18,

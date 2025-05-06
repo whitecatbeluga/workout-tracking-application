@@ -3,40 +3,46 @@ import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
 import { CalendarList } from "react-native-calendars";
 
-const StreakList = () => {
-  const router = useRouter();
-  const [currentDate, setCurrentDate] = useState("");
-  const [monthsSinceRegistered, setMonthsSinceRegistered] = useState(0);
+import { getDocs, collection, query, where } from "firebase/firestore";
+import { db } from "@/utils/firebase-config";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { auth } from "@/utils/firebase-config";
 
-  const markedDates = [
-    { date: "2025-03-01", img: undefined },
-    { date: "2025-03-03", img: require("../../../assets/images/Pull day.png") },
-    { date: "2025-03-05", img: require("../../../assets/images/push-day.jpg") },
-    { date: "2025-03-07", img: undefined },
-    { date: "2025-03-10", img: require("../../../assets/images/guy1.png") },
-    { date: "2025-03-12", img: undefined },
-    { date: "2025-03-14", img: undefined },
-    { date: "2025-03-19", img: undefined },
-    {
-      date: "2025-03-21",
-      img: require("../../../assets/images/core-focus.jpg"),
-    },
-    { date: "2025-03-24", img: undefined },
-    {
-      date: "2025-03-26",
-      img: require("../../../assets/images/stretch-recovery.webp"),
-    },
-    { date: "2025-03-28", img: undefined },
-    {
-      date: "2025-03-31",
-      img: require("../../../assets/images/hiit-session.webp"),
-    },
-    { date: "2025-04-01", img: require("../../../assets/images/leg-day.jpg") },
-    { date: "2025-04-02", img: undefined },
-    { date: "2025-04-04", img: require("../../../assets/images/legday.png") },
-    { date: "2025-04-07", img: undefined },
-    { date: "2025-03-09", img: undefined },
-  ];
+type MarkedDates = {
+  date: string;
+  img_url?: string | undefined;
+};
+
+const getWorkouts = async (user_id: string | undefined) => {
+  try {
+    const workoutsCollectionRef = collection(db, "workouts");
+    const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
+    const workoutsSnapshot = await getDocs(q);
+
+    const workouts = [];
+
+    for (const workoutDoc of workoutsSnapshot.docs) {
+      const workoutData = workoutDoc.data();
+      const workoutId = workoutDoc.id;
+
+      workouts.push({
+        id: workoutId,
+        ...workoutData,
+      });
+    }
+
+    return workouts;
+  } catch (error) {
+    console.error("Error fetching workouts:", error);
+  }
+};
+
+const StreakList = () => {
+  const user = useAppSelector((state) => state.auth.user);
+  const router = useRouter();
+  const [currentDate, setCurrentDate] = useState<string>("");
+  const [markedDates, setMarkedDates] = useState<Array<MarkedDates>>([]);
+  const [monthsSinceRegistered, setMonthsSinceRegistered] = useState<number>(0);
 
   useEffect(() => {
     let current = new Date();
@@ -44,6 +50,27 @@ const StreakList = () => {
     current = new Date(current.getTime() - offset * 60 * 1000);
     setCurrentDate(current.toISOString().split("T")[0]);
     setMonthsSinceRegistered(1);
+
+    const fetchWorkouts = async () => {
+      try {
+        const workouts: any = await getWorkouts(auth.currentUser?.uid);
+        setMarkedDates(
+          /*replace any later*/ workouts.map((workout: any) => {
+            const date = workout?.created_at
+              ?.toDate()
+              .toISOString()
+              .split("T")[0];
+            const img_url = workout?.image_urls?.[0] ?? undefined;
+            if (!date) return null;
+            return { date, img_url };
+          })
+        );
+      } catch (error) {
+        console.error("Error fetching workouts:", error);
+      }
+    };
+
+    fetchWorkouts();
   }, []);
 
   return (
@@ -90,11 +117,11 @@ const StreakList = () => {
                     })
                   }
                 >
-                  {matchedDate.img ? (
+                  {matchedDate.img_url ? (
                     <View style={styles.streakImageContainer}>
                       <Text style={styles.streakImageText}>{date?.day}</Text>
                       <Image
-                        source={matchedDate.img}
+                        source={{ uri: matchedDate.img_url }}
                         style={styles.streakIcon}
                       />
                     </View>
@@ -135,22 +162,17 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 18,
+    color: "#777777",
   },
   currentDayText: {
     color: "#48A6A7",
     fontSize: 18,
-  },
-  currentDayDot: {
-    height: 30,
-    width: 30,
-    borderRadius: 18,
-    backgroundColor: "red",
-    justifyContent: "center",
-    alignItems: "center",
+    fontWeight: "bold",
   },
   dayTextStreak: {
     color: "#FFFFFF",
     fontSize: 18,
+    fontWeight: "bold",
   },
   streakCircle: {
     height: 50,
@@ -171,13 +193,15 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 15,
+    backgroundColor: "#000000",
+    opacity: 0.9,
   },
   streakImageText: {
     position: "absolute",
     color: "#FFFFFF",
     fontSize: 18,
     zIndex: 1,
-    opacity: 0.8,
+    fontWeight: "bold",
   },
 });
 
