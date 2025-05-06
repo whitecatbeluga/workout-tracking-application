@@ -21,18 +21,8 @@ export default function Workout() {
         <Stack.Screen
           name="create-routine"
           options={{
-            title: "Create Routine",
             headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
             headerTitleAlign: "center",
-            headerLeft: () => (
-              <TouchableOpacity onPress={() => router.push("/(tabs)/workout")}>
-                <Text
-                  style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}
-                >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            ),
           }}
         />
         <Stack.Screen
