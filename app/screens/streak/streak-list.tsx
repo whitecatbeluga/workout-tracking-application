@@ -54,7 +54,6 @@ const StreakList = () => {
     const fetchWorkouts = async () => {
       try {
         const workouts: any = await getWorkouts(auth.currentUser?.uid);
-        console.log(workouts);
         setMarkedDates(
           /*replace any later*/ workouts.map((workout: any) => {
             const date = workout?.created_at
@@ -163,14 +162,17 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 18,
+    color: "#777777",
   },
   currentDayText: {
     color: "#48A6A7",
     fontSize: 18,
+    fontWeight: "bold",
   },
   dayTextStreak: {
     color: "#FFFFFF",
     fontSize: 18,
+    fontWeight: "bold",
   },
   streakCircle: {
     height: 50,
@@ -199,6 +201,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     zIndex: 1,
+    fontWeight: "bold",
   },
 });
 
