@@ -28,14 +28,14 @@ import {
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 import { RootState } from "@/redux/store";
-import { resetDuration } from "@/redux/slices/timer-slice";
-import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetProps,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { BtnTitle, CustomBtn } from "@/components/custom-btn";
+import { resetDuration } from "@/redux/slices/timer-slice";
+import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);

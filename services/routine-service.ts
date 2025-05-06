@@ -190,16 +190,18 @@ export const RoutineService = {
 
           if (Array.isArray(exerciseSets)) {
             for (const set of exerciseSets) {
-              const { reps, kg, previous } = set;
+              const { reps, kg, previous, checked } = set;
               if (reps === undefined || kg === undefined) {
                 console.warn("Skipping invalid set", set);
                 continue;
               }
 
               await addDoc(collection(exerciseRef, "sets"), {
-                reps,
-                kg,
+                set: set.set,
                 previous: previous ?? "",
+                kg,
+                reps,
+                checked,
               });
             }
           }
