@@ -30,6 +30,9 @@ interface ProgramState {
   loading: Loading;
   params: Params;
   error: string | null;
+
+  selectedRoutineExercises: Exercise[];
+  workoutRoutineSets: WorkoutSets;
 }
 
 const initialState: ProgramState = {
@@ -38,6 +41,9 @@ const initialState: ProgramState = {
   params: { routineId: "", programId: "" },
   loading: Loading.Idle,
   error: null,
+
+  selectedRoutineExercises: [],
+  workoutRoutineSets: {},
 };
 
 // Async thunks
@@ -180,6 +186,9 @@ export const routineSlice = createSlice({
   name: "routines",
   initialState,
   reducers: {
+    clearSingleRoutine: (state) => {
+      state.singleRoutine = null;
+    },
     clearProgramsAndRoutines: (state) => {
       state.programs = [];
     },
@@ -188,6 +197,36 @@ export const routineSlice = createSlice({
     },
     clearRoutineParams: (state) => {
       state.params = { routineId: "", programId: "" };
+    },
+
+    // exercises
+    setSelectedRoutineExercises: (state, action) => {
+      state.selectedRoutineExercises = action.payload;
+    },
+    updateSelectedRoutineExercises: (state, action) => {
+      const newSelectedRoutineExercises = action.payload;
+      state.selectedRoutineExercises = {
+        ...state.selectedRoutineExercises,
+        ...newSelectedRoutineExercises,
+      };
+    },
+    clearSelectedRoutineExercises: (state) => {
+      state.selectedRoutineExercises = [];
+    },
+
+    // workoutsets
+    setWorkoutRoutineSets: (state, action) => {
+      state.workoutRoutineSets = action.payload;
+    },
+    updateWorkoutRoutineSets(state, action) {
+      const newRoutineSets: WorkoutSets = action.payload;
+      state.workoutRoutineSets = {
+        ...state.workoutRoutineSets,
+        ...newRoutineSets,
+      };
+    },
+    clearWorkoutRoutineSets(state) {
+      state.workoutRoutineSets = {};
     },
   },
   extraReducers: (builder) => {
@@ -277,9 +316,18 @@ export const routineSlice = createSlice({
 });
 
 export const {
+  clearSingleRoutine,
+
   clearProgramsAndRoutines,
   setRoutineParams,
   clearRoutineParams,
+
+  setWorkoutRoutineSets,
+  setSelectedRoutineExercises,
+  updateSelectedRoutineExercises,
+  clearSelectedRoutineExercises,
+  updateWorkoutRoutineSets,
+  clearWorkoutRoutineSets,
 } = routineSlice.actions;
 
 export default routineSlice.reducer;

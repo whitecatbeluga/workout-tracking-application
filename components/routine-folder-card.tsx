@@ -8,6 +8,8 @@ import { db } from "@/utils/firebase-config";
 import { BtnTitle, CustomBtn } from "./custom-btn";
 import { router } from "expo-router";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { setSelectExercises } from "@/redux/slices/exercise-slice";
+import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 
 type RoutineFolderCardProps = {
   program: Program;
@@ -136,7 +138,13 @@ const RoutineFolderCard = ({
                   </View>
                 ))}
                 <CustomBtn
-                  onPress={() => {}}
+                  onPress={async () => {
+                    dispatch(setSelectExercises(routine?.exercises));
+                    dispatch(updateWorkoutSets(routine?.exercises));
+                    router.push({
+                      pathname: "/screens/workout/add-workout",
+                    });
+                  }}
                   buttonStyle={{
                     borderRadius: 6,
                     marginTop: 10,
