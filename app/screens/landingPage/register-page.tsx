@@ -669,7 +669,7 @@ const RegisterPage = () => {
         await dispatch(setUserToken(await token));
 
         setLoading(false);
-        router.replace("/(tabs)");
+        router.replace("/screens/landingPage/login-page");
       } catch (error) {
         console.log("Error setting user document:", error);
       }
