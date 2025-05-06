@@ -27,7 +27,7 @@ import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
-  openRoutine: () => void;
+  openRoutine?: () => void;
 }
 
 interface SetData {
