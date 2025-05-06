@@ -32,6 +32,8 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import CustomModal from "@/components/custom-modal";
 import { auth } from "@/utils/firebase-config";
+import { setSelectExercises } from "@/redux/slices/exercise-slice";
+import { updateWorkoutSets } from "@/redux/slices/workout-slice";
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
@@ -132,7 +134,13 @@ const ViewRoutine = () => {
             </View>
 
             <CustomBtn
-              onPress={() => {}}
+              onPress={() => {
+                dispatch(setSelectExercises(routine?.exercises));
+                dispatch(updateWorkoutSets(routine?.exercises));
+                router.push({
+                  pathname: "/screens/workout/add-workout",
+                });
+              }}
               buttonStyle={{
                 borderRadius: 6,
                 marginTop: 10,

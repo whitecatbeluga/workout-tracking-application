@@ -58,15 +58,24 @@ const ExerciseDetailCard = ({
   }>({
     [exercise.id]: {
       name: exercise.name,
-      sets: [
-        {
-          set: 1,
-          previous: "",
-          kg: "",
-          reps: "",
-          checked: false,
-        },
-      ],
+      sets:
+        Array.isArray(exercise.sets) && exercise.sets.length > 0
+          ? exercise.sets.map((s, index) => ({
+              set: typeof s.set === "number" ? s.set : index + 1,
+              previous: typeof s.previous === "string" ? s.previous : "",
+              kg: typeof s.kg === "string" ? s.kg : "",
+              reps: typeof s.reps === "string" ? s.reps : "",
+              checked: typeof s.checked === "boolean" ? s.checked : false,
+            }))
+          : [
+              {
+                set: 1,
+                previous: "",
+                kg: "",
+                reps: "",
+                checked: false,
+              },
+            ],
     },
   });
 

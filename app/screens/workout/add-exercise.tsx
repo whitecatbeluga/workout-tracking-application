@@ -91,7 +91,7 @@ const AddExercise = () => {
   };
 
   const handleAddExercise = () => {
-    if (previousRoute === "/screens/workout/create-routine") {
+    if (previousRoute === "create-routine") {
       router.replace({
         pathname: "/screens/workout/create-routine",
         params: { type: "add-routine" },
