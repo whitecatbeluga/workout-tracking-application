@@ -53,6 +53,7 @@ const ExerciseDetailCard = ({
   const dispatch = useAppDispatch();
 
   const pathname = usePathname();
+  const { type } = useLocalSearchParams();
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({

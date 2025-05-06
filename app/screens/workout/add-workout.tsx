@@ -28,6 +28,8 @@ import {
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 import { RootState } from "@/redux/store";
+import { resetDuration } from "@/redux/slices/timer-slice";
+import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetProps,
