@@ -118,22 +118,23 @@ export const updateRoutine = createAsyncThunk(
   "routines/update",
   async ({
     userId,
-    programId,
     routineId,
-    updatedData,
+    updatedRoutineName,
+    updatedSets,
   }: {
     userId: string;
-    programId: string;
     routineId: string;
-    updatedData: any;
+    updatedRoutineName?: string;
+    updatedSets?: WorkoutSets;
   }) => {
-    await RoutineService.updateRoutine(
+    const updatedRoutine = await RoutineService.updateRoutine(
       userId,
-      programId,
       routineId,
-      updatedData
+      updatedRoutineName,
+      updatedSets
     );
-    return { routineId, updatedData };
+
+    return updatedRoutine;
   }
 );
 
@@ -244,7 +245,7 @@ export const routineSlice = createSlice({
         state.loading = Loading.Rejected;
       })
 
-      //   // fetchPrograms
+      // fetchPrograms
       .addCase(fetchPrograms.pending, (state) => {
         state.loading = Loading.Pending;
       })
@@ -287,14 +288,18 @@ export const routineSlice = createSlice({
         }
       })
 
-      //   // updateRoutine
-      //   .addCase(updateRoutine.fulfilled, (state, action) => {
-      //     const { routineId, updatedData } = action.payload;
-      //     const index = state.routines.findIndex((r) => r.id === routineId);
-      //     if (index !== -1) {
-      //       state.routines[index] = { ...state.routines[index], ...updatedData };
-      //     }
-      //   })
+      // updateRoutine
+      .addCase(updateRoutine.pending, (state) => {
+        state.loading = Loading.Pending;
+      })
+      .addCase(updateRoutine.fulfilled, (state, action) => {
+        state.loading = Loading.Fulfilled;
+        state.programs = action.payload;
+      })
+      .addCase(updateRoutine.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to update routine";
+        state.loading = Loading.Rejected;
+      })
 
       // deleteRoutine
       .addCase(deleteRoutine.fulfilled, (state, action) => {

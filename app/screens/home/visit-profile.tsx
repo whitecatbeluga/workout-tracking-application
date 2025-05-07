@@ -6,13 +6,16 @@ import {
   Dimensions,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { BarChart } from "react-native-chart-kit";
 import PostCard from "./post-card";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
+import { db } from "@/utils/firebase-config";
+import { doc, getDoc } from "firebase/firestore";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -45,9 +48,8 @@ const chartConfig = {
 
 const VisitProfile = () => {
   const {
+    post_id,
     name,
-    fullName,
-    email,
     postTitle,
     description,
     time,
@@ -55,10 +57,11 @@ const VisitProfile = () => {
     likes,
     comments,
     date,
+    user_id,
     sets,
     records,
-    profilePicture,
-    postedPicture,
+    fullName,
+    email,
     isLiked,
   } = useLocalSearchParams();
 
@@ -68,6 +71,8 @@ const VisitProfile = () => {
   const [liked, setLiked] = useState(isLiked === "true");
   const [following, setFollowing] = useState(false);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
@@ -75,6 +80,47 @@ const VisitProfile = () => {
     setSheetType(type);
     bottomSheetRef.current?.expand();
   };
+
+  // fetch data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const userDocRef = doc(db, "users", user_id.toString());
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setProfilePicture(userData.profile_picture);
+        } else {
+          console.log("No such user!");
+        }
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false);
+        console.log(user_id);
+        console.log("Profile picture", profilePicture);
+      }
+    };
+
+    if (user_id) {
+      fetchProfile();
+    }
+  }, [user_id]);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <ActivityIndicator size="large" color="#48A6A7" />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -85,7 +131,14 @@ const VisitProfile = () => {
       >
         <View style={styles.profileContainer}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <Image style={styles.profilePicture} source={profilePicture} />
+            <Image
+              style={styles.profilePicture}
+              source={
+                profilePicture
+                  ? { uri: profilePicture }
+                  : require("../../../assets/images/image_placeholder.jpg")
+              }
+            />
             <View>
               <Text style={styles.name}>{fullName}</Text>
               <Text style={styles.email}>{email}</Text>
@@ -151,6 +204,7 @@ const VisitProfile = () => {
             <Text style={styles.recentWorkoutText}>Recent Workouts</Text>
           </View>
           <PostCard
+            post_id={toString(post_id)}
             name={toString(name)}
             fullName={toString(fullName)}
             email={toString(fullName)}
@@ -161,11 +215,12 @@ const VisitProfile = () => {
             volume={toString(volume)}
             sets={toString(sets)}
             records={toString(records)}
-            profilePicture={profilePicture}
-            postedPicture={postedPicture}
+            // profilePicture={profilePicture}
+            // postedPicture={postedPicture}
             likes={toString(likes)}
             comments={toString(comments)}
             liked={liked}
+            user_id={toString(user_id)}
             onLikePress={() => setLiked(!liked)}
             onCheckLikes={() => handleOpenSheet("likes")}
             onCommentPress={() => handleOpenSheet("comments")}
