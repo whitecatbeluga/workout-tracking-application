@@ -15,7 +15,16 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
 import { db } from "@/utils/firebase-config";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { formatDistanceToNow } from "date-fns";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -72,6 +81,7 @@ const VisitProfile = () => {
   const [following, setFollowing] = useState(false);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [profilePicture, setProfilePicture] = useState<string>("");
+  const [userPosts, setUserPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -83,29 +93,55 @@ const VisitProfile = () => {
 
   // fetch data
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
+        if (!user_id) return;
+
+        // Fetch user profile
         const userDocRef = doc(db, "users", user_id.toString());
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          setProfilePicture(userData.profile_picture);
+          setProfilePicture(userData.profile_picture || "");
         } else {
           console.log("No such user!");
         }
+
+        // Fetch public workouts for this user
+        const workoutsRef = collection(db, "workouts");
+        const q = query(
+          workoutsRef,
+          where("user_id", "==", toString(user_id)),
+          where("visible_to_everyone", "==", true),
+          orderBy("created_at", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        const posts = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            total_volume: data.total_volume,
+            created_at: formatDistanceToNow(
+              data.created_at.toDate?.() || data.created_at,
+              { addSuffix: true }
+            ),
+          };
+        });
+
+        setUserPosts(posts);
       } catch (error) {
         console.error("Error fetching data: ", error);
       } finally {
         setLoading(false);
-        console.log(user_id);
-        console.log("Profile picture", profilePicture);
+        console.log("Fetched user ID:", user_id);
+        console.log("Profile picture:", profilePicture);
       }
     };
 
-    if (user_id) {
-      fetchProfile();
-    }
+    fetchData();
   }, [user_id]);
 
   if (loading) {
@@ -203,7 +239,31 @@ const VisitProfile = () => {
           <View style={{ paddingHorizontal: 16 }}>
             <Text style={styles.recentWorkoutText}>Recent Workouts</Text>
           </View>
-          <PostCard
+          {userPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post_id={post.id}
+              name={toString(name)}
+              fullName={toString(fullName)}
+              email={toString(email)}
+              date={toString(post.created_at)}
+              postTitle={toString(post.workout_title)}
+              description={toString(post.workout_description)}
+              time={toString(post.workout_duration)}
+              volume={post.total_volume}
+              sets={post.total_sets}
+              records={toString(post.records)}
+              likes={toString(likes)}
+              comments={toString(comments)}
+              liked={liked}
+              user_id={toString(user_id)}
+              onLikePress={() => setLiked(!liked)}
+              onCheckLikes={() => handleOpenSheet("likes")}
+              onCommentPress={() => handleOpenSheet("comments")}
+            />
+          ))}
+
+          {/* <PostCard
             post_id={toString(post_id)}
             name={toString(name)}
             fullName={toString(fullName)}
@@ -224,7 +284,7 @@ const VisitProfile = () => {
             onLikePress={() => setLiked(!liked)}
             onCheckLikes={() => handleOpenSheet("likes")}
             onCommentPress={() => handleOpenSheet("comments")}
-          />
+          /> */}
         </View>
       </ScrollView>
       <BottomSheetComments
