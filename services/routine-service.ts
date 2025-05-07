@@ -231,20 +231,69 @@ export const RoutineService = {
 
   async updateRoutine(
     userId: string,
-    programId: string,
     routineId: string,
-    updatedData: any
+    updatedRoutineName?: string,
+    updatedSets?: WorkoutSets
   ) {
-    const routineRef = doc(
-      db,
-      "users",
-      userId,
-      "programs",
-      programId,
-      "routines",
-      routineId
-    );
-    await updateDoc(routineRef, updatedData);
+    try {
+      const routineRef = doc(db, "routines", routineId);
+
+      // update routine name
+      if (updatedRoutineName) {
+        await updateDoc(routineRef, {
+          routine_name: updatedRoutineName,
+        });
+      }
+
+      // update sets
+      if (updatedSets) {
+        const exercisesRef = collection(routineRef, "exercises");
+        const existingExercisesSnap = await getDocs(exercisesRef);
+
+        // delete existing sets
+        await Promise.all(
+          existingExercisesSnap.docs.map(async (exerciseRef) => {
+            const setsRef = collection(exerciseRef.ref, "sets");
+            const setsSnap = await getDocs(setsRef);
+
+            await Promise.all(
+              setsSnap.docs.map((setDoc) => deleteDoc(setDoc.ref))
+            );
+
+            await deleteDoc(exerciseRef.ref);
+          })
+        );
+
+        // add new sets
+        for (const [exerciseId, exercise] of Object.entries(updatedSets)) {
+          const { name, sets: exerciseSets } = exercise;
+          if (!name) continue;
+
+          const newExerciseRef = doc(routineRef, "exercises", exerciseId);
+          await setDoc(newExerciseRef, { exercise_id: exerciseId });
+
+          if (Array.isArray(exerciseSets)) {
+            for (const set of exerciseSets) {
+              const { reps, kg, previous, checked } = set;
+              if (reps === undefined || kg === undefined) continue;
+
+              await addDoc(collection(newExerciseRef, "sets"), {
+                set: set.set,
+                previous: previous ?? "",
+                kg,
+                reps,
+                checked,
+              });
+            }
+          }
+        }
+      }
+
+      return this.getPrograms(userId);
+    } catch (err) {
+      console.error("Error in updateRoutine:", err);
+      throw err;
+    }
   },
 
   async deleteRoutine(userId: string, programId: string, routineId: string) {

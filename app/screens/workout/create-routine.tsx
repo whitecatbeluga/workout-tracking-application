@@ -18,6 +18,7 @@ import {
   clearSingleRoutine,
   clearWorkoutRoutineSets,
   createRoutineWithoutProgram,
+  updateRoutine,
 } from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
@@ -111,12 +112,14 @@ const CreateRoutine = () => {
 
       setLoading(true);
 
+      console.log(workoutRoutineSets);
+
       await dispatch(
-        createRoutineWithoutProgram({
+        updateRoutine({
           userId: userId as string,
-          routineName,
-          sets: workoutRoutineSets,
-          programId: routineParams.programId,
+          routineId: routineParams.routineId as string,
+          updatedRoutineName: routineName,
+          updatedSets: workoutRoutineSets,
         })
       );
 
