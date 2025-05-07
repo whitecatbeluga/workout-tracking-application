@@ -229,20 +229,27 @@ const WorkoutPage = () => {
   };
 
   const handleEditRoutine = async () => {
-    await dispatch(
+    const resultAction = await dispatch(
       fetchRoutine({
         routineId: selectedRoutineDetails?.id as string,
       })
     );
-    dispatch(setSelectedRoutineExercises(selectedRoutineDetails?.exercises));
-    dispatch(setWorkoutRoutineSets(selectedRoutineDetails?.exercises));
-    router.push({
-      pathname: "/screens/workout/create-routine",
-      params: {
-        type: "edit",
-        routineId: selectedRoutineDetails?.id,
-      },
-    });
+
+    if (fetchRoutine.fulfilled.match(resultAction)) {
+      const routine = resultAction.payload;
+
+      dispatch(setRoutineParams({ routineId: routine.id }));
+      dispatch(setSelectedRoutineExercises(routine.exercises));
+
+      router.push({
+        pathname: "/screens/workout/create-routine",
+        params: {
+          type: "edit",
+        },
+      });
+    } else {
+      console.error("Failed to fetch routine");
+    }
   };
 
   return (

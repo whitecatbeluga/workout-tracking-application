@@ -81,9 +81,10 @@ export const seedFirestore = async () => {
 
         const setsRef = collection(exerciseRef, "sets");
         const sets = [
-          { set: 1, previous: 10, kg: 10, reps: 10 },
-          { set: 2, previous: 10, kg: 10, reps: 10 },
-          { set: 3, previous: 10, kg: 10, reps: 10 },
+          { set: 1, previous: "10", kg: "10", reps: "10", checked: false },
+          { set: 2, previous: "10", kg: "10", reps: "10", checked: false },
+          { set: 3, previous: "10", kg: "10", reps: "10", checked: false },
+          { set: 4, previous: "10", kg: "10", reps: "10", checked: false },
         ];
 
         const batch = writeBatch(db);
