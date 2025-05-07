@@ -272,10 +272,6 @@ const WorkoutPage = () => {
                 <WorkoutHeader />
               </View>
 
-              {/* <TouchableOpacity onPress={seedFirestore}>
-                <Text>Seeders</Text>
-              </TouchableOpacity> */}
-
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
                 <View style={styles.routineIcon}>
