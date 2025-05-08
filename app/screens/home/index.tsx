@@ -18,13 +18,16 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
 import { auth, db } from "@/utils/firebase-config";
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
   where,
+  onSnapshot,
 } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 
@@ -66,6 +69,7 @@ const HomeScreen = () => {
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
@@ -106,11 +110,42 @@ const HomeScreen = () => {
   //   fetchUserData();
   // }, []);
 
-  const toggleLike = (postId: string) => {
-    setLikedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
+  // const toggleLike = (postId: string) => {
+  //   setLikedPosts((prev) => ({
+  //     ...prev,
+  //     [postId]: !prev[postId],
+  //   }));
+  // };
+  const toggleLike = async (postId: string) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const user_id = currentUser.uid;
+
+    try {
+      const likesRef = collection(db, "workouts", postId, "likes");
+
+      const q = query(likesRef, where("liked_by", "==", user_id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // User has liked, remove the like
+        const likeDocId = querySnapshot.docs[0].id;
+        await deleteDoc(querySnapshot.docs[0].ref);
+        setLikedPosts((prev) => ({ ...prev, [postId]: false }));
+      } else {
+        await addDoc(likesRef, {
+          liked_by: user_id,
+        });
+        setLikedPosts((prev) => ({ ...prev, [postId]: true }));
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
   };
 
   // To hide bottom nav
@@ -128,12 +163,15 @@ const HomeScreen = () => {
   };
 
   // Handle open comments
-  const handleOpenSheet = (type: "likes" | "comments") => {
+  const handleOpenSheet = (type: "likes" | "comments", postId: string) => {
     setSheetType(type);
+    setSelectedPostId(postId);
     bottomSheetRef.current?.expand();
   };
 
   useEffect(() => {
+    const unsubscribeFns: (() => void)[] = [];
+
     const fetchWorkouts = async () => {
       try {
         const workoutsRef = collection(db, "workouts");
@@ -163,52 +201,77 @@ const HomeScreen = () => {
           })
         );
 
-        // Build workouts array with user profiles and like count
-        const workoutsWithUsers: Workout[] = await Promise.all(
-          workoutDocs
-            .filter((doc) => doc.data().user_id !== currentUserId)
-            .map(async (doc) => {
-              const data = doc.data();
+        // Create base workout list
+        const baseWorkouts: Workout[] = workoutDocs
+          .filter((doc) => doc.data().user_id !== currentUserId)
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              created_at: formatDistanceToNow(
+                data.created_at.toDate?.() || data.created_at,
+                { addSuffix: true }
+              ),
+              image_urls: data.image_urls,
+              total_sets: data.total_sets,
+              total_volume: data.total_volume,
+              user_id: data.user_id,
+              visible_to_everyone: data.visible_to_everyone,
+              workout_description: data.workout_description,
+              workout_duration: data.workout_duration,
+              workout_title: data.workout_title,
+              userProfile: userMap[data.user_id],
+              like_count: 0,
+              comment_count: 0,
+            };
+          });
 
-              // Get likes count from subcollection
-              const likesRef = collection(db, "workouts", doc.id, "likes");
-              const likesSnapshot = await getDocs(likesRef);
-              const likeCount = likesSnapshot.size;
+        setWorkouts(baseWorkouts);
 
-              // Get comments count from subcollection
-              const commentsRef = collection(
-                db,
-                "workouts",
-                doc.id,
-                "comments"
-              );
-              const commentsSnapshot = await getDocs(commentsRef);
-              const commentsCount = commentsSnapshot.size;
+        // Initialize likedPosts map
+        if (currentUserId) {
+          const newLikedPosts: { [key: string]: boolean } = {};
 
-              const workout: Workout = {
-                id: doc.id,
-                created_at: formatDistanceToNow(
-                  data.created_at.toDate?.() || data.created_at,
-                  { addSuffix: true }
-                ),
-                image_urls: data.image_urls,
-                total_sets: data.total_sets,
-                total_volume: data.total_volume,
-                user_id: data.user_id,
-                visible_to_everyone: data.visible_to_everyone,
-                workout_description: data.workout_description,
-                workout_duration: data.workout_duration,
-                workout_title: data.workout_title,
-                userProfile: userMap[data.user_id],
-                like_count: likeCount,
-                comment_count: commentsCount,
-              };
-
-              return workout;
+          await Promise.all(
+            baseWorkouts.map(async (workout) => {
+              const likesRef = collection(db, "workouts", workout.id, "likes");
+              const q = query(likesRef, where("liked_by", "==", currentUserId));
+              const snapshot = await getDocs(q);
+              newLikedPosts[workout.id] = !snapshot.empty;
             })
-        );
+          );
 
-        setWorkouts(workoutsWithUsers);
+          setLikedPosts(newLikedPosts); // ✅ Moved outside of loop
+        }
+
+        // Attach real-time listeners to likes and comments
+        baseWorkouts.forEach((workout) => {
+          const likesRef = collection(db, "workouts", workout.id, "likes");
+          const commentsRef = collection(
+            db,
+            "workouts",
+            workout.id,
+            "comments"
+          );
+
+          const unsubscribeLikes = onSnapshot(likesRef, (snapshot) => {
+            setWorkouts((prev) =>
+              prev.map((w) =>
+                w.id === workout.id ? { ...w, like_count: snapshot.size } : w
+              )
+            );
+          });
+
+          const unsubscribeComments = onSnapshot(commentsRef, (snapshot) => {
+            setWorkouts((prev) =>
+              prev.map((w) =>
+                w.id === workout.id ? { ...w, comment_count: snapshot.size } : w
+              )
+            );
+          });
+
+          unsubscribeFns.push(unsubscribeLikes, unsubscribeComments);
+        });
       } catch (error) {
         console.error("Error fetching workouts and users:", error);
       } finally {
@@ -217,6 +280,10 @@ const HomeScreen = () => {
     };
 
     fetchWorkouts();
+
+    return () => {
+      unsubscribeFns.forEach((unsub) => unsub());
+    };
   }, []);
 
   return (
@@ -429,12 +496,16 @@ const HomeScreen = () => {
                 </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
-                  <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("likes", item.id)}
+                  >
                     <Text style={styles.likesText}>
                       {item.like_count} likes
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("comments", item.id)}
+                  >
                     <Text style={styles.likesText}>
                       {item.comment_count} comments
                     </Text>
@@ -446,15 +517,19 @@ const HomeScreen = () => {
                     <Ionicons
                       style={styles.icons}
                       name={
-                        likedPosts[item.id]
+                        likedPosts[item.id] === true
                           ? "thumbs-up-sharp"
                           : "thumbs-up-outline"
                       }
                       size={24}
-                      color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
+                      color={
+                        likedPosts[item.id] === true ? "#48A6A7" : "#606060"
+                      }
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("comments", item.id)}
+                  >
                     <Ionicons
                       style={styles.icons}
                       name="chatbubble-outline"
@@ -482,6 +557,7 @@ const HomeScreen = () => {
       <BottomSheetComments
         title="sample"
         type={sheetType}
+        postId={selectedPostId}
         ref={bottomSheetRef}
       />
     </View>
