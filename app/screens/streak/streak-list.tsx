@@ -1,156 +1,31 @@
+import { useRegistrationInfo } from "@/hooks/useRegistrationInfo";
+import { fetchMarkedDates } from "@/redux/slices/calendar-slice";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
 import { CalendarList } from "react-native-calendars";
-
-import { getDocs, collection, query, where } from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
-import { auth } from "@/utils/firebase-config";
-
-type MarkedDate = {
-  date: string;
-  img_url?: string | undefined;
-};
-
-type MarkedDates = MarkedDate[];
-
-const getWorkouts = async (user_id: string | undefined) => {
-  try {
-    const workoutsCollectionRef = collection(db, "workouts");
-    const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
-    const workoutsSnapshot = await getDocs(q);
-
-    const workouts = [];
-
-    for (const workoutDoc of workoutsSnapshot.docs) {
-      const workoutData = workoutDoc.data();
-      const workoutId = workoutDoc.id;
-
-      workouts.push({
-        id: workoutId,
-        ...workoutData,
-      });
-    }
-
-    return workouts;
-  } catch (error) {
-    console.error("Error fetching workouts:", error);
-  }
-};
-
-const getStartOfWeek = (date: Date) => {
-  const day = date.getDay();
-  const diff = date.getDate() - day;
-  return new Date(date.getFullYear(), date.getMonth(), diff);
-};
-
-const isDateInRange = (date: Date, start: Date, end: Date) =>
-  date >= start && date <= end;
-
-const countStreak = (markedDates: MarkedDates) => {
-  const workoutDates = new Set(
-    markedDates.map((markedDate) => markedDate.date)
-  );
-
-  let count = 0;
-  let today = new Date();
-  let weekStart = getStartOfWeek(today);
-  let weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  const hasWorkoutThisWeek = Array.from(workoutDates).some((dateStr) => {
-    const date = new Date(dateStr);
-    return isDateInRange(date, weekStart, weekEnd);
-  });
-
-  if (hasWorkoutThisWeek) count++;
-
-  while (true) {
-    weekStart.setDate(weekStart.getDate() - 7);
-    weekEnd.setDate(weekEnd.getDate() - 7);
-
-    const hadWorkout = Array.from(workoutDates).some((dateStr) => {
-      const date = new Date(dateStr);
-      return isDateInRange(date, weekStart, weekEnd);
-    });
-
-    if (hadWorkout) {
-      count++;
-    } else {
-      break;
-    }
-  }
-
-  return count;
-};
-
-const countRest = (markedDates: MarkedDates) => {
-  if (markedDates.length === 0) return 0;
-
-  const lastWorkoutDate = new Date(
-    Math.max(...markedDates.map((d) => new Date(d.date).getTime()))
-  );
-
-  const today = new Date();
-
-  const last = new Date(lastWorkoutDate.toISOString().split("T")[0]);
-  const current = new Date(today.toISOString().split("T")[0]);
-
-  const diffMs = current.getTime() - last.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  return Math.max(0, diffDays);
-};
+import { useDispatch, useSelector } from "react-redux";
 
 const StreakList = () => {
   const router = useRouter();
-  const [streakCount, setStreakCount] = useState(0);
-  const [restCount, setRestCount] = useState(0);
   const [currentDate, setCurrentDate] = useState<string>("");
-  const [markedDates, setMarkedDates] = useState<Array<MarkedDate>>([]);
-  const [monthsSinceRegistered, setMonthsSinceRegistered] = useState<number>(0);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { monthsSinceRegistered } = useRegistrationInfo();
 
   useEffect(() => {
-    let createdAt = new Date(auth.currentUser?.metadata.creationTime ?? "");
-    const offsetCreatedAt = createdAt.getTimezoneOffset();
-    createdAt = new Date(createdAt.getTime() - offsetCreatedAt * 60 * 1000);
-
-    let current = new Date();
-    const offset = current.getTimezoneOffset();
-    current = new Date(current.getTime() - offset * 60 * 1000);
-    setCurrentDate(current.toISOString().split("T")[0]);
-
-    const monthsDifference =
-      (current.getFullYear() - createdAt.getFullYear()) * 12 +
-      (current.getMonth() - createdAt.getMonth());
-    setMonthsSinceRegistered(monthsDifference);
-
-    const fetchWorkouts = async () => {
-      try {
-        const workouts: any = await getWorkouts(auth.currentUser?.uid);
-        setMarkedDates(
-          /*replace any later*/ workouts.map((workout: any) => {
-            const date = workout?.created_at
-              ?.toDate()
-              .toISOString()
-              .split("T")[0];
-            const img_url = workout?.image_urls?.[0] ?? undefined;
-            if (!date) return null;
-            return { date, img_url };
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching workouts:", error);
-      }
-    };
-
-    fetchWorkouts();
+    const current = new Date().toISOString().split("T")[0];
+    setCurrentDate(current);
   }, []);
 
   useEffect(() => {
-    setStreakCount(() => countStreak(markedDates));
-    setRestCount(() => countRest(markedDates));
-  }, [markedDates]);
+    dispatch(fetchMarkedDates());
+  }, [dispatch]);
+
+  const markedDates = useSelector(
+    (state: RootState) => state.calendar.markedDates
+  );
 
   return (
     <View style={styles.container}>
