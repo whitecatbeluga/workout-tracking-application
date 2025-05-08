@@ -1,3 +1,4 @@
+import { Audio } from "expo-av";
 import { Swipeable, RectButton } from "react-native-gesture-handler";
 import React, { useEffect, useState } from "react";
 import {
@@ -15,7 +16,6 @@ import {
 import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
 import Feather from "react-native-vector-icons/Feather";
-
 import {
   updateWorkoutSets,
   updateTotalVolumeSets,
@@ -48,12 +48,16 @@ const ExerciseDetailCard = ({
   );
   const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
   const [isRestModalVisible, setIsRestModalVisible] = useState(false);
-  const [restTimer, setRestTimer] = useState<number>(34);
+  const [restTimer, setRestTimer] = useState<number>(30);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [currentRestTime, setCurrentRestTime] = useState(restTimer);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
   const dispatch = useAppDispatch();
-
   const pathname = usePathname();
   const { type } = useLocalSearchParams();
+
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({
@@ -79,6 +83,136 @@ const ExerciseDetailCard = ({
             ],
     },
   });
+
+  // Load sound effect
+  useEffect(() => {
+    async function loadSound() {
+      const { sound } = await Audio.Sound.createAsync(
+        require("@/assets/sounds/peep.mp3"),
+        { isLooping: true }
+      );
+      setSound(sound);
+    }
+
+    loadSound();
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isTimerRunning && currentRestTime > 0) {
+      interval = setInterval(() => {
+        setCurrentRestTime((prev) => prev - 1);
+      }, 1000);
+    } else if (isTimerRunning && currentRestTime === 0) {
+      setIsTimerRunning(false);
+      playAlarm();
+    }
+
+    return () => clearInterval(interval);
+  }, [isTimerRunning, currentRestTime]);
+
+  const playAlarm = async () => {
+    if (sound) {
+      await sound.playAsync();
+      setIsAlarmPlaying(true);
+    }
+  };
+
+  const stopAlarm = async () => {
+    if (sound) {
+      await sound.stopAsync();
+      setIsAlarmPlaying(false);
+    }
+  };
+
+  const startTimer = () => {
+    if (isAlarmPlaying) {
+      stopAlarm();
+    }
+    setCurrentRestTime(restTimer);
+    setIsTimerRunning(true);
+  };
+
+  const stopTimer = () => {
+    setIsTimerRunning(false);
+  };
+
+  const handleSelectRestTime = (seconds: number) => {
+    setRestTimer(seconds);
+    setCurrentRestTime(seconds);
+    setIsRestModalVisible(false);
+  };
+
+  const handleInputChange = (
+    exerciseId: string,
+    index: number,
+    field: keyof SetData,
+    value: string
+  ) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = [...exerciseData.sets];
+      updatedSets[index] = { ...updatedSets[index], [field]: value || "" };
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
+    });
+  };
+
+  const handleToggleCheck = (exerciseId: string, index: number) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = [...exerciseData.sets];
+      updatedSets[index] = {
+        ...updatedSets[index],
+        checked: !updatedSets[index].checked,
+      };
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
+    });
+  };
+
+  const handleAddSet = (exerciseId: string) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = [
+        ...exerciseData.sets,
+        {
+          set: exerciseData.sets.length + 1,
+          previous: "",
+          kg: "",
+          reps: "",
+          checked: false,
+        },
+      ];
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
+    });
+  };
+
+  const handleDeleteSet = (exerciseId: string, index: number) => {
+    setSetsByExercise((prevSetsByExercise) => {
+      const exerciseData = prevSetsByExercise[exerciseId];
+      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
+      return {
+        ...prevSetsByExercise,
+        [exerciseId]: { ...exerciseData, sets: updatedSets },
+      };
+    });
+  };
 
   useEffect(() => {
     if (workoutSets != null) {
@@ -152,88 +286,10 @@ const ExerciseDetailCard = ({
     dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(workoutSets)));
   }, [workoutSets]);
 
-  const handleInputChange = (
-    exerciseId: string,
-    index: number,
-    field: keyof SetData,
-    value: string
-  ) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = [...exerciseData.sets];
-      updatedSets[index] = { ...updatedSets[index], [field]: value || "" };
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
-      };
-    });
-  };
-
-  const handleToggleCheck = (exerciseId: string, index: number) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = [...exerciseData.sets];
-      updatedSets[index] = {
-        ...updatedSets[index],
-        checked: !updatedSets[index].checked,
-      };
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
-      };
-    });
-  };
-
-  const handleAddSet = (exerciseId: string) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = [
-        ...exerciseData.sets,
-        {
-          set: exerciseData.sets.length + 1,
-          previous: "",
-          kg: "",
-          reps: "",
-          checked: false,
-        },
-      ];
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
-      };
-    });
-  };
-
-  const handleSelectRestTime = (seconds: number) => {
-    setRestTimer(seconds);
-    setIsRestModalVisible(false);
-  };
-
-  const handleDeleteSet = (exerciseId: string, index: number) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
-      };
-    });
-  };
-
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          marginBottom: 10,
-          marginTop: 20,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
-          {exercise.name}
-        </Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.exerciseName}>{exercise.name}</Text>
         <TouchableOpacity onPress={openRoutine}>
           <Feather name="more-vertical" size={20} color="#000" />
         </TouchableOpacity>
@@ -241,17 +297,43 @@ const ExerciseDetailCard = ({
 
       <TouchableOpacity
         onPress={() => setIsRestModalVisible(true)}
-        style={styles.restTimerContainer}
+        style={[
+          styles.restTimerContainer,
+          isAlarmPlaying && styles.alarmActiveContainer,
+        ]}
       >
-        <Icon
-          name="clock-o"
-          size={20}
-          color="#007bff"
-          style={{ marginRight: 5 }}
-        />
-        <Text style={{ fontSize: 16, color: "#007bff" }}>
-          Rest timer: {restTimer}s
-        </Text>
+        <View style={styles.timerDisplay}>
+          {
+            <Icon
+              name="clock-o"
+              size={20}
+              color={isAlarmPlaying ? "#ff3b30" : "#007bff"}
+              style={{ marginRight: 5 }}
+            />
+          }
+          <Text
+            style={[styles.timerText, isAlarmPlaying && styles.alarmActiveText]}
+          >
+            {isAlarmPlaying ? "TIME'S UP!" : `Rest timer: ${currentRestTime}s`}
+          </Text>
+        </View>
+
+        {isAlarmPlaying ? (
+          <TouchableOpacity
+            onPress={stopAlarm}
+            style={[styles.timerControl, styles.alarmControl]}
+          >
+            <Icon name="bell-slash" size={20} color="#ff3b30" />
+          </TouchableOpacity>
+        ) : isTimerRunning ? (
+          <TouchableOpacity onPress={stopTimer} style={styles.timerControl}>
+            <Icon name="stop" size={20} color="#ff3b30" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={startTimer} style={styles.timerControl}>
+            <Icon name="play" size={20} color="#007bff" />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
 
       <View style={styles.table}>
@@ -375,17 +457,53 @@ const ExerciseDetailCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    // padding: 1,
     marginTop: 3,
     width: "100%",
   },
-  header: {
+  headerContainer: {
+    marginBottom: 10,
+    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  exerciseName: {
+    fontWeight: "bold",
+    fontSize: 24,
+  },
+  restTimerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
     marginBottom: 10,
   },
-  headerText: {
-    fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
-    color: "#333",
+  alarmActiveContainer: {
+    backgroundColor: "#ffebee",
+    borderColor: "#ff3b30",
+    borderWidth: 1,
+  },
+  timerDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  timerText: {
+    fontSize: 16,
+    color: "#007bff",
+  },
+  alarmActiveText: {
+    color: "#ff3b30",
+    fontWeight: "bold",
+  },
+  timerControl: {
+    padding: 5,
+  },
+  alarmControl: {
+    backgroundColor: "#ffcdd2",
+    borderRadius: 20,
+    padding: 8,
   },
   table: {
     marginTop: 20,
@@ -395,7 +513,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     padding: 5,
     borderRadius: 5,
-    // marginBottom: 10,
   },
   tableHeaderText: {
     flex: 1,
@@ -408,8 +525,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 5,
-    // paddingTop: 5,
-    // paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
@@ -457,10 +572,6 @@ const styles = StyleSheet.create({
   restTimeText: {
     fontSize: 16,
     textAlign: "center",
-  },
-  restTimerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
   },
   deleteButton: {
     backgroundColor: "#ff3b30",
