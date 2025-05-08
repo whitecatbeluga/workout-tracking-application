@@ -42,11 +42,13 @@ const ViewPostScreen = () => {
   const [liked, setLiked] = useState(isLiked === "true");
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
-  const handleOpenSheet = (type: "likes" | "comments") => {
+  const handleOpenSheet = (type: "likes" | "comments", postId: string) => {
     setSheetType(type);
+    setSelectedPostId(postId);
     bottomSheetRef.current?.expand();
   };
 
@@ -184,8 +186,10 @@ const ViewPostScreen = () => {
               liked={liked}
               user_id={toString(user_id)}
               onLikePress={() => setLiked(!liked)}
-              onCheckLikes={() => handleOpenSheet("likes")}
-              onCommentPress={() => handleOpenSheet("comments")}
+              onCheckLikes={() => handleOpenSheet("likes", toString(post_id))}
+              onCommentPress={() =>
+                handleOpenSheet("comments", toString(post_id))
+              }
             />
           </>
         }
@@ -196,6 +200,7 @@ const ViewPostScreen = () => {
       <BottomSheetComments
         title="sample"
         type={sheetType}
+        postId={selectedPostId}
         ref={bottomSheetRef}
       />
     </View>

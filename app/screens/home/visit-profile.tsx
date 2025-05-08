@@ -99,7 +99,7 @@ const VisitProfile = () => {
         if (!user_id) return;
 
         // Fetch user profile
-        const userDocRef = doc(db, "users", user_id.toString());
+        const userDocRef = doc(db, "users", toString(user_id));
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
