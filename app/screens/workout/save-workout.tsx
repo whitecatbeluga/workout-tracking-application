@@ -275,7 +275,6 @@ const SaveWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
-
   return (
     <View style={styles.container}>
       <TextInput
