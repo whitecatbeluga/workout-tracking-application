@@ -14,6 +14,10 @@ import Constants from "expo-constants";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 import { RootState } from "../store";
 
+import { getDocs, collection, query, where } from "firebase/firestore";
+import { db } from "@/utils/firebase-config";
+import { auth } from "@/utils/firebase-config";
+
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
 
@@ -33,6 +37,38 @@ export const getWorkout = createAsyncThunk(
     }
   }
 );
+
+export const getUserWorkouts = createAsyncThunk(
+  "workout/getUserWorkouts",
+  async (_, thunkApi) => {
+    try {
+      const workoutsCollectionRef = collection(db, "workouts");
+      const q = query(
+        workoutsCollectionRef,
+        where("user_id", "==", auth.currentUser?.uid)
+      );
+      const workoutsSnapshot = await getDocs(q);
+
+      const workouts = [];
+
+      for (const workoutDoc of workoutsSnapshot.docs) {
+        const workoutData = workoutDoc.data();
+        const workoutId = workoutDoc.id;
+
+        workouts.push({
+          id: workoutId,
+          ...workoutData,
+        });
+      }
+
+      return workouts;
+    } catch (error) {
+      console.error("Error fetching workouts:", error);
+      return thunkApi.rejectWithValue("Failed to fetch user workouts");
+    }
+  }
+);
+
 export const createWorkout = createAsyncThunk(
   "workout/createWorkout",
   async (data: WorkoutFormData, thunkApi) => {
@@ -131,7 +167,7 @@ export const {
   drarfWorkout,
   undraftWorkout,
   updateTotalVolumeSets,
-  clearTotalVolumeSets
+  clearTotalVolumeSets,
 } = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;
