@@ -245,6 +245,7 @@ const SaveWorkout = () => {
             }
           }
         }
+        dispatch(clearSelectedExercises());
         console.log(`Workout saved`);
       } catch (error) {
         console.error("Error saving workout to Firestore: ", error);
@@ -275,6 +276,7 @@ const SaveWorkout = () => {
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
+
   return (
     <View style={styles.container}>
       <TextInput
