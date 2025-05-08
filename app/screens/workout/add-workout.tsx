@@ -187,7 +187,6 @@ const AddWorkout = () => {
   };
   // console.log("counter-add workout");
   // console.log("isModalVisible", isModalVisible);
-  console.log("selectedExercises", selectedExercises);
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
