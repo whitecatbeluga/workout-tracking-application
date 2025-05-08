@@ -1,77 +1,31 @@
+import { useRegistrationInfo } from "@/hooks/useRegistrationInfo";
+import { fetchMarkedDates } from "@/redux/slices/calendar-slice";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
 import { CalendarList } from "react-native-calendars";
-
-import { getDocs, collection, query, where } from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
-import { useAppSelector } from "@/hooks/use-app-selector";
-import { auth } from "@/utils/firebase-config";
-
-type MarkedDates = {
-  date: string;
-  img_url?: string | undefined;
-};
-
-const getWorkouts = async (user_id: string | undefined) => {
-  try {
-    const workoutsCollectionRef = collection(db, "workouts");
-    const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
-    const workoutsSnapshot = await getDocs(q);
-
-    const workouts = [];
-
-    for (const workoutDoc of workoutsSnapshot.docs) {
-      const workoutData = workoutDoc.data();
-      const workoutId = workoutDoc.id;
-
-      workouts.push({
-        id: workoutId,
-        ...workoutData,
-      });
-    }
-
-    return workouts;
-  } catch (error) {
-    console.error("Error fetching workouts:", error);
-  }
-};
+import { useDispatch, useSelector } from "react-redux";
 
 const StreakList = () => {
-  const user = useAppSelector((state) => state.auth.user);
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState<string>("");
-  const [markedDates, setMarkedDates] = useState<Array<MarkedDates>>([]);
-  const [monthsSinceRegistered, setMonthsSinceRegistered] = useState<number>(0);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { monthsSinceRegistered } = useRegistrationInfo();
 
   useEffect(() => {
-    let current = new Date();
-    const offset = current.getTimezoneOffset();
-    current = new Date(current.getTime() - offset * 60 * 1000);
-    setCurrentDate(current.toISOString().split("T")[0]);
-    setMonthsSinceRegistered(1);
-
-    const fetchWorkouts = async () => {
-      try {
-        const workouts: any = await getWorkouts(auth.currentUser?.uid);
-        setMarkedDates(
-          /*replace any later*/ workouts.map((workout: any) => {
-            const date = workout?.created_at
-              ?.toDate()
-              .toISOString()
-              .split("T")[0];
-            const img_url = workout?.image_urls?.[0] ?? undefined;
-            if (!date) return null;
-            return { date, img_url };
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching workouts:", error);
-      }
-    };
-
-    fetchWorkouts();
+    const current = new Date().toISOString().split("T")[0];
+    setCurrentDate(current);
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchMarkedDates());
+  }, [dispatch]);
+
+  const markedDates = useSelector(
+    (state: RootState) => state.calendar.markedDates
+  );
 
   return (
     <View style={styles.container}>

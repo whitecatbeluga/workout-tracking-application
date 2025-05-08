@@ -11,8 +11,18 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import { auth, db } from "@/utils/firebase-config";
 import { Dimensions } from "react-native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -58,12 +68,50 @@ const PostCard = ({
   onCheckLikes,
   onCommentPress,
 }: PostCardProps) => {
+  const [likeCount, setLikeCount] = useState<string>(likes);
+  const [commentCount, setCommentCount] = useState<string>(comments);
+  const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [image_urls, setImage_urls] = useState<string[]>([]);
   const [profilePicture, setProfilePicture] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
+  const toggleLike = async (postId: string) => {
+    console.log(postId);
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const user_id = currentUser.uid;
+
+    try {
+      const likesRef = collection(db, "workouts", postId, "likes");
+
+      const q = query(likesRef, where("liked_by", "==", user_id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // User has liked, remove the like
+        const likeDocId = querySnapshot.docs[0].id;
+        await deleteDoc(querySnapshot.docs[0].ref);
+        setLikedPosts((prev) => ({ ...prev, [postId]: false }));
+      } else {
+        await addDoc(likesRef, {
+          liked_by: user_id,
+        });
+        setLikedPosts((prev) => ({ ...prev, [postId]: true }));
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
   useEffect(() => {
+    const unsubscribeFns: (() => void)[] = [];
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -89,6 +137,27 @@ const PostCard = ({
             } else {
               console.log("No image_urls found or it's not an array.");
             }
+
+            if (auth.currentUser) {
+              const currentUserId = auth.currentUser.uid;
+              const likesRef = collection(db, "workouts", post_id, "likes");
+              const q = query(likesRef, where("liked_by", "==", currentUserId));
+              const snapshot = await getDocs(q);
+              setLikedPosts({ [post_id]: !snapshot.empty });
+            }
+
+            // Real-time likes listener
+            const likesRef = collection(db, "workouts", post_id, "likes");
+            const unsubscribeLikes = onSnapshot(likesRef, (snapshot) => {
+              setLikeCount(snapshot.size.toString());
+            });
+
+            // Real-time comments listener
+            const commentsRef = collection(db, "workouts", post_id, "comments");
+            const unsubscribeComments = onSnapshot(commentsRef, (snapshot) => {
+              setCommentCount(snapshot.size.toString());
+            });
+            unsubscribeFns.push(unsubscribeLikes, unsubscribeComments);
           } else {
             console.log("Post not found");
           }
@@ -103,6 +172,10 @@ const PostCard = ({
     if (user_id || post_id) {
       fetchData();
     }
+
+    return () => {
+      unsubscribeFns.forEach((unsub) => unsub());
+    };
   }, [user_id, post_id]);
 
   if (loading) {
@@ -262,7 +335,7 @@ const PostCard = ({
 
       <View style={styles.likesContainer}>
         <TouchableOpacity onPress={onCheckLikes}>
-          <Text style={styles.likesText}>{likes} likes</Text>
+          <Text style={styles.likesText}>{likeCount} likes</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
           <Text style={styles.likesText}>{comments} comments</Text>
@@ -270,13 +343,16 @@ const PostCard = ({
       </View>
 
       <View style={styles.likeCommentShareContainer}>
-        <TouchableOpacity onPress={onLikePress}>
+        <TouchableOpacity onPress={() => toggleLike(post_id)}>
           <Ionicons
             style={styles.icons}
-            name={liked ? "thumbs-up-sharp" : "thumbs-up-outline"}
-            size={24}
-            color={liked ? "#48A6A7" : "#606060"}
-          />
+            name={
+              likedPosts[post_id]
+                ? "thumbs-up-sharp"
+                : "thumbs-up-outline"
+            }            size={24}
+            color={likedPosts[post_id] ? "#48A6A7" : "#606060"}
+            />
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
           <Ionicons
