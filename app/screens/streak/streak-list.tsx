@@ -9,10 +9,10 @@ import { useDispatch, useSelector } from "react-redux";
 
 const StreakList = () => {
   const router = useRouter();
-  const [currentDate, setCurrentDate] = useState<string>("");
   const dispatch = useDispatch<AppDispatch>();
-
   const { monthsSinceRegistered } = useRegistrationInfo();
+
+  const [currentDate, setCurrentDate] = useState<string>("");
 
   useEffect(() => {
     const current = new Date().toISOString().split("T")[0];
@@ -51,21 +51,21 @@ const StreakList = () => {
                     router.push({
                       pathname: "/screens/home/view-post",
                       params: {
-                        id: data[1].id,
-                        name: data[1].name,
-                        fullName: data[1].fullName,
-                        email: data[1].email,
-                        postTitle: data[1].postTitle,
-                        description: data[1].description,
-                        time: data[1].time,
-                        volume: data[1].volume,
-                        likes: data[1].likes,
-                        comments: data[1].comments,
-                        date: data[1].date,
-                        profilePicture: data[1].profilePicture,
-                        postedPicture: data[1].postedPicture,
-                        sets: data[1].sets,
-                        records: data[1].records,
+                        post_id: matchedDate.id,
+                        name: matchedDate.username,
+                        fullName: matchedDate.full_name,
+                        email: matchedDate.email,
+                        postTitle: matchedDate.title,
+                        description: matchedDate.description,
+                        time: matchedDate.duration,
+                        volume: matchedDate.total_volume,
+                        likes: matchedDate.like_count,
+                        comments: matchedDate.comment_count,
+                        date: matchedDate.created_at,
+                        user_id: matchedDate.user_id,
+                        sets: matchedDate.total_sets,
+                        image_urls: matchedDate.image_urls,
+                        // records: matchedDate.records,
                         isLiked: "false",
                       },
                     })
@@ -158,61 +158,3 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-type PostItem = {
-  id: string;
-  name: string;
-  fullName: string;
-  email: string;
-  active: string;
-  postTitle: string;
-  description: string;
-  profilePicture: any;
-  time: string;
-  volume: string;
-  postedPicture: any;
-  likes: string;
-  comments: string;
-  date: string;
-  sets: string;
-  records: string;
-};
-
-const data: PostItem[] = [
-  {
-    id: "1",
-    name: "mima79",
-    fullName: "John Smith Doe",
-    email: "mima@gmail.com",
-    active: "2 hours ago",
-    postTitle: "Leg Day!",
-    description: "No skip leg day",
-    profilePicture: require("../../../assets/images/guy1.png"),
-    time: "42 min",
-    volume: "3,780 kg",
-    postedPicture: require("../../../assets/images/legday.png"),
-    likes: "20 Likes",
-    comments: "0 comments",
-    date: "Tuesday, April 1, 2025 - 9:55am",
-    sets: "2",
-    records: "1",
-  },
-  {
-    id: "2",
-    name: "luffy",
-    fullName: "Monkey D. Luffy",
-    email: "luffykaizoku@gmail.com",
-    active: "5 hours ago",
-    postTitle: "Push day!",
-    description: "No pain no gain",
-    profilePicture: require("../../../assets/images/Pull day.png"),
-    time: "30 min",
-    volume: "4,780 kg",
-    postedPicture: require("../../../assets/images/legday.png"),
-    likes: "25 Likes",
-    comments: "4 comments",
-    date: "Wednesday, April 2, 2025 - 11:55am",
-    sets: "4",
-    records: "2",
-  },
-];

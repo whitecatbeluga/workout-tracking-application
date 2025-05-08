@@ -1,5 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getDocs, collection, query, where } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  query,
+  where,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { auth } from "@/utils/firebase-config";
 import { MarkedDate } from "../../custom-types/calendar-type";
@@ -9,17 +16,64 @@ export const fetchMarkedDates = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const user_id = auth.currentUser?.uid;
+      if (!user_id) {
+        throw new Error("No authenticated user found.");
+      }
+
       const workoutsCollectionRef = collection(db, "workouts");
-      const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
-      const workoutsSnapshot = await getDocs(q);
+      const wq = query(workoutsCollectionRef, where("user_id", "==", user_id));
+      const workoutsSnapshot = await getDocs(wq);
+
+      const userDocRef = doc(db, "users", user_id);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        throw new Error("User document not found");
+      }
+
+      const userData = userDocSnap.data();
 
       const markedDates = workoutsSnapshot.docs
         .map((doc) => {
           const data = doc.data();
           const date = data?.created_at?.toDate()?.toISOString().split("T")[0];
           const img_url = data?.image_urls?.[0] ?? undefined;
+          const id = doc.id;
+          const title = data.workout_title;
+          const description = data.workout_description;
+          const duration = data.workout_duration;
+          // const user_id = data.user_id;
+          const username = userData.username;
+          const full_name = `${userData.first_name} ${userData.last_name}`;
+          const email = userData.email;
+          const created_at = data?.created_at
+            ?.toDate()
+            ?.toISOString()
+            .split("T")[0];
           if (!date) return null;
-          return { date, img_url };
+          // const image_urls = data.image_urls;
+          const total_sets = data.total_sets;
+          const total_volume = data.total_volume;
+          const like_count = data.like_count;
+          const comment_count = date.comment_count;
+          return {
+            date,
+            img_url,
+            id,
+            title,
+            description,
+            duration,
+            // user_id,
+            username,
+            full_name,
+            email,
+            created_at,
+            // image_urls,
+            total_sets,
+            total_volume,
+            like_count,
+            comment_count,
+          };
         })
         .filter((entry): entry is MarkedDate => entry !== null);
 
