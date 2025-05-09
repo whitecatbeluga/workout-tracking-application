@@ -242,10 +242,18 @@ const ExerciseDetailCard = ({
     setSetsByExercise((prevSetsByExercise) => {
       const exerciseData = prevSetsByExercise[exerciseId];
       const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
-      return {
+      const updatedState = {
         ...prevSetsByExercise,
         [exerciseId]: { ...exerciseData, sets: updatedSets },
       };
+      if (workoutSets != null) {
+        dispatch(updateWorkoutSets(updatedState));
+        dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(updatedState)));
+      }
+      if (workoutRoutineSets != null) {
+        dispatch(updateWorkoutRoutineSets(updatedState));
+      }
+      return updatedState;
     });
   };
 
