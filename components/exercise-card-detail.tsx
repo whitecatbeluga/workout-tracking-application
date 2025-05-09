@@ -54,6 +54,8 @@ const ExerciseDetailCard = ({
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
+  const swipeableRefs = React.useRef<{ [key: number]: Swipeable | null }>({});
+
   const dispatch = useAppDispatch();
   const pathname = usePathname();
 
@@ -239,12 +241,23 @@ const ExerciseDetailCard = ({
   };
 
   const handleDeleteSet = (exerciseId: string, index: number) => {
+    if (swipeableRefs.current[index]) {
+      swipeableRefs.current[index]?.close();
+    }
+
     setSetsByExercise((prevSetsByExercise) => {
       const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
+      const filteredSets = exerciseData.sets.filter((_, i) => i !== index);
+      const renumberedSets = filteredSets.map((set, i) => ({
+        ...set,
+        set: i + 1,
+      }));
       const updatedState = {
         ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
+        [exerciseId]: {
+          ...exerciseData,
+          sets: renumberedSets,
+        },
       };
       if (workoutSets != null) {
         dispatch(updateWorkoutSets(updatedState));
@@ -341,6 +354,7 @@ const ExerciseDetailCard = ({
         {setsByExercise[exercise.id].sets.map((set, index) => (
           <Swipeable
             key={set.set}
+            ref={(ref) => (swipeableRefs.current[index] = ref)}
             renderRightActions={() => (
               <RectButton
                 style={styles.deleteButton}
