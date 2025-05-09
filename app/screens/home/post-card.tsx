@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -184,7 +183,9 @@ const PostCard = ({
         style={{
           flex: 1,
           justifyContent: "center",
-          backgroundColor: "#FFFFFF",
+          alignItems: "center",
+          backgroundColor: "white",
+          height: 550,
         }}
       >
         <ActivityIndicator size="large" color="#48A6A7" />

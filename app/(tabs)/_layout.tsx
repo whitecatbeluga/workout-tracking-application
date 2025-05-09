@@ -18,6 +18,9 @@ import {
 } from "react-native"; // Importing Image and View for styling
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useAppSelector } from "@/hooks/use-app-selector";
+import { db, auth } from "@/utils/firebase-config";
+import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 const TabVisibilityContext = createContext({
   isTabVisible: true,
@@ -62,8 +65,29 @@ const TabLayout = () => {
     () => ({ isTabVisible, setTabVisible }),
     [isTabVisible]
   );
+  const [profilePicture, setProfilePicture] = useState<string>("");
 
   const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setProfilePicture(data.profile_picture);
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <TabVisibilityContext.Provider value={contextValue}>
@@ -99,7 +123,11 @@ const TabLayout = () => {
               <View style={styles.avatarContainer}>
                 {/* Circular Avatar Image */}
                 <Image
-                  source={require("../../assets/images/profile-cat.webp")} // Direct image URL
+                  source={{
+                    uri:
+                      profilePicture ||
+                      "https://avatar.iran.liara.run/public/41",
+                  }}
                   style={styles.avatar}
                   alt="avatar"
                 />
