@@ -93,7 +93,7 @@ const TabLayout = () => {
               fontSize: 18,
               fontFamily: "Inter_400Regular",
             },
-            tabBarLabel: "Home",
+            tabBarLabel: "Social",
             tabBarLabelStyle: { fontFamily: "Inter_400Regular" },
             headerLeft: () => (
               <View style={styles.avatarContainer}>
