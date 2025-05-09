@@ -7,7 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ScrollView } from "react-native";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
@@ -18,6 +18,8 @@ import {
   clearSingleRoutine,
   clearWorkoutRoutineSets,
   createRoutineWithoutProgram,
+  setSelectedRoutineExercises,
+  updateRoutine,
 } from "@/redux/slices/routine-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { auth } from "@/utils/firebase-config";
@@ -37,13 +39,19 @@ const CreateRoutine = () => {
     (state) => state.routine.workoutRoutineSets
   );
 
-  const [routineName, setRoutineName] = useState<string>("");
+  const routine = useAppSelector((state) => state.routine.singleRoutine);
+
+  const [routineName, setRoutineName] = useState<string>(
+    routine?.routine_name || ""
+  );
   const [errors, setErrors] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const routineParams = useAppSelector((state) => state.routine.params);
 
-  const handleSaveRoutine = async () => {
+  const { type } = useLocalSearchParams();
+
+  const handleUpdateRoutine = async () => {
     try {
       const validationErrors = [];
 
@@ -63,11 +71,11 @@ const CreateRoutine = () => {
       setLoading(true);
 
       await dispatch(
-        createRoutineWithoutProgram({
+        updateRoutine({
           userId: userId as string,
-          routineName,
-          sets: workoutRoutineSets,
-          programId: routineParams.programId,
+          routineId: routineParams.routineId as string,
+          updatedRoutineName: routineName,
+          updatedSets: workoutRoutineSets,
         })
       );
 
@@ -101,9 +109,16 @@ const CreateRoutine = () => {
     router.replace("/(tabs)/workout");
   };
 
+  const handleAddExercise = () => {
+    router.push({
+      pathname: "/screens/workout/add-exercise",
+      params: { previousRoute: "edit-routine" },
+    });
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: "Create Routine",
+      title: "Edit Routine",
       headerLeft: () => (
         <TouchableOpacity onPress={discardWorkout}>
           <Text style={{ fontFamily: "Inter_400Regular", color: "#48A6A7" }}>
@@ -113,20 +128,20 @@ const CreateRoutine = () => {
       ),
       headerRight: () => (
         <TouchableOpacity
-          onPress={handleSaveRoutine}
+          onPress={handleUpdateRoutine}
           style={{
             backgroundColor: "#48A6A7",
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 8,
-            width: 65,
+            width: 81,
           }}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
-              Save
+              Update
             </Text>
           )}
         </TouchableOpacity>
@@ -184,12 +199,7 @@ const CreateRoutine = () => {
       <View style={{ flexDirection: "column", gap: 12, paddingVertical: 20 }}>
         <TouchableOpacity
           style={styles.addExerciseButton}
-          onPress={() =>
-            router.push({
-              pathname: "/screens/workout/add-exercise",
-              params: { previousRoute: "create-routine" },
-            })
-          }
+          onPress={handleAddExercise}
         >
           <Ionicons name="add-outline" size={20} color="#FFFFFF" />
           <Text

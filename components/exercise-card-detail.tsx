@@ -64,13 +64,15 @@ const ExerciseDetailCard = ({
       name: exercise.name,
       sets:
         Array.isArray(exercise.sets) && exercise.sets.length > 0
-          ? exercise.sets.map((s, index) => ({
-              set: typeof s.set === "number" ? s.set : index + 1,
-              previous: typeof s.previous === "string" ? s.previous : "",
-              kg: typeof s.kg === "string" ? s.kg : "",
-              reps: typeof s.reps === "string" ? s.reps : "",
-              checked: typeof s.checked === "boolean" ? s.checked : false,
-            }))
+          ? exercise.sets
+              .map((s, index) => ({
+                set: typeof s.set === "number" ? s.set : index + 1,
+                previous: typeof s.previous === "string" ? s.previous : "",
+                kg: typeof s.kg === "string" ? s.kg : "",
+                reps: typeof s.reps === "string" ? s.reps : "",
+                checked: typeof s.checked === "boolean" ? s.checked : false,
+              }))
+              .sort((a, b) => a.set - b.set)
           : [
               {
                 set: 1,

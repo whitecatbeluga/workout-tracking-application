@@ -42,7 +42,7 @@ export const RoutineService = {
         const setsSnapshot = await getDocs(setsRef);
 
         return {
-          id: exerciseDoc.id,
+          id: exerciseData.exercise_id,
           exercise_id: exerciseData.exercise_id,
           name: fullData?.name,
           description: fullData?.description,

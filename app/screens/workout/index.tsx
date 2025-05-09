@@ -22,7 +22,11 @@ import React, {
 import WorkoutHeader from "./workout-header";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { getWorkout } from "@/redux/slices/workout-slice";
+import {
+  clearWorkoutSets,
+  getWorkout,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import WorkoutCard from "@/components/workout-card";
@@ -53,10 +57,13 @@ import {
   fetchRoutine,
   setSelectedRoutineExercises,
   setWorkoutRoutineSets,
+  clearWorkoutRoutineSets,
+  clearSelectedRoutineExercises,
 } from "@/redux/slices/routine-slice";
 import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
 import { seedFirestore } from "@/utils/seeders";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
@@ -67,6 +74,7 @@ const WorkoutPage = () => {
 
   const userId = auth.currentUser?.uid;
 
+  const draftWorkout = useAppSelector((state) => state.workout.draftWorkout);
   const loading = useAppSelector((state) => state.routine.loading);
   const programs = useAppSelector((state) => state.routine.programs);
 
@@ -89,6 +97,11 @@ const WorkoutPage = () => {
     useState<boolean>(false);
   const [isModalUpdateProgramVisible, setIsModalUpdateProgramVisible] =
     useState<boolean>(false);
+
+  const [isModalResetWorkoutVisible, setIsModalResetWorkoutVisible] =
+    useState<boolean>(false);
+  const [modalResetWorkoutType, setModalResetWorkoutType] =
+    useState<string>("");
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -155,6 +168,19 @@ const WorkoutPage = () => {
   };
 
   const openCreateNewRoutine = () => {
+    if (draftWorkout) {
+      setIsModalResetWorkoutVisible(true);
+      setModalResetWorkoutType("create-routine");
+      return;
+    }
+
+    router.push({
+      pathname: "/screens/workout/create-routine",
+      params: { type: "create-routine" },
+    });
+  };
+
+  const openCreateNewRoutineBottomSheet = () => {
     createNewRoutineRef.current?.expand();
   };
 
@@ -220,8 +246,15 @@ const WorkoutPage = () => {
     setIsModalUpdateProgramVisible(false);
   };
 
-  const handleAddExercise = (programId: string) => {
+  const handleAddRoutineInProgram = (programId: string) => {
     dispatch(setRoutineParams({ programId: programId }));
+
+    if (draftWorkout) {
+      setIsModalResetWorkoutVisible(true);
+      setModalResetWorkoutType("create-routine");
+      return;
+    }
+
     router.push({
       pathname: "/screens/workout/create-routine",
       params: { type: "create-routine" },
@@ -242,13 +275,38 @@ const WorkoutPage = () => {
       dispatch(setSelectedRoutineExercises(routine.exercises));
 
       router.push({
-        pathname: "/screens/workout/create-routine",
-        params: {
-          type: "edit",
-        },
+        pathname: "/screens/workout/edit-routine",
       });
     } else {
       console.error("Failed to fetch routine");
+    }
+  };
+
+  const handleResetWorkout = () => {
+    if (modalResetWorkoutType === "create-routine") {
+      // clear workouts
+      dispatch(clearWorkoutSets());
+      dispatch(clearWorkoutRoutineSets());
+
+      // clear exercises
+      dispatch(clearSelectedRoutineExercises());
+      dispatch(clearSelectedExercises());
+
+      // reset draft workout
+      dispatch(undraftWorkout());
+
+      router.push({
+        pathname: "/screens/workout/create-routine",
+        params: { type: "create-routine" },
+      });
+
+      return;
+    }
+
+    if (modalResetWorkoutType === "start-routine") {
+      router.push({
+        pathname: "/screens/workout/add-workout",
+      });
     }
   };
 
@@ -279,9 +337,9 @@ const WorkoutPage = () => {
                 <WorkoutHeader />
               </View>
 
-              {/* <TouchableOpacity onPress={seedFirestore}>
+              <TouchableOpacity onPress={seedFirestore}>
                 <Text>Seeders</Text>
-              </TouchableOpacity> */}
+              </TouchableOpacity>
 
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
@@ -306,12 +364,8 @@ const WorkoutPage = () => {
                 <CustomBtn
                   onPress={
                     programs.length === 0
-                      ? () =>
-                          router.push({
-                            pathname: "/screens/workout/create-routine",
-                            params: { type: "create-routine" },
-                          })
-                      : openCreateNewRoutine
+                      ? openCreateNewRoutine
+                      : openCreateNewRoutineBottomSheet
                   }
                   buttonStyle={{
                     borderRadius: 6,
@@ -388,6 +442,8 @@ const WorkoutPage = () => {
                 <RoutineFolderCard
                   openRoutineMenu={openRoutineMenu}
                   openProgramMenu={openProgramMenu}
+                  openResetWorkoutModal={setIsModalResetWorkoutVisible}
+                  resetWorkoutType={setModalResetWorkoutType}
                   program={program}
                   key={index}
                 />
@@ -401,7 +457,8 @@ const WorkoutPage = () => {
         isModalProgramVisible ||
         isModalProgramRoutineVisible ||
         isModalCreateProgramVisible ||
-        isModalUpdateProgramVisible ? (
+        isModalUpdateProgramVisible ||
+        isModalResetWorkoutVisible ? (
           <>
             {/* routine deletion modal */}
             <CustomModal
@@ -522,6 +579,16 @@ const WorkoutPage = () => {
                   selectedProgramDetails?.routine_ids as string[]
                 );
               }}
+            />
+
+            {/* reset workout modal */}
+            <CustomModal
+              isModalVisible={isModalResetWorkoutVisible}
+              setIsModalVisible={setIsModalResetWorkoutVisible}
+              modalTitle="Reset Workout"
+              modalDescription="You have a pending workout, are you sure you want to reset your workout?"
+              modalActionButtonText="Confirm Reset"
+              modalActionButton={handleResetWorkout}
             />
           </>
         ) : (
@@ -652,7 +719,7 @@ const WorkoutPage = () => {
               {programs.map((program, index) => (
                 <CustomBtn
                   key={index}
-                  onPress={() => handleAddExercise(program.id)}
+                  onPress={() => handleAddRoutineInProgram(program.id)}
                   buttonStyle={{
                     borderRadius: 6,
                     width: "100%",

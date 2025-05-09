@@ -26,6 +26,13 @@ export default function Workout() {
           }}
         />
         <Stack.Screen
+          name="edit-routine"
+          options={{
+            headerTitleStyle: { fontSize: 18, fontFamily: "Inter_400Regular" },
+            headerTitleAlign: "center",
+          }}
+        />
+        <Stack.Screen
           name="view-routine"
           options={{
             title: "View Routine",
