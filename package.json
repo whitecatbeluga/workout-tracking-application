@@ -31,6 +31,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "expo": "~52.0.41",
+    "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",
     "expo-checkbox": "~4.0.1",
     "expo-constants": "~17.0.8",
@@ -70,13 +71,13 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "react-redux": "^9.2.0",
-    "uuid": "^11.1.0",
-    "expo-av": "~15.0.2"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@react-native-community/cli": "^18.0.0",
     "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.17.16",
     "@types/react": "~18.3.12",
     "@types/react-native": "^0.72.8",
     "@types/react-native-vector-icons": "^6.4.18",
