@@ -1,9 +1,34 @@
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+import { auth, db } from "@/utils/firebase-config";
+import { Dimensions } from "react-native";
+
+const screenWidth = Dimensions.get("window").width;
 
 interface PostCardProps {
+  post_id: string;
   name: string;
   fullName: string;
   email: string;
@@ -14,8 +39,7 @@ interface PostCardProps {
   volume: string;
   sets: string;
   records: string;
-  profilePicture: any;
-  postedPicture: any;
+  user_id: string;
   likes: string;
   comments: string;
   liked: boolean;
@@ -25,6 +49,7 @@ interface PostCardProps {
 }
 
 const PostCard = ({
+  post_id,
   name,
   fullName,
   email,
@@ -35,8 +60,7 @@ const PostCard = ({
   volume,
   sets,
   records,
-  profilePicture,
-  postedPicture,
+  user_id,
   likes,
   comments,
   liked,
@@ -44,6 +68,130 @@ const PostCard = ({
   onCheckLikes,
   onCommentPress,
 }: PostCardProps) => {
+  const [likeCount, setLikeCount] = useState<string>(likes);
+  const [commentCount, setCommentCount] = useState<string>(comments);
+  const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [image_urls, setImage_urls] = useState<string[]>([]);
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  const toggleLike = async (postId: string) => {
+    console.log(postId);
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const user_id = currentUser.uid;
+
+    try {
+      const likesRef = collection(db, "workouts", postId, "likes");
+
+      const q = query(likesRef, where("liked_by", "==", user_id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // User has liked, remove the like
+        const likeDocId = querySnapshot.docs[0].id;
+        await deleteDoc(querySnapshot.docs[0].ref);
+        setLikedPosts((prev) => ({ ...prev, [postId]: false }));
+      } else {
+        await addDoc(likesRef, {
+          liked_by: user_id,
+        });
+        setLikedPosts((prev) => ({ ...prev, [postId]: true }));
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribeFns: (() => void)[] = [];
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (user_id) {
+          const userDocRef = doc(db, "users", user_id);
+          const userSnap = await getDoc(userDocRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setProfilePicture(userData.profile_picture || "");
+          } else {
+            console.log("No such user!");
+          }
+        }
+
+        if (post_id) {
+          const postRef = doc(db, "workouts", post_id);
+          const postSnap = await getDoc(postRef);
+          if (postSnap.exists()) {
+            const postData = postSnap.data();
+            if (postData?.image_urls && Array.isArray(postData.image_urls)) {
+              setImage_urls(postData.image_urls);
+              console.log("Fetched image URLs: ", postData.image_urls);
+            } else {
+              console.log("No image_urls found or it's not an array.");
+            }
+
+            if (auth.currentUser) {
+              const currentUserId = auth.currentUser.uid;
+              const likesRef = collection(db, "workouts", post_id, "likes");
+              const q = query(likesRef, where("liked_by", "==", currentUserId));
+              const snapshot = await getDocs(q);
+              setLikedPosts({ [post_id]: !snapshot.empty });
+            }
+
+            // Real-time likes listener
+            const likesRef = collection(db, "workouts", post_id, "likes");
+            const unsubscribeLikes = onSnapshot(likesRef, (snapshot) => {
+              setLikeCount(snapshot.size.toString());
+            });
+
+            // Real-time comments listener
+            const commentsRef = collection(db, "workouts", post_id, "comments");
+            const unsubscribeComments = onSnapshot(commentsRef, (snapshot) => {
+              setCommentCount(snapshot.size.toString());
+            });
+            unsubscribeFns.push(unsubscribeLikes, unsubscribeComments);
+          } else {
+            console.log("Post not found");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user_id || post_id) {
+      fetchData();
+    }
+
+    return () => {
+      unsubscribeFns.forEach((unsub) => unsub());
+    };
+  }, [user_id, post_id]);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <ActivityIndicator size="large" color="#48A6A7" />
+      </View>
+    );
+  }
+
   return (
     <View>
       <TouchableOpacity
@@ -51,6 +199,7 @@ const PostCard = ({
           router.push({
             pathname: "/screens/home/view-post",
             params: {
+              post_id: post_id, // for fetching the posted images
               name: name,
               fullName: fullName,
               email: email,
@@ -61,10 +210,10 @@ const PostCard = ({
               likes: likes,
               comments: comments,
               date: date,
-              profilePicture: profilePicture,
-              postedPicture: postedPicture,
+              user_id: user_id, // for fetching the user profile picture
               sets: sets,
-              records: records,
+              // image_urls: item.image_urls,
+              // records: item.records,
               isLiked: liked.toString(),
             },
           })
@@ -77,9 +226,8 @@ const PostCard = ({
               router.push({
                 pathname: "/screens/home/visit-profile",
                 params: {
+                  post_id: post_id,
                   name: name,
-                  fullName: fullName,
-                  email: email,
                   postTitle: postTitle,
                   description: description,
                   time: time,
@@ -87,16 +235,24 @@ const PostCard = ({
                   likes: likes,
                   comments: comments,
                   date: date,
-                  profilePicture: profilePicture,
-                  postedPicture: postedPicture,
+                  user_id: user_id,
+                  // profilePicture: profilePicture,
                   sets: sets,
+                  fullName: fullName,
+                  email: email,
                   records: records,
                   isLiked: liked.toString(),
                 },
               })
             }
           >
-            <Image style={styles.profileImage} source={profilePicture} />
+            <Image
+              style={styles.profileImage}
+              source={{
+                uri:
+                  profilePicture || "https://avatar.iran.liara.run/public/41",
+              }}
+            />
             <View>
               <Text style={styles.name}>{name}</Text>
               <Text style={styles.active}>{date}</Text>
@@ -125,27 +281,71 @@ const PostCard = ({
             </View>
           </View>
         </View>
-        <View>
-          <Image style={styles.postedPicture} source={postedPicture} />
+        <View style={{ height: 300 }}>
+          <FlatList
+            data={image_urls}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(url, index) => index.toString()}
+            renderItem={({ item: url }) => (
+              <Image
+                source={{ uri: url }}
+                style={styles.postedPicture}
+                resizeMode="cover"
+              />
+            )}
+            onMomentumScrollEnd={(event) => {
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x /
+                  event.nativeEvent.layoutMeasurement.width
+              );
+              setCurrentImageIndex(index);
+            }}
+          />
         </View>
+
+        {image_urls.length > 1 && (
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: 8,
+            }}
+          >
+            {image_urls.map((_, index) => (
+              <View
+                key={index}
+                style={{
+                  height: 6,
+                  width: 6,
+                  borderRadius: 3,
+                  backgroundColor:
+                    currentImageIndex === index ? "#48A6A7" : "#ccc",
+                  marginHorizontal: 4,
+                }}
+              />
+            ))}
+          </View>
+        )}
       </TouchableOpacity>
 
       <View style={styles.likesContainer}>
         <TouchableOpacity onPress={onCheckLikes}>
-          <Text style={styles.likesText}>{likes}</Text>
+          <Text style={styles.likesText}>{likeCount} likes</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
-          <Text style={styles.likesText}>{comments}</Text>
+          <Text style={styles.likesText}>{commentCount} comments</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.likeCommentShareContainer}>
-        <TouchableOpacity onPress={onLikePress}>
+        <TouchableOpacity onPress={() => toggleLike(post_id)}>
           <Ionicons
             style={styles.icons}
-            name={liked ? "thumbs-up-sharp" : "thumbs-up-outline"}
+            name={likedPosts[post_id] ? "thumbs-up-sharp" : "thumbs-up-outline"}
             size={24}
-            color={liked ? "#48A6A7" : "#606060"}
+            color={likedPosts[post_id] ? "#48A6A7" : "#606060"}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
@@ -204,7 +404,7 @@ const styles = StyleSheet.create({
     color: "#555555",
   },
   postedPicture: {
-    width: "100%",
+    width: screenWidth,
     height: 300,
     resizeMode: "cover",
   },

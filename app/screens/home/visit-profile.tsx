@@ -6,13 +6,25 @@ import {
   Dimensions,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { BarChart } from "react-native-chart-kit";
 import PostCard from "./post-card";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
+import { db, auth } from "@/utils/firebase-config";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import { formatDistanceToNow } from "date-fns";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -45,9 +57,8 @@ const chartConfig = {
 
 const VisitProfile = () => {
   const {
+    post_id,
     name,
-    fullName,
-    email,
     postTitle,
     description,
     time,
@@ -55,10 +66,11 @@ const VisitProfile = () => {
     likes,
     comments,
     date,
+    user_id,
     sets,
     records,
-    profilePicture,
-    postedPicture,
+    fullName,
+    email,
     isLiked,
   } = useLocalSearchParams();
 
@@ -68,13 +80,85 @@ const VisitProfile = () => {
   const [liked, setLiked] = useState(isLiked === "true");
   const [following, setFollowing] = useState(false);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
-  const handleOpenSheet = (type: "likes" | "comments") => {
+  const handleOpenSheet = (type: "likes" | "comments", postId: string) => {
     setSheetType(type);
+    setSelectedPostId(postId);
     bottomSheetRef.current?.expand();
   };
+
+  // fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (!user_id) return;
+
+        // Fetch user profile
+        const userDocRef = doc(db, "users", toString(user_id));
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setProfilePicture(userData.profile_picture || "");
+        } else {
+          console.log("No such user!");
+        }
+
+        // Fetch public workouts for this user
+        const workoutsRef = collection(db, "workouts");
+        const q = query(
+          workoutsRef,
+          where("user_id", "==", toString(user_id)),
+          where("visible_to_everyone", "==", true),
+          orderBy("created_at", "desc")
+        );
+
+        const snapshot = await getDocs(q);
+        const posts = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            total_volume: data.total_volume,
+            created_at: formatDistanceToNow(
+              data.created_at.toDate?.() || data.created_at,
+              { addSuffix: true }
+            ),
+          };
+        });
+
+        setUserPosts(posts);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false);
+        console.log("Fetched user ID:", user_id);
+        console.log("Profile picture:", profilePicture);
+      }
+    };
+
+    fetchData();
+  }, [user_id]);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <ActivityIndicator size="large" color="#48A6A7" />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -85,9 +169,23 @@ const VisitProfile = () => {
       >
         <View style={styles.profileContainer}>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-            <Image style={styles.profilePicture} source={profilePicture} />
+            <Image
+              style={styles.profilePicture}
+              source={{
+                uri:
+                  profilePicture || "https://avatar.iran.liara.run/public/41",
+              }}
+            />
             <View>
-              <Text style={styles.name}>{fullName}</Text>
+              <Text style={styles.name}>
+                {fullName}
+                {auth.currentUser?.uid && user_id === auth.currentUser.uid && (
+                  <Text style={{ fontWeight: "normal", color: "#888" }}>
+                    {" "}
+                    (You)
+                  </Text>
+                )}
+              </Text>
               <Text style={styles.email}>{email}</Text>
             </View>
           </View>
@@ -122,16 +220,21 @@ const VisitProfile = () => {
             </View>
           </View>
         </View>
-        <View style={styles.followButtonContainer}>
-          <TouchableOpacity
-            style={!following ? styles.followButton : styles.followingButton}
-            onPress={() => setFollowing(!following)}
-          >
-            <Text style={!following ? styles.followText : styles.followingText}>
-              {!following ? "Follow" : "Following"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {auth.currentUser?.uid && user_id !== auth.currentUser.uid && (
+          <View style={styles.followButtonContainer}>
+            <TouchableOpacity
+              style={!following ? styles.followButton : styles.followingButton}
+              onPress={() => setFollowing(!following)}
+            >
+              <Text
+                style={!following ? styles.followText : styles.followingText}
+              >
+                {!following ? "Follow" : "Following"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.barChartContainer}>
           <BarChart
             data={data}
@@ -150,7 +253,32 @@ const VisitProfile = () => {
           <View style={{ paddingHorizontal: 16 }}>
             <Text style={styles.recentWorkoutText}>Recent Workouts</Text>
           </View>
-          <PostCard
+          {userPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post_id={post.id}
+              name={toString(name)}
+              fullName={toString(fullName)}
+              email={toString(email)}
+              date={toString(post.created_at)}
+              postTitle={toString(post.workout_title)}
+              description={toString(post.workout_description)}
+              time={toString(post.workout_duration)}
+              volume={post.total_volume}
+              sets={post.total_sets}
+              records={toString(post.records)}
+              likes={toString(likes)}
+              comments={toString(comments)}
+              liked={liked}
+              user_id={toString(user_id)}
+              onLikePress={() => setLiked(!liked)}
+              onCheckLikes={() => handleOpenSheet("likes", post.id)}
+              onCommentPress={() => handleOpenSheet("comments", post.id)}
+            />
+          ))}
+
+          {/* <PostCard
+            post_id={toString(post_id)}
             name={toString(name)}
             fullName={toString(fullName)}
             email={toString(fullName)}
@@ -161,20 +289,22 @@ const VisitProfile = () => {
             volume={toString(volume)}
             sets={toString(sets)}
             records={toString(records)}
-            profilePicture={profilePicture}
-            postedPicture={postedPicture}
+            // profilePicture={profilePicture}
+            // postedPicture={postedPicture}
             likes={toString(likes)}
             comments={toString(comments)}
             liked={liked}
+            user_id={toString(user_id)}
             onLikePress={() => setLiked(!liked)}
             onCheckLikes={() => handleOpenSheet("likes")}
             onCommentPress={() => handleOpenSheet("comments")}
-          />
+          /> */}
         </View>
       </ScrollView>
       <BottomSheetComments
         title="sample"
         type={sheetType}
+        postId={selectedPostId}
         ref={bottomSheetRef}
       />
     </View>

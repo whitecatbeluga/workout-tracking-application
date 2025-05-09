@@ -2,130 +2,77 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Image,
   TouchableOpacity,
   FlatList,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useRouter } from "expo-router";
-
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
-import { useAppSelector } from "@/hooks/use-app-selector";
+import { auth, db } from "@/utils/firebase-config";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
+import { formatDistanceToNow } from "date-fns";
 
-type PostItem = {
+type Workout = {
   id: string;
-  name: string;
-  fullName: string;
-  email: string;
-  active: string;
-  postTitle: string;
-  description: string;
-  profilePicture: any;
-  time: string;
-  volume: string;
-  postedPicture: any;
-  likes: string;
-  comments: string;
-  date: string;
-  sets: string;
-  records: string;
+  created_at: any;
+  image_urls: string[];
+  total_sets: string;
+  total_volume: string;
+  user_id: string;
+  visible_to_everyone: boolean;
+  workout_description: string;
+  workout_duration: string;
+  workout_title: string;
+  userProfile?: UserProfile;
+  like_count: number;
+  comment_count: number;
 };
 
-const data: PostItem[] = [
-  {
-    id: "1",
-    name: "mima79",
-    fullName: "John Smith Doe",
-    email: "mima@gmail.com",
-    active: "2 hours ago",
-    postTitle: "Leg Day!",
-    description: "No skip leg day",
-    profilePicture: require("../../../assets/images/guy1.png"),
-    time: "42 min",
-    volume: "3,780 kg",
-    postedPicture: require("../../../assets/images/legday.png"),
-    likes: "20 Likes",
-    comments: "0 comments",
-    date: "Tuesday, April 1, 2025 - 9:55am",
-    sets: "2",
-    records: "1",
-  },
-  {
-    id: "2",
-    name: "luffy",
-    fullName: "Monkey D. Luffy",
-    email: "luffykaizoku@gmail.com",
-    active: "5 hours ago",
-    postTitle: "Push day!",
-    description: "No pain no gain",
-    profilePicture: require("../../../assets/images/Pull day.png"),
-    time: "30 min",
-    volume: "4,780 kg",
-    postedPicture: require("../../../assets/images/legday.png"),
-    likes: "25 Likes",
-    comments: "4 comments",
-    date: "Wednesday, April 2, 2025 - 11:55am",
-    sets: "4",
-    records: "2",
-  },
-];
-
-const routines = [
-  {
-    id: 1,
-    name: "Push (Chest, Shoulders, Triceps)",
-    image: require("../../../assets/images/push-day.jpg"),
-    imageKey: "push",
-  },
-  {
-    id: 2,
-    name: "Pull (Back, Biceps)",
-    image: require("../../../assets/images/Pull day.png"),
-    imageKey: "pull",
-  },
-  {
-    id: 3,
-    name: "Legs (Quads, Hamstrings, Glutes)",
-    image: require("../../../assets/images/leg-day.jpg"),
-    imageKey: "legs",
-  },
-  {
-    id: 4,
-    name: "Core Focus",
-    image: require("../../../assets/images/core-focus.jpg"),
-    imageKey: "core",
-  },
-  {
-    id: 5,
-    name: "HIIT Session",
-    image: require("../../../assets/images/hiit-session.webp"),
-    imageKey: "hiit",
-  },
-  {
-    id: 6,
-    name: "Stretch & Recovery",
-    image: require("../../../assets/images/stretch-recovery.webp"),
-    imageKey: "stretch",
-  },
-];
+type UserProfile = {
+  address: string;
+  birthdate: string;
+  created_at: any;
+  email: string;
+  first_name: string;
+  gender: string;
+  height: string;
+  last_name: string;
+  profile_picture: string;
+  username: string;
+  weight: string;
+};
 
 const HomeScreen = () => {
   const [activeButton, setActiveButton] = useState<"following" | "discover">(
     "discover"
   );
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
-  const [seeAllButton, setSeeAllButton] = useState(false);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
-  const [userSupa, setUserSupa] = useState(null);
-  const user = useAppSelector((state) => state.auth.user);
 
   // useEffect(() => {
   //   const verifyRefreshToken = async () => {
@@ -163,11 +110,42 @@ const HomeScreen = () => {
   //   fetchUserData();
   // }, []);
 
-  const toggleLike = (postId: string) => {
-    setLikedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
+  // const toggleLike = (postId: string) => {
+  //   setLikedPosts((prev) => ({
+  //     ...prev,
+  //     [postId]: !prev[postId],
+  //   }));
+  // };
+  const toggleLike = async (postId: string) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const user_id = currentUser.uid;
+
+    try {
+      const likesRef = collection(db, "workouts", postId, "likes");
+
+      const q = query(likesRef, where("liked_by", "==", user_id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // User has liked, remove the like
+        const likeDocId = querySnapshot.docs[0].id;
+        await deleteDoc(querySnapshot.docs[0].ref);
+        setLikedPosts((prev) => ({ ...prev, [postId]: false }));
+      } else {
+        await addDoc(likesRef, {
+          liked_by: user_id,
+        });
+        setLikedPosts((prev) => ({ ...prev, [postId]: true }));
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
   };
 
   // To hide bottom nav
@@ -185,133 +163,176 @@ const HomeScreen = () => {
   };
 
   // Handle open comments
-  const handleOpenSheet = (type: "likes" | "comments") => {
+  const handleOpenSheet = (type: "likes" | "comments", postId: string) => {
     setSheetType(type);
+    setSelectedPostId(postId);
     bottomSheetRef.current?.expand();
   };
 
-  const handleSeeAllPressed = () => {
-    setSeeAllButton((prevState) => !prevState);
-  };
+  useEffect(() => {
+    const unsubscribeFns: (() => void)[] = [];
+
+    const fetchWorkouts = async () => {
+      try {
+        const workoutsRef = collection(db, "workouts");
+        const q = query(
+          workoutsRef,
+          where("visible_to_everyone", "==", true),
+          orderBy("created_at", "desc")
+        );
+
+        const querySnapshot = await getDocs(q);
+        const workoutDocs = querySnapshot.docs;
+
+        const currentUserId = auth.currentUser?.uid;
+        const userIds = Array.from(
+          new Set(workoutDocs.map((doc) => doc.data().user_id))
+        );
+
+        const userMap: Record<string, UserProfile> = {};
+
+        // Fetch user profiles
+        await Promise.all(
+          userIds.map(async (uid) => {
+            const userDoc = await getDoc(doc(db, "users", uid));
+            if (userDoc.exists()) {
+              userMap[uid] = userDoc.data() as UserProfile;
+            }
+          })
+        );
+
+        // Create base workout list
+        const baseWorkouts: Workout[] = workoutDocs
+          .filter((doc) => doc.data().user_id !== currentUserId)
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              created_at: formatDistanceToNow(
+                data.created_at.toDate?.() || data.created_at,
+                { addSuffix: true }
+              ),
+              image_urls: data.image_urls,
+              total_sets: data.total_sets,
+              total_volume: data.total_volume,
+              user_id: data.user_id,
+              visible_to_everyone: data.visible_to_everyone,
+              workout_description: data.workout_description,
+              workout_duration: data.workout_duration,
+              workout_title: data.workout_title,
+              userProfile: userMap[data.user_id],
+              like_count: 0,
+              comment_count: 0,
+            };
+          });
+
+        setWorkouts(baseWorkouts);
+
+        // Initialize likedPosts map
+        if (currentUserId) {
+          const newLikedPosts: { [key: string]: boolean } = {};
+
+          await Promise.all(
+            baseWorkouts.map(async (workout) => {
+              const likesRef = collection(db, "workouts", workout.id, "likes");
+              const q = query(likesRef, where("liked_by", "==", currentUserId));
+              const snapshot = await getDocs(q);
+              newLikedPosts[workout.id] = !snapshot.empty;
+            })
+          );
+
+          setLikedPosts(newLikedPosts); // ✅ Moved outside of loop
+        }
+
+        // Attach real-time listeners to likes and comments
+        baseWorkouts.forEach((workout) => {
+          const likesRef = collection(db, "workouts", workout.id, "likes");
+          const commentsRef = collection(
+            db,
+            "workouts",
+            workout.id,
+            "comments"
+          );
+
+          const unsubscribeLikes = onSnapshot(likesRef, (snapshot) => {
+            setWorkouts((prev) =>
+              prev.map((w) =>
+                w.id === workout.id ? { ...w, like_count: snapshot.size } : w
+              )
+            );
+          });
+
+          const unsubscribeComments = onSnapshot(commentsRef, (snapshot) => {
+            setWorkouts((prev) =>
+              prev.map((w) =>
+                w.id === workout.id ? { ...w, comment_count: snapshot.size } : w
+              )
+            );
+          });
+
+          unsubscribeFns.push(unsubscribeLikes, unsubscribeComments);
+        });
+      } catch (error) {
+        console.error("Error fetching workouts and users:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkouts();
+
+    return () => {
+      unsubscribeFns.forEach((unsub) => unsub());
+    };
+  }, []);
 
   return (
     <View>
-      <TouchableOpacity
-        onPress={handleSeeAllPressed}
-        style={{ alignItems: "flex-end", marginRight: 10, marginTop: 10 }}
-      >
-        <Text style={styles.seeAllText}>
-          {seeAllButton ? "Back" : "See All"}
-        </Text>
-      </TouchableOpacity>
-
-      <View style={seeAllButton ? { paddingHorizontal: 40 } : null}>
-        {seeAllButton ? (
-          // Vertical scroll grid view (2 columns)
-          <View style={{ flexGrow: 1, paddingBottom: 80 }}>
-            <FlatList
-              data={routines}
-              overScrollMode="never"
-              numColumns={2}
-              keyExtractor={(item) => item.id.toString()}
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.gridCard}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/home/routine-screen",
-                      params: {
-                        id: item.id,
-                        name: item.name,
-                        image: item.image,
-                        imageKey: item.imageKey,
-                      },
-                    })
-                  }
-                >
-                  <Image style={styles.gridCardImg} source={item.image} />
-                  <Text style={styles.cardTitleSmall}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        ) : (
-          // Horizontal scroll view
-          <ScrollView
-            horizontal
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContainer}
-            showsHorizontalScrollIndicator={false}
-            overScrollMode="never"
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.followingButton,
+            activeButton === "following" && styles.activeButton,
+          ]}
+          onPress={() => setActiveButton("following")}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              activeButton === "following" && styles.activeText,
+            ]}
           >
-            {routines.map((routine) => (
-              <TouchableOpacity
-                key={routine.id}
-                style={styles.card}
-                onPress={() =>
-                  router.push({
-                    pathname: "/screens/home/routine-screen",
-                    params: {
-                      id: routine.id,
-                      name: routine.name,
-                      image: routine.image,
-                      imageKey: routine.imageKey,
-                    },
-                  })
-                }
-              >
-                <Image style={styles.cardImg} source={routine.image} />
-                <Text style={styles.cardTitle}>{routine.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+            Following
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.discoverButton,
+            activeButton === "discover" && styles.activeButton,
+          ]}
+          onPress={() => setActiveButton("discover")}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              activeButton === "discover" && styles.activeText,
+            ]}
+          >
+            Discover
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {!seeAllButton ? (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.followingButton,
-              activeButton === "following" && styles.activeButton,
-            ]}
-            onPress={() => setActiveButton("following")}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                activeButton === "following" && styles.activeText,
-              ]}
-            >
-              Following
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.discoverButton,
-              activeButton === "discover" && styles.activeButton,
-            ]}
-            onPress={() => setActiveButton("discover")}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                activeButton === "discover" && styles.activeText,
-              ]}
-            >
-              Discover
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {!seeAllButton ? (
-        <View style={{ flexGrow: 1, paddingBottom: 485, paddingTop: 16 }}>
+      <View
+        style={{
+          flexGrow: 1,
+          paddingTop: 16,
+          paddingBottom: 120,
+        }}
+      >
+        {!loading ? (
           <FlatList
-            data={data}
+            data={workouts}
             onScroll={onScroll}
             scrollEventThrottle={16}
             keyExtractor={(item) => item.id}
@@ -325,21 +346,21 @@ const HomeScreen = () => {
                     router.push({
                       pathname: "/screens/home/view-post",
                       params: {
-                        id: item.id,
-                        name: item.name,
-                        fullName: item.fullName,
-                        email: item.email,
-                        postTitle: item.postTitle,
-                        description: item.description,
-                        time: item.time,
-                        volume: item.volume,
-                        likes: item.likes,
-                        comments: item.comments,
-                        date: item.date,
-                        profilePicture: item.profilePicture,
-                        postedPicture: item.postedPicture,
-                        sets: item.sets,
-                        records: item.records,
+                        post_id: item.id, // for fetching the posted images
+                        name: item.userProfile?.username,
+                        fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
+                        email: item.userProfile?.email,
+                        postTitle: item.workout_title,
+                        description: item.workout_description,
+                        time: item.workout_duration,
+                        volume: item.total_volume,
+                        likes: item.like_count,
+                        comments: item.comment_count,
+                        date: item.created_at,
+                        user_id: item.user_id, // for fetching the user profile picture
+                        sets: item.total_sets,
+                        // image_urls: item.image_urls,
+                        // records: item.records,
                         isLiked: likedPosts[item.id] ? "true" : "false",
                       },
                     })
@@ -362,21 +383,22 @@ const HomeScreen = () => {
                           router.push({
                             pathname: "/screens/home/visit-profile",
                             params: {
-                              id: item.id,
-                              name: item.name,
-                              postTitle: item.postTitle,
-                              description: item.description,
-                              time: item.time,
-                              volume: item.volume,
-                              likes: item.likes,
-                              comments: item.comments,
-                              date: item.date,
-                              profilePicture: item.profilePicture,
-                              postedPicture: item.postedPicture,
-                              sets: item.sets,
-                              records: item.records,
-                              fullName: item.fullName,
-                              email: item.email,
+                              post_id: item.id, // for fetching the posted images
+                              name: item.userProfile?.username,
+                              postTitle: item.workout_title,
+                              description: item.workout_description,
+                              time: item.workout_duration,
+                              volume: item.total_volume,
+                              likes: item.like_count,
+                              comments: item.comment_count,
+                              date: item.created_at,
+                              user_id: item.user_id, // for fetching the user profile picture
+                              // profilePicture: item.userProfile?.profile_picture,
+                              // postedPicture: item.postedPicture,
+                              sets: item.total_sets,
+                              // records: item.records,
+                              fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
+                              email: item.userProfile?.email,
                               isLiked: likedPosts[item.id] ? "true" : "false",
                             },
                           })
@@ -384,11 +406,17 @@ const HomeScreen = () => {
                       >
                         <Image
                           style={styles.profileImage}
-                          source={item.profilePicture}
+                          source={{
+                            uri:
+                              item.userProfile?.profile_picture ||
+                              "https://avatar.iran.liara.run/public/41",
+                          }}
                         />
                         <View>
-                          <Text style={styles.name}>{item.name}</Text>
-                          <Text style={styles.active}>{item.active}</Text>
+                          <Text style={styles.name}>
+                            {item.userProfile?.username}
+                          </Text>
+                          <Text style={styles.active}>{item.created_at}</Text>
                         </View>
                       </TouchableOpacity>
                       <TouchableOpacity style={{ flexDirection: "row" }}>
@@ -400,35 +428,87 @@ const HomeScreen = () => {
                         <Text style={styles.followButton}>Follow</Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.postTitle}>{item.postTitle}</Text>
+                    <Text style={styles.postTitle}>{item.workout_title}</Text>
                     <Text style={styles.postDescription}>
-                      {item.description}
+                      {item.workout_description}
                     </Text>
                     <View style={{ flexDirection: "row", gap: 40 }}>
                       <View>
                         <Text style={styles.timevolume}>Time</Text>
-                        <Text style={styles.itemTimeVolume}>{item.time}</Text>
+                        <Text style={styles.itemTimeVolume}>
+                          {item.workout_duration}
+                        </Text>
                       </View>
                       <View>
                         <Text style={styles.timevolume}>Volume</Text>
-                        <Text style={styles.itemTimeVolume}>{item.volume}</Text>
+                        <Text style={styles.itemTimeVolume}>
+                          {item.total_volume}
+                        </Text>
                       </View>
                     </View>
                   </View>
-                  <View style={{ alignItems: "center" }}>
-                    <Image
-                      style={styles.postedPicture}
-                      source={item.postedPicture}
+                  <View style={{ height: 300 }}>
+                    <FlatList
+                      data={item.image_urls}
+                      keyExtractor={(url, index) => index.toString()}
+                      renderItem={({ item: url }) => (
+                        <Image
+                          source={{ uri: url }}
+                          style={styles.postedPicture}
+                          resizeMode="cover"
+                        />
+                      )}
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(event) => {
+                        const index = Math.round(
+                          event.nativeEvent.contentOffset.x /
+                            event.nativeEvent.layoutMeasurement.width
+                        );
+                        setCurrentImageIndex(index);
+                      }}
                     />
                   </View>
+                  {item.image_urls.length > 1 && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        marginTop: 8,
+                      }}
+                    >
+                      {item.image_urls.map((_, index) => (
+                        <View
+                          key={index}
+                          style={{
+                            height: 6,
+                            width: 6,
+                            borderRadius: 3,
+                            backgroundColor:
+                              currentImageIndex === index ? "#48A6A7" : "#ccc",
+                            marginHorizontal: 4,
+                          }}
+                        />
+                      ))}
+                    </View>
+                  )}
                 </TouchableOpacity>
 
                 <View style={styles.likesContainer}>
-                  <TouchableOpacity onPress={() => handleOpenSheet("likes")}>
-                    <Text style={styles.likesText}>{item.likes}</Text>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("likes", item.id)}
+                  >
+                    <Text style={styles.likesText}>
+                      {item.like_count} likes
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
-                    <Text style={styles.likesText}>{item.comments}</Text>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("comments", item.id)}
+                  >
+                    <Text style={styles.likesText}>
+                      {item.comment_count} comments
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
@@ -437,15 +517,19 @@ const HomeScreen = () => {
                     <Ionicons
                       style={styles.icons}
                       name={
-                        likedPosts[item.id]
+                        likedPosts[item.id] === true
                           ? "thumbs-up-sharp"
                           : "thumbs-up-outline"
                       }
                       size={24}
-                      color={likedPosts[item.id] ? "#48A6A7" : "#606060"}
+                      color={
+                        likedPosts[item.id] === true ? "#48A6A7" : "#606060"
+                      }
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleOpenSheet("comments")}>
+                  <TouchableOpacity
+                    onPress={() => handleOpenSheet("comments", item.id)}
+                  >
                     <Ionicons
                       style={styles.icons}
                       name="chatbubble-outline"
@@ -465,11 +549,15 @@ const HomeScreen = () => {
               </View>
             )}
           />
-        </View>
-      ) : null}
+        ) : (
+          <ActivityIndicator size="large" color="#48A6A7" />
+        )}
+      </View>
+
       <BottomSheetComments
         title="sample"
         type={sheetType}
+        postId={selectedPostId}
         ref={bottomSheetRef}
       />
     </View>
@@ -580,7 +668,7 @@ const styles = StyleSheet.create({
   profileImage: {
     height: 50,
     width: 50,
-    borderRadius: 50,
+    borderRadius: 25,
   },
   name: {
     fontFamily: "Inter_400Regular",
@@ -615,9 +703,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   postedPicture: {
-    width: "100%",
+    width: Dimensions.get("window").width,
     height: 300,
-    resizeMode: "cover",
+    borderRadius: 10,
   },
   likesContainer: {
     flexDirection: "row",

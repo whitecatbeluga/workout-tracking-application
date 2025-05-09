@@ -23,4 +23,12 @@ export const styles = StyleSheet.create({
     flex: 10,
     paddingBottom: 50,
   },
+  settingsDiscardButton: {
+    backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: "100%",
+    borderRadius: 8,
+  },
 });

@@ -1,6 +1,5 @@
+import { Audio } from "expo-av";
 import { Swipeable, RectButton } from "react-native-gesture-handler";
-import Animated from "react-native-reanimated";
-
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -16,11 +15,19 @@ import {
 } from "react-native";
 import { Exercise, WorkoutSets } from "@/custom-types/exercise-type";
 import Icon from "react-native-vector-icons/FontAwesome";
-import { updateWorkoutSets } from "@/redux/slices/workout-slice";
+import Feather from "react-native-vector-icons/Feather";
+import {
+  updateWorkoutSets,
+  updateTotalVolumeSets,
+} from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { usePathname } from "expo-router";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
+  openRoutine?: () => void;
 }
 
 interface SetData {
@@ -31,42 +38,145 @@ interface SetData {
   checked: boolean;
 }
 
-const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
+const ExerciseDetailCard = ({
+  exercise,
+  openRoutine,
+}: ExerciseDetailCardProps) => {
+  const workoutSets = useAppSelector((state) => state.workout.workoutSets);
+  const workoutRoutineSets = useAppSelector(
+    (state) => state.routine.workoutRoutineSets
+  );
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+  const [isRestModalVisible, setIsRestModalVisible] = useState(false);
+  const [restTimer, setRestTimer] = useState<number>(30);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [currentRestTime, setCurrentRestTime] = useState(restTimer);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+
+  const swipeableRefs = React.useRef<{ [key: number]: Swipeable | null }>({});
+
+  const dispatch = useAppDispatch();
+  const pathname = usePathname();
+
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
   }>({
     [exercise.id]: {
       name: exercise.name,
-      sets: [
-        {
-          set: 1,
-          previous: "",
-          kg: "",
-          reps: "",
-          checked: false,
-        },
-      ],
+      sets:
+        Array.isArray(exercise.sets) && exercise.sets.length > 0
+          ? exercise.sets
+              .map((s, index) => ({
+                set: typeof s.set === "number" ? s.set : index + 1,
+                previous: typeof s.previous === "string" ? s.previous : "",
+                kg: typeof s.kg === "string" ? s.kg : "",
+                reps: typeof s.reps === "string" ? s.reps : "",
+                checked: typeof s.checked === "boolean" ? s.checked : false,
+              }))
+              .sort((a, b) => a.set - b.set)
+          : [
+              {
+                set: 1,
+                previous: "",
+                kg: "",
+                reps: "",
+                checked: false,
+              },
+            ],
     },
   });
 
-  const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
-  const [isRestModalVisible, setIsRestModalVisible] = useState(false);
-  const [restTimer, setRestTimer] = useState<number>(34);
-  const dispatch = useAppDispatch();
+  useEffect(() => {
+    async function loadSound() {
+      const { sound } = await Audio.Sound.createAsync(
+        require("@/assets/sounds/peep.mp3"),
+        { isLooping: true }
+      );
+      setSound(sound);
+    }
+
+    loadSound();
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isTimerRunning && currentRestTime > 0) {
+      interval = setInterval(() => {
+        setCurrentRestTime((prev) => prev - 1);
+      }, 1000);
+    } else if (isTimerRunning && currentRestTime === 0) {
+      setIsTimerRunning(false);
+      playAlarm();
+    }
+
+    return () => clearInterval(interval);
+  }, [isTimerRunning, currentRestTime]);
 
   useEffect(() => {
-    const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
-      (acc, exerciseId) => {
-        acc[exerciseId] = {
-          name: setsByExercise[exerciseId].name,
-          sets: setsByExercise[exerciseId].sets,
-        };
-        return acc;
-      },
-      {} as WorkoutSets
-    );
-    dispatch(updateWorkoutSets(setsObject));
-  }, [setsByExercise]);
+    const { totalVolume, totalSets } = calculateTotalVolumeSets(workoutSets);
+    dispatch(updateTotalVolumeSets({ totalVolume, totalSets }));
+  }, [workoutSets, dispatch]);
+
+  useEffect(() => {
+    if (workoutSets != null) {
+      const saveSets = workoutSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+
+    if (workoutRoutineSets != null) {
+      const saveSets = workoutRoutineSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+  }, []);
+
+  const playAlarm = async () => {
+    if (sound) {
+      await sound.playAsync();
+      setIsAlarmPlaying(true);
+    }
+  };
+
+  const stopAlarm = async () => {
+    if (sound) {
+      await sound.stopAsync();
+      setIsAlarmPlaying(false);
+    }
+  };
+
+  const startTimer = () => {
+    if (isAlarmPlaying) {
+      stopAlarm();
+    }
+    setCurrentRestTime(restTimer);
+    setIsTimerRunning(true);
+  };
+
+  const stopTimer = () => {
+    setIsTimerRunning(false);
+  };
+
+  const handleSelectRestTime = (seconds: number) => {
+    setRestTimer(seconds);
+    setCurrentRestTime(seconds);
+    setIsRestModalVisible(false);
+  };
 
   const handleInputChange = (
     exerciseId: string,
@@ -83,17 +193,30 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
         [exerciseId]: { ...exerciseData, sets: updatedSets },
       };
     });
+    setTimeout(() => setFocusedRowIndex(null), 0);
   };
 
   const handleToggleCheck = (exerciseId: string, index: number) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = [...exerciseData.sets];
-      updatedSets[index].checked = !updatedSets[index].checked;
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
+    setSetsByExercise((prev) => {
+      const updated = {
+        ...prev,
+        [exerciseId]: {
+          ...prev[exerciseId],
+          sets: prev[exerciseId].sets.map((set, i) =>
+            i === index ? { ...set, checked: !set.checked } : set
+          ),
+        },
       };
+      if (workoutSets != null) {
+        dispatch(updateWorkoutSets(updated));
+        dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(updated)));
+      }
+
+      if (workoutRoutineSets != null) {
+        dispatch(updateWorkoutRoutineSets(updated));
+      }
+
+      return updated;
     });
   };
 
@@ -117,43 +240,104 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
     });
   };
 
-  const handleSelectRestTime = (seconds: number) => {
-    setRestTimer(seconds);
-    setIsRestModalVisible(false);
-  };
-
   const handleDeleteSet = (exerciseId: string, index: number) => {
+    if (swipeableRefs.current[index]) {
+      swipeableRefs.current[index]?.close();
+    }
+
     setSetsByExercise((prevSetsByExercise) => {
       const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
-      return {
+      const filteredSets = exerciseData.sets.filter((_, i) => i !== index);
+      const renumberedSets = filteredSets.map((set, i) => ({
+        ...set,
+        set: i + 1,
+      }));
+      const updatedState = {
         ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
+        [exerciseId]: {
+          ...exerciseData,
+          sets: renumberedSets,
+        },
       };
+      if (workoutSets != null) {
+        dispatch(updateWorkoutSets(updatedState));
+        dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(updatedState)));
+      }
+      if (workoutRoutineSets != null) {
+        dispatch(updateWorkoutRoutineSets(updatedState));
+      }
+      return updatedState;
     });
+  };
+
+  const calculateTotalVolumeSets = (allWorkoutSets: WorkoutSets) => {
+    let totalVolume = 0;
+    let totalSets = 0;
+
+    Object.values(allWorkoutSets).forEach((exercise) => {
+      exercise.sets.forEach((set) => {
+        if (set.checked) {
+          const kg = parseFloat(set.kg) || 0;
+          const reps = parseFloat(set.reps) || 0;
+          if (kg > 0 && reps > 0) {
+            totalVolume += kg * reps;
+            totalSets += 1;
+          }
+        }
+      });
+    });
+
+    return { totalVolume, totalSets };
   };
 
   return (
     <View style={styles.container}>
-      <ExerciseSetCardHeader />
-
-      <View style={{ marginBottom: 10 }}>
-        <Text>Title: {exercise.name}</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.exerciseName}>{exercise.name}</Text>
+        <TouchableOpacity onPress={openRoutine}>
+          <Feather name="more-vertical" size={20} color="#000" />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
         onPress={() => setIsRestModalVisible(true)}
-        style={styles.restTimerContainer}
+        style={[
+          styles.restTimerContainer,
+          isAlarmPlaying && styles.alarmActiveContainer,
+        ]}
       >
-        <Icon
-          name="clock-o"
-          size={20}
-          color="#007bff"
-          style={{ marginRight: 5 }}
-        />
-        <Text style={{ fontSize: 16, color: "#007bff" }}>
-          Rest timer: {restTimer}s
-        </Text>
+        <View style={styles.timerDisplay}>
+          {
+            <Icon
+              name="clock-o"
+              size={20}
+              color={isAlarmPlaying ? "#ff3b30" : "#007bff"}
+              style={{ marginRight: 5 }}
+            />
+          }
+          <Text
+            style={[styles.timerText, isAlarmPlaying && styles.alarmActiveText]}
+          >
+            {isAlarmPlaying ? "TIME'S UP!" : `Rest timer: ${currentRestTime}s`}
+          </Text>
+        </View>
+
+        {isAlarmPlaying ? (
+          <TouchableOpacity
+            onPress={stopAlarm}
+            style={[styles.timerControl, styles.alarmControl]}
+          >
+            <Icon name="bell-slash" size={20} color="#ff3b30" />
+          </TouchableOpacity>
+        ) : isTimerRunning ? (
+          <TouchableOpacity onPress={stopTimer} style={styles.timerControl}>
+            <Icon name="stop" size={20} color="#ff3b30" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={startTimer} style={styles.timerControl}>
+            <Icon name="play" size={20} color="#007bff" />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
 
       <View style={styles.table}>
@@ -162,12 +346,15 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
           <Text style={styles.tableHeaderText}>Previous</Text>
           <Text style={styles.tableHeaderText}>KG</Text>
           <Text style={styles.tableHeaderText}>REPS</Text>
-          <Text style={styles.tableHeaderText}>CHECK</Text>
+          {pathname === "/screens/workout/add-workout" && (
+            <Text style={styles.tableHeaderText}>CHECK</Text>
+          )}
         </View>
 
         {setsByExercise[exercise.id].sets.map((set, index) => (
           <Swipeable
             key={set.set}
+            ref={(ref) => (swipeableRefs.current[index] = ref)}
             renderRightActions={() => (
               <RectButton
                 style={styles.deleteButton}
@@ -181,6 +368,7 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
               style={[
                 styles.tableRow,
                 focusedRowIndex === index && styles.selectedRow,
+                set.checked && styles.checkedRow,
               ]}
             >
               <Text style={styles.tableCell}>{set.set}</Text>
@@ -215,14 +403,16 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
                 keyboardType="numeric"
               />
 
-              <TouchableOpacity
-                style={styles.tableCell}
-                onPress={() => handleToggleCheck(exercise.id, index)}
-              >
-                <Text style={{ fontSize: 16, textAlign: "center" }}>
-                  {set.checked ? "✔️" : ""}
-                </Text>
-              </TouchableOpacity>
+              {pathname === "/screens/workout/add-workout" && (
+                <TouchableOpacity
+                  style={styles.tableCell}
+                  onPress={() => handleToggleCheck(exercise.id, index)}
+                >
+                  <Text style={{ fontSize: 16, textAlign: "center" }}>
+                    {set.checked ? "✔️" : ""}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Swipeable>
         ))}
@@ -270,25 +460,55 @@ const ExerciseDetailCard = ({ exercise }: ExerciseDetailCardProps) => {
   );
 };
 
-const ExerciseSetCardHeader = () => {
-  return (
-    <View style={styles.header}>
-      <Text style={styles.headerText}>Header</Text>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    marginTop: 3,
+    width: "100%",
   },
-  header: {
+  headerContainer: {
+    marginBottom: 10,
+    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  exerciseName: {
+    fontWeight: "bold",
+    fontSize: 24,
+  },
+  restTimerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
     marginBottom: 10,
   },
-  headerText: {
-    fontSize: 18,
-    fontFamily: "Inter_600SemiBold",
-    color: "#333",
+  alarmActiveContainer: {
+    backgroundColor: "#ffebee",
+    borderColor: "#ff3b30",
+    borderWidth: 1,
+  },
+  timerDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  timerText: {
+    fontSize: 16,
+    color: "#007bff",
+  },
+  alarmActiveText: {
+    color: "#ff3b30",
+    fontWeight: "bold",
+  },
+  timerControl: {
+    padding: 5,
+  },
+  alarmControl: {
+    backgroundColor: "#ffcdd2",
+    borderRadius: 20,
+    padding: 8,
   },
   table: {
     marginTop: 20,
@@ -298,7 +518,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     padding: 5,
     borderRadius: 5,
-    marginBottom: 10,
   },
   tableHeaderText: {
     flex: 1,
@@ -359,10 +578,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
   },
-  restTimerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
   deleteButton: {
     backgroundColor: "#ff3b30",
     justifyContent: "center",
@@ -375,6 +590,9 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  checkedRow: {
+    backgroundColor: "#E6FBEF",
   },
 });
 

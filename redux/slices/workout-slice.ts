@@ -1,6 +1,10 @@
 import { ApiError } from "@/custom-types/api-error-type";
 import { Loading } from "@/custom-types/loading-type";
-import { Workout, WorkoutFormData } from "@/custom-types/workout-type";
+import {
+  DurationVolumeSets,
+  Workout,
+  WorkoutFormData,
+} from "@/custom-types/workout-type";
 import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
@@ -8,6 +12,11 @@ import { getAuthToken } from "@/services/get-token";
 
 import Constants from "expo-constants";
 import { WorkoutSets } from "@/custom-types/exercise-type";
+import { RootState } from "../store";
+
+import { getDocs, collection, query, where } from "firebase/firestore";
+import { db } from "@/utils/firebase-config";
+import { auth } from "@/utils/firebase-config";
 
 // Get the API URL from expo config
 const API_URL = (Constants.expoConfig?.extra as { API_URL: string }).API_URL;
@@ -28,6 +37,38 @@ export const getWorkout = createAsyncThunk(
     }
   }
 );
+
+export const getUserWorkouts = createAsyncThunk(
+  "workout/getUserWorkouts",
+  async (_, thunkApi) => {
+    try {
+      const workoutsCollectionRef = collection(db, "workouts");
+      const q = query(
+        workoutsCollectionRef,
+        where("user_id", "==", auth.currentUser?.uid)
+      );
+      const workoutsSnapshot = await getDocs(q);
+
+      const workouts = [];
+
+      for (const workoutDoc of workoutsSnapshot.docs) {
+        const workoutData = workoutDoc.data();
+        const workoutId = workoutDoc.id;
+
+        workouts.push({
+          id: workoutId,
+          ...workoutData,
+        });
+      }
+
+      return workouts;
+    } catch (error) {
+      console.error("Error fetching workouts:", error);
+      return thunkApi.rejectWithValue("Failed to fetch user workouts");
+    }
+  }
+);
+
 export const createWorkout = createAsyncThunk(
   "workout/createWorkout",
   async (data: WorkoutFormData, thunkApi) => {
@@ -49,18 +90,42 @@ export const createWorkout = createAsyncThunk(
   }
 );
 
+export const selectTotalVolumeSets = (state: RootState) => {
+  const workoutSets = state.workout.workoutSets;
+  let totalVolume = 0;
+  let totalSets = 0;
+  Object.values(workoutSets).forEach((exercise) => {
+    exercise.sets.forEach((set) => {
+      if (set.checked) {
+        const kg = parseFloat(set.kg) || 0;
+        const reps = parseFloat(set.reps) || 0;
+        totalVolume += kg * reps;
+        totalSets += 1;
+      }
+    });
+  });
+  return { totalVolume, totalSets };
+};
+
 interface InitialState {
   loading: Loading;
   error: string | null | Record<string, string>;
   workout: Workout[] | null;
-  workoutSets: WorkoutSets | null;
+  workoutSets: WorkoutSets;
+  draftWorkout: boolean;
+  totalVolumeSets: { totalVolume: number; totalSets: number };
 }
 
 const initialState: InitialState = {
   loading: Loading.Idle,
   error: null,
   workout: null,
-  workoutSets: null,
+  workoutSets: {},
+  draftWorkout: false,
+  totalVolumeSets: {
+    totalVolume: 0,
+    totalSets: 0,
+  },
 };
 
 const WorkoutSlice = createSlice({
@@ -74,40 +139,35 @@ const WorkoutSlice = createSlice({
         ...newSets,
       };
     },
+    clearWorkoutSets(state) {
+      state.workoutSets = {};
+    },
+    drarfWorkout(state) {
+      state.draftWorkout = true;
+    },
+    undraftWorkout(state) {
+      state.draftWorkout = false;
+    },
+    updateTotalVolumeSets(state, action) {
+      state.totalVolumeSets = action.payload;
+    },
+    clearTotalVolumeSets(state) {
+      state.totalVolumeSets = {
+        totalVolume: 0,
+        totalSets: 0,
+      };
+    },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(createWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(createWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = [action.payload, ...(state.workout ?? [])];
-      })
-      .addCase(createWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
-
-    builder
-      .addCase(getWorkout.pending, (state) => {
-        state.loading = Loading.Pending;
-        state.error = null;
-      })
-      .addCase(getWorkout.fulfilled, (state, action) => {
-        state.loading = Loading.Fulfilled;
-        state.error = null;
-        state.workout = action.payload;
-      })
-      .addCase(getWorkout.rejected, (state, action) => {
-        state.loading = Loading.Rejected;
-        state.error = action.payload as string;
-      });
-  },
+  extraReducers: () => {},
 });
 
-export const { updateWorkoutSets } = WorkoutSlice.actions;
+export const {
+  updateWorkoutSets,
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+  updateTotalVolumeSets,
+  clearTotalVolumeSets,
+} = WorkoutSlice.actions;
 
 export default WorkoutSlice.reducer;

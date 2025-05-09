@@ -17,6 +17,7 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { setSelectExercises } from "@/redux/slices/exercise-slice";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
+import { setSelectedRoutineExercises } from "@/redux/slices/routine-slice";
 
 const AddExercise = () => {
   const [searchExercise, setSearchExercise] = useState("");
@@ -31,6 +32,9 @@ const AddExercise = () => {
 
   const selectedExercise = useAppSelector(
     (state) => state.exercise.selectedExercise
+  );
+  const selectedRoutineExercises = useAppSelector(
+    (state) => state.routine.selectedRoutineExercises
   );
 
   const fetchExercises = async () => {
@@ -62,23 +66,52 @@ const AddExercise = () => {
   };
 
   const toggleExercise = (exercise: Exercise) => {
-    const exists = selectedExercise.find((e) => e.id === exercise.id);
     let newSelectedExercises: Exercise[];
-    if (exists) {
-      newSelectedExercises = selectedExercise.filter(
-        (e) => e.id !== exercise.id
-      );
+    if (
+      previousRoute === "create-routine" ||
+      previousRoute === "edit-routine"
+    ) {
+      const exists = selectedRoutineExercises.find((e) => e.id === exercise.id);
+      if (exists) {
+        newSelectedExercises = selectedRoutineExercises.filter(
+          (e) => e.id !== exercise.id
+        );
+      } else {
+        newSelectedExercises = [...selectedRoutineExercises, exercise];
+      }
+      dispatch(setSelectedRoutineExercises(newSelectedExercises));
     } else {
-      newSelectedExercises = [...selectedExercise, exercise];
+      const exists = selectedExercise.find((e) => e.id === exercise.id);
+      if (exists) {
+        newSelectedExercises = selectedExercise.filter(
+          (e) => e.id !== exercise.id
+        );
+      } else {
+        newSelectedExercises = [...selectedExercise, exercise];
+      }
+      dispatch(setSelectExercises(newSelectedExercises));
     }
-    dispatch(setSelectExercises(newSelectedExercises));
   };
+
   const handleAddExercise = () => {
-    if (previousRoute === "/screens/workout/create-routine") {
-      router.replace("/screens/workout/create-routine");
-    } else {
-      router.replace("/screens/workout/add-workout");
+    if (previousRoute === "create-routine") {
+      router.replace({
+        pathname: "/screens/workout/create-routine",
+      });
+
+      return;
     }
+
+    if (previousRoute === "edit-routine") {
+      router.replace({
+        pathname: "/screens/workout/edit-routine",
+      });
+      return;
+    }
+
+    router.replace({
+      pathname: "/screens/workout/add-workout",
+    });
   };
 
   return (
@@ -122,21 +155,43 @@ const AddExercise = () => {
               key={exercise.id}
               exercise={exercise}
               onToggleSelect={() => toggleExercise(exercise)}
-              isSelected={selectedExercise.some((e) => e.id === exercise.id)}
+              isSelected={
+                previousRoute === "create-routine" ||
+                previousRoute === "edit-routine"
+                  ? selectedRoutineExercises.some((e) => e.id === exercise.id)
+                  : selectedExercise.some((e) => e.id === exercise.id)
+              }
             />
           ))}
         </ScrollView>
       )}
 
-      {selectedExercise.length > 0 && (
+      {(previousRoute === "create-routine" || previousRoute === "edit-routine"
+        ? selectedRoutineExercises
+        : selectedExercise
+      ).length > 0 && (
         <View style={styles.floatingButtonContainer}>
           <TouchableOpacity
             style={styles.floatingButton}
             onPress={handleAddExercise}
           >
             <Text style={styles.floatingButtonText}>
-              Add {selectedExercise.length} Exercise
-              {selectedExercise.length > 1 ? "s" : ""}
+              Add{" "}
+              {
+                (previousRoute === "create-routine" ||
+                previousRoute === "edit-routine"
+                  ? selectedRoutineExercises
+                  : selectedExercise
+                ).length
+              }{" "}
+              Exercise
+              {(previousRoute === "create-routine" ||
+              previousRoute === "edit-routine"
+                ? selectedRoutineExercises
+                : selectedExercise
+              ).length > 1
+                ? "s"
+                : ""}
             </Text>
           </TouchableOpacity>
         </View>

@@ -1,11 +1,35 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import {
+  calculateStreakAndRest,
+  fetchMarkedDates,
+} from "@/redux/slices/calendar-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const StreakHeader = () => {
   const [streakModal, setStreakModal] = useState(false);
   const [restModal, setRestModal] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const streakCount = useSelector(
+    (state: RootState) => state.calendar.streakCount
+  );
+  const restCount = useSelector((state: RootState) => state.calendar.restCount);
+
+  useEffect(() => {
+    dispatch(fetchMarkedDates())
+      .unwrap()
+      .then(() => {
+        dispatch(calculateStreakAndRest());
+      })
+      .catch((err) => {
+        console.error("Failed to fetch marked dates:", err);
+      });
+  }, [dispatch]);
 
   return (
     <View style={styles.headerContainer}>
@@ -15,7 +39,9 @@ const StreakHeader = () => {
       >
         <MaterialCommunityIcons name="fire" size={45} color="#DC723D" />
         <View>
-          <Text style={styles.streakText}>15 Weeks</Text>
+          <Text style={styles.streakText}>
+            {`${streakCount} ${streakCount === 1 ? "Week" : "Weeks"}`}
+          </Text>
           <Text style={styles.streakLabel}>Streak</Text>
         </View>
       </TouchableOpacity>
@@ -25,7 +51,9 @@ const StreakHeader = () => {
       >
         <MaterialCommunityIcons name="power-sleep" size={45} color="#48A6A7" />
         <View>
-          <Text style={styles.streakText}>1 Days</Text>
+          <Text style={styles.streakText}>{`${restCount} ${
+            restCount === 1 ? "Day" : "Days"
+          }`}</Text>
           <Text style={styles.streakLabel}>Rest</Text>
         </View>
       </TouchableOpacity>
@@ -35,8 +63,10 @@ const StreakHeader = () => {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>
-            You worked out 18 days within your streak of 15 weeks.{"\n\n"}Make
-            sure to log a workout at least once a week to keep the streak going.
+            You have a streak of{" "}
+            {`${streakCount} ${streakCount === 1 ? "week" : "weeks"}`}.{"\n\n"}
+            Make sure to log a workout at least once a week to keep the streak
+            going.
           </Text>
           <TouchableOpacity
             style={styles.modalButton}
@@ -49,7 +79,8 @@ const StreakHeader = () => {
       <Modal isVisible={restModal} onBackdropPress={() => setRestModal(false)}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalText}>
-            It has been 1 day since your last workout.
+            It has been {`${restCount} ${restCount === 1 ? "day" : "days"}`}{" "}
+            since your last workout.
           </Text>
           <TouchableOpacity
             style={styles.modalButton}
@@ -84,7 +115,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 5,
     padding: 10,
-    elevation: 1,
   },
   streakText: {
     fontSize: 18,

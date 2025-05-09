@@ -1,10 +1,15 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useLayoutEffect,
+  useMemo,
+  forwardRef,
+  useRef,
+} from "react";
 import {
   Text,
   StyleSheet,
   View,
   TouchableOpacity,
-  ScrollViewComponent,
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,136 +18,66 @@ import { useRouter, useNavigation } from "expo-router";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
-import Timer from "@/components/timer";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
+import Timer, { TimerHandle } from "@/components/timer";
 import { WorkoutSets } from "@/custom-types/exercise-type";
+import {
+  clearTotalVolumeSets,
+  clearWorkoutSets,
+  drarfWorkout,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { RootState } from "@/redux/store";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetProps,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { BtnTitle, CustomBtn } from "@/components/custom-btn";
+import { resetDuration } from "@/redux/slices/timer-slice";
+import { clearWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
 const AddWorkout = () => {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isClockModal, setIsClockModal] = useState<boolean>(false);
+  const [addExerciseModal, setAddExerciseModal] = useState<boolean>(false);
   const [activeButton, setActiveButton] = useState<"timer" | "stopwatch">(
     "timer"
   );
+  const createNewRoutineRef = useRef<BottomSheet>(null);
 
-  const [duration, setDuration] = useState<number>(60);
+  // const [duration, setDuration] = useState<number>(60);
+  // const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  // const intervalRefStopwatch = useRef<ReturnType<typeof setInterval> | null>(
-  //   null
-  // );
+  const dispatch = useAppDispatch();
+  const openCreateNewRoutine = () => {
+    createNewRoutineRef.current?.expand();
+  };
 
-  const exercises = useAppSelector((state) => state.exercise.exercise);
+  const timerRef = useRef<TimerHandle>(null);
+
+  // To be passed to save workout
+  const workoutDuration = useAppSelector(
+    (state: RootState) => state.timer.duration
+  );
+
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
   );
 
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
+  );
+
   const router = useRouter();
   const navigation = useNavigation();
-
-  const handleCancel = () => {
-    setIsTimerPlaying(false);
-    setKey((prev) => prev + 1);
-  };
-
-  const formatTime = (seconds: number) => {
-    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const secs = String(seconds % 60).padStart(2, "0");
-    return `${minutes}:${secs}`;
-  };
-
-  const handleReset = () => {
-    setIsRunning(false);
-    setElapsedTime(0);
-  };
-
-  const deleteSubCollection = async (parentRef: any, subCollection: string) => {
-    const subRef = collection(parentRef, subCollection);
-    const snapshot = await getDocs(subRef);
-
-    for (const docItem of snapshot.docs) {
-      const setsRef = collection(docItem.ref, "sets");
-      const setsSnapshot = await getDocs(setsRef);
-      for (const set of setsSnapshot.docs) {
-        await deleteDoc(set.ref);
-      }
-      await deleteDoc(docItem.ref);
-    }
-  };
-
-  const saveWorkoutToFirestore = async (workoutSets: WorkoutSets) => {
-    try {
-      const workoutRef = doc(collection(db, "workouts"));
-      const workoutSnapshot = await getDoc(workoutRef);
-
-      if (workoutSnapshot.exists()) {
-        await deleteSubCollection(workoutRef, "exercises");
-        await deleteDoc(workoutRef);
-        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
-      }
-
-      await setDoc(workoutRef, {
-        timestamp: new Date(),
-      });
-
-      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-        const { name, sets } = exercise;
-        if (!name) {
-          console.error(
-            `Error: 'name' is missing in exercise with ID: ${exerciseId}`
-          );
-          continue;
-        }
-
-        const exerciseRef = doc(collection(workoutRef, "exercises"));
-        await setDoc(exerciseRef, {
-          name,
-          exerciseId,
-        });
-
-        if (sets && Array.isArray(sets)) {
-          for (const set of sets) {
-            const { reps, kg, checked, previous } = set;
-
-            if (reps === undefined || kg === undefined) {
-              console.error(`Error: reps or kg is undefined. Skipping set.`);
-              continue;
-            }
-
-            await addDoc(collection(exerciseRef, "sets"), {
-              reps,
-              kg,
-              checked: checked || false,
-              previous: previous || "",
-            });
-          }
-        }
-      }
-
-      console.log(`Workout saved`);
-    } catch (e) {
-      console.error("Error saving workout to Firestore: ", e);
-    }
-  };
-
-  const handleExercises = async () => {
-    if (workoutSets !== null) {
-      saveWorkoutToFirestore(workoutSets);
-    }
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -153,7 +88,13 @@ const AddWorkout = () => {
             justifyContent: "center",
             marginRight: 12,
           }}
-          onPress={() => setIsModalVisible((prev) => !prev)}
+          onPress={() => {
+            if (timerRef.current) {
+              timerRef.current.finish();
+            }
+            dispatch(drarfWorkout());
+            router.replace("/(tabs)/workout");
+          }}
         >
           <Ionicons name="arrow-back-outline" size={20} />
         </TouchableOpacity>
@@ -171,7 +112,7 @@ const AddWorkout = () => {
               borderRadius: 8,
             }}
             onPress={() => {
-              handleExercises();
+              handleFinish();
             }}
           >
             <Text style={{ color: "#FFFFFF", fontFamily: "Inter_500Medium" }}>
@@ -181,7 +122,78 @@ const AddWorkout = () => {
         </View>
       ),
     });
-  }, [selectedExercises, duration, navigation, workoutSets]);
+  }, [selectedExercises, navigation, workoutSets]);
+
+  const handleCancel = () => {
+    setIsTimerPlaying(false);
+    setKey((prev) => prev + 1);
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    return `${minutes}:${secs}`;
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setElapsedTime(0);
+  };
+
+  const calculateWorkoutStats = (workoutSets?: WorkoutSets | null) => {
+    let totalVolume = 0;
+    let totalSets = 0;
+
+    if (!workoutSets) return { totalVolume, totalSets };
+
+    for (const exercise of Object.values(workoutSets)) {
+      for (const set of exercise.sets || []) {
+        const kg = Number(set.kg) || 0;
+        const reps = Number(set.reps) || 0;
+        const volume = kg * reps;
+        totalVolume += volume;
+        totalSets += 1;
+      }
+    }
+    return { totalVolume, totalSets };
+  };
+
+  const handleFinish = () => {
+    if (timerRef.current) {
+      const finalTime = timerRef.current.finish();
+      console.log("Workout completed in:", finalTime);
+    }
+
+    if (!workoutSets) {
+      setAddExerciseModal(true);
+      console.error("Error: workoutSets is null or undefined");
+      return;
+    }
+
+    const { totalVolume, totalSets } = calculateWorkoutStats(workoutSets);
+
+    router.push({
+      pathname: "/screens/workout/save-workout",
+      params: {
+        workoutSets: JSON.stringify(workoutSets),
+        totalVolume: totalVolume.toString(),
+        totalSets: totalSets.toString(),
+        // totalDuration: duration,
+      },
+    });
+  };
+
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
+    dispatch(clearWorkoutSets());
+    dispatch(clearWorkoutRoutineSets());
+    dispatch(clearTotalVolumeSets());
+    dispatch(undraftWorkout());
+    dispatch(resetDuration());
+    timerRef.current?.reset();
+    router.replace("/(tabs)/workout");
+  };
 
   return (
     <View style={styles.container}>
@@ -195,21 +207,24 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            <Timer />
+            <Timer ref={timerRef} shouldDispatch={true} />
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>0 kg</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalVolume}kg</Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>0</Text>
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       {/* Show here the added exercise */}
-
-      <ScrollView overScrollMode="never">
+      <ScrollView
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+      >
         {selectedExercises.length === 0 ? (
           <View style={styles.getStartedContainer}>
             <Ionicons name="barbell-outline" size={50} color="#6A6A6A" />
@@ -222,6 +237,7 @@ const AddWorkout = () => {
           selectedExercises.map((selectedExercise) => (
             <ExerciseDetailCard
               key={selectedExercise.id}
+              openRoutine={openCreateNewRoutine}
               exercise={selectedExercise}
             />
           ))
@@ -232,7 +248,7 @@ const AddWorkout = () => {
         <View>
           <TouchableOpacity
             style={styles.addExerciseButton}
-            onPress={() => router.push("/screens/workout/add-exercise")}
+            onPress={() => router.replace("/screens/workout/add-exercise")}
           >
             <Ionicons name="add-outline" size={20} color="#FFFFFF" />
             <Text
@@ -246,6 +262,7 @@ const AddWorkout = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        {/* Modal Add exercise */}
         <View style={styles.settingsDiscardContainer}>
           <TouchableOpacity
             style={styles.settingsDiscardButton}
@@ -271,9 +288,278 @@ const AddWorkout = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Clock Modal */}
+      {isModalVisible || isClockModal ? (
+        <>
+          <Modal
+            isVisible={isModalVisible}
+            onBackdropPress={() => setIsModalVisible(false)}
+            backdropOpacity={0.5}
+            style={{ margin: 0, justifyContent: "center" }}
+          >
+            <View
+              style={[
+                styles.modalContainer,
+                { width: "80%", alignSelf: "center" },
+              ]}
+            >
+              <Text
+                style={{
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 16,
+                  textAlign: "center",
+                  marginBottom: 20,
+                }}
+              >
+                Are you sure you want to discard this workout?
+              </Text>
+              <View style={{ width: "100%", gap: 14 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.modalSettingsDiscardButton,
+                    { borderWidth: 1, borderColor: "#ED1010" },
+                  ]}
+                  onPress={discardWorkout}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 16,
+                      color: "#ED1010",
+                    }}
+                  >
+                    Discard Workout
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalSettingsDiscardButton}
+                  onPress={() => setIsModalVisible(false)}
+                >
+                  <Text style={{ fontFamily: "Inter_500Medium", fontSize: 16 }}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          <Modal
+            isVisible={isClockModal}
+            onBackdropPress={() => setIsClockModal(false)}
+          >
+            <View style={styles.clockModalContainer}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 18 }}>
+                Clock
+              </Text>
+              <View style={{ flexDirection: "row", width: "100%" }}>
+                <TouchableOpacity
+                  style={[
+                    styles.timerButton,
+                    activeButton === "timer" && styles.activeButton,
+                  ]}
+                  onPress={() => setActiveButton("timer")}
+                >
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      activeButton === "timer" && styles.activeText,
+                    ]}
+                  >
+                    Timer
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.stopwatchButton,
+                    activeButton === "stopwatch" && styles.activeButton,
+                  ]}
+                  onPress={() => setActiveButton("stopwatch")}
+                >
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      activeButton === "stopwatch" && styles.activeText,
+                    ]}
+                  >
+                    Stopwatch
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {activeButton === "timer" ? (
+                <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
+                  <View
+                    style={{ flexDirection: "row", alignItems: "flex-end" }}
+                  >
+                    <TouchableOpacity
+                    // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                    >
+                      <Text style={{ fontFamily: "Inter_600SemiBold" }}>
+                        -15s
+                      </Text>
+                    </TouchableOpacity>
+                    {/* <CountdownCircleTimer
+                      isPlaying={isTimerPlaying}
+                      duration={duration}
+                      key={key}
+                      colors={["#48A6A7", "#F7B801", "#ED1010", "#000000"]}
+                      colorsTime={[
+                        duration,
+                        duration * 0.66,
+                        duration * 0.33,
+                        0,
+                      ]}
+                      size={200}
+                      strokeWidth={10}
+                      onComplete={() => {
+                        setIsTimerPlaying(false);
+                        setKey((prev) => prev + 1);
+                        return { shouldRepeat: false };
+                      }}
+                    >
+                      {({ remainingTime }) => (
+                        <Text
+                          style={{
+                            fontFamily: "Inter_600SemiBold",
+                            fontSize: 22,
+                          }}
+                        >{`${Math.floor(remainingTime / 60)
+                          .toString()
+                          .padStart(2, "0")}:${(remainingTime % 60)
+                          .toString()
+                          .padStart(2, "0")}`}</Text>
+                      )}
+                    </CountdownCircleTimer> */}
+                    <TouchableOpacity
+                    // onPress={() => setDuration((prev) => prev + 15)}
+                    >
+                      <Text style={{ fontFamily: "Inter_600SemiBold" }}>
+                        +15s
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  {!isTimerPlaying ? (
+                    <TouchableOpacity
+                      style={styles.clockStartButton}
+                      onPress={() => setIsTimerPlaying(true)}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Inter_500Medium",
+                          fontSize: 16,
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        Start
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.clockCancelButton}
+                      onPress={handleCancel}
+                    >
+                      <Text
+                        style={{ fontFamily: "Inter_400Regular", fontSize: 16 }}
+                      >
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
+                  <Text style={styles.stopwatch}>
+                    {formatTime(elapsedTime)}
+                  </Text>
+                  {!isRunning && elapsedTime === 0 ? (
+                    <TouchableOpacity
+                      style={styles.stopwatchStartButton}
+                      onPress={() => setIsRunning(true)}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Inter_500Medium",
+                          fontSize: 16,
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        Start
+                      </Text>
+                    </TouchableOpacity>
+                  ) : isRunning ? (
+                    <TouchableOpacity
+                      style={styles.stopwatchStopButton}
+                      onPress={() => setIsRunning(false)}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Inter_500Medium",
+                          fontSize: 16,
+                          color: "#000000",
+                        }}
+                      >
+                        Stop
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      <TouchableOpacity
+                        style={styles.stopwatchResetButton}
+                        onPress={handleReset}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Inter_500Medium",
+                            fontSize: 16,
+                            color: "#000000",
+                          }}
+                        >
+                          Reset
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.stopwatchStartButtonHalf}
+                        onPress={() => setIsRunning(true)}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Inter_500Medium",
+                            fontSize: 16,
+                            color: "#FFFFFF",
+                          }}
+                        >
+                          Start
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          </Modal>
+        </>
+      ) : (
+        <BottomSheetOverlay ref={createNewRoutineRef}>
+          <CustomBtn
+            // key=
+            onPress={() => {}}
+            buttonStyle={{
+              borderRadius: 6,
+              width: "100%",
+              backgroundColor: "white",
+            }}
+          >
+            <BtnTitle
+              title={"Delete" as string}
+              textStyle={{ fontSize: 14, color: "red" }}
+            />
+          </CustomBtn>
+        </BottomSheetOverlay>
+      )}
+
       <Modal
-        isVisible={isModalVisible}
-        onBackdropPress={() => setIsModalVisible((prev) => !prev)}
+        isVisible={addExerciseModal}
+        onBackdropPress={() => setAddExerciseModal(false)}
       >
         <View style={styles.modalContainer}>
           <Text
@@ -283,218 +569,29 @@ const AddWorkout = () => {
               textAlign: "center",
             }}
           >
-            Are you sure you want to discard this workout?
+            Add an exercise
           </Text>
           <View style={{ width: "100%", alignItems: "center", gap: 14 }}>
             <TouchableOpacity
-              style={styles.modalSettingsDiscardButton}
-              onPress={() => router.back()}
+              style={styles.addExerciseModalButton}
+              onPress={() => setAddExerciseModal((prev) => !prev)}
             >
               <Text
                 style={{
                   fontFamily: "Inter_500Medium",
                   fontSize: 16,
-                  color: "#ED1010",
+                  color: "#FFFFFF",
                 }}
               >
-                Discard Workout
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalSettingsDiscardButton}
-              onPress={() => setIsModalVisible((prev) => !prev)}
-            >
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 16 }}>
-                Cancel
+                Ok
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-
-      {/* Clock Modal */}
-      <Modal
-        isVisible={isClockModal}
-        onBackdropPress={() => setIsClockModal(false)}
-      >
-        <View style={styles.clockModalContainer}>
-          <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 18 }}>
-            Clock
-          </Text>
-          <View style={{ flexDirection: "row", width: "100%" }}>
-            <TouchableOpacity
-              style={[
-                styles.timerButton,
-                activeButton === "timer" && styles.activeButton,
-              ]}
-              onPress={() => setActiveButton("timer")}
-            >
-              <Text
-                style={[
-                  styles.buttonText,
-                  activeButton === "timer" && styles.activeText,
-                ]}
-              >
-                Timer
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.stopwatchButton,
-                activeButton === "stopwatch" && styles.activeButton,
-              ]}
-              onPress={() => setActiveButton("stopwatch")}
-            >
-              <Text
-                style={[
-                  styles.buttonText,
-                  activeButton === "stopwatch" && styles.activeText,
-                ]}
-              >
-                Stopwatch
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {activeButton === "timer" ? (
-            <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
-                <TouchableOpacity
-                  onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
-                >
-                  <Text style={{ fontFamily: "Inter_600SemiBold" }}>-15s</Text>
-                </TouchableOpacity>
-                <CountdownCircleTimer
-                  isPlaying={isTimerPlaying}
-                  duration={duration}
-                  key={key}
-                  colors={["#48A6A7", "#F7B801", "#ED1010", "#000000"]}
-                  colorsTime={[duration, duration * 0.66, duration * 0.33, 0]}
-                  size={200}
-                  strokeWidth={10}
-                  onComplete={() => {
-                    setIsTimerPlaying(false);
-                    setKey((prev) => prev + 1);
-                    return { shouldRepeat: false };
-                  }}
-                >
-                  {({ remainingTime }) => (
-                    <Text
-                      style={{ fontFamily: "Inter_600SemiBold", fontSize: 22 }}
-                    >{`${Math.floor(remainingTime / 60)
-                      .toString()
-                      .padStart(2, "0")}:${(remainingTime % 60)
-                      .toString()
-                      .padStart(2, "0")}`}</Text>
-                  )}
-                </CountdownCircleTimer>
-                <TouchableOpacity
-                  onPress={() => setDuration((prev) => prev + 15)}
-                >
-                  <Text style={{ fontFamily: "Inter_600SemiBold" }}>+15s</Text>
-                </TouchableOpacity>
-              </View>
-              {!isTimerPlaying ? (
-                <TouchableOpacity
-                  style={styles.clockStartButton}
-                  onPress={() => setIsTimerPlaying(true)}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Inter_500Medium",
-                      fontSize: 16,
-                      color: "#FFFFFF",
-                    }}
-                  >
-                    Start
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.clockCancelButton}
-                  onPress={handleCancel}
-                >
-                  <Text
-                    style={{ fontFamily: "Inter_400Regular", fontSize: 16 }}
-                  >
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ) : (
-            <View style={{ width: "100%", alignItems: "center", gap: 16 }}>
-              <Text style={styles.stopwatch}>{formatTime(elapsedTime)}</Text>
-              {!isRunning && elapsedTime === 0 ? (
-                <TouchableOpacity
-                  style={styles.stopwatchStartButton}
-                  onPress={() => setIsRunning(true)}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Inter_500Medium",
-                      fontSize: 16,
-                      color: "#FFFFFF",
-                    }}
-                  >
-                    Start
-                  </Text>
-                </TouchableOpacity>
-              ) : isRunning ? (
-                <TouchableOpacity
-                  style={styles.stopwatchStopButton}
-                  onPress={() => setIsRunning(false)}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Inter_500Medium",
-                      fontSize: 16,
-                      color: "#000000",
-                    }}
-                  >
-                    Stop
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <TouchableOpacity
-                    style={styles.stopwatchResetButton}
-                    onPress={handleReset}
-                  >
-                    <Text
-                      style={{
-                        fontFamily: "Inter_500Medium",
-                        fontSize: 16,
-                        color: "#000000",
-                      }}
-                    >
-                      Reset
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.stopwatchStartButtonHalf}
-                    onPress={() => setIsRunning(true)}
-                  >
-                    <Text
-                      style={{
-                        fontFamily: "Inter_500Medium",
-                        fontSize: 16,
-                        color: "#FFFFFF",
-                      }}
-                    >
-                      Start
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
         </View>
       </Modal>
     </View>
   );
 };
-
 export default AddWorkout;
 
 const styles = StyleSheet.create({
@@ -563,6 +660,14 @@ const styles = StyleSheet.create({
   },
   modalSettingsDiscardButton: {
     backgroundColor: "#EEEEEE",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    width: "100%",
+    borderRadius: 8,
+  },
+  addExerciseModalButton: {
+    backgroundColor: "#48A6A7",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
@@ -659,3 +764,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+const BottomSheetOverlay = forwardRef<BottomSheet, BottomSheetProps>(
+  ({ children }, ref) => {
+    const snapPoints = useMemo(() => ["50%"], []);
+
+    return (
+      <BottomSheet
+        ref={ref}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        handleStyle={{
+          backgroundColor: "#F4F4F4",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            pressBehavior="close"
+            disappearsOnIndex={-1}
+            appearsOnIndex={0}
+          />
+        )}
+      >
+        <BottomSheetScrollView
+          bounces={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            paddingTop: 20,
+            backgroundColor: "#F4F4F4",
+            gap: 10,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </BottomSheetScrollView>
+      </BottomSheet>
+    );
+  }
+);

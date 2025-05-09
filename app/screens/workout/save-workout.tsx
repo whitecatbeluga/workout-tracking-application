@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, useRef } from "react";
+import { useLayoutEffect, useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,49 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { useNavigation, useRouter } from "expo-router";
+import { useNavigation, useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Modal from "react-native-modal";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetVisiblity from "./bottom-sheet-visibility";
+import { formatTime } from "@/utils/format-time";
+import { WorkoutSets } from "@/custom-types/exercise-type";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import { db, storage, auth } from "@/utils/firebase-config";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { ActivityIndicator } from "react-native";
+import { useAppSelector } from "@/hooks/use-app-selector";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import {
+  clearTotalVolumeSets,
+  clearWorkoutSets,
+  undraftWorkout,
+} from "@/redux/slices/workout-slice";
 
 const SaveWorkout = () => {
+  const {
+    workoutSets: workoutSetsParam,
+    totalVolume,
+    totalSets,
+    totalDuration,
+  } = useLocalSearchParams();
+  const totalVolumeSets = useAppSelector(
+    (state) => state.workout.totalVolumeSets
+  );
+
+  const parsedWorkoutSets: WorkoutSets = JSON.parse(workoutSetsParam as string);
+
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [visibility, setVisibility] = useState<"private" | "everyone">(
     "everyone"
@@ -25,7 +61,19 @@ const SaveWorkout = () => {
     null
   );
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [workoutTitle, setWorkoutTitle] = useState<string>("");
+  const [workoutDescription, setWorkoutDescription] = useState<string>("");
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [triggerMissing, setTriggerMissing] = useState<boolean>(false);
+  const [triggerMessage, setTriggerMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [timeSnapshot, setTimeSnapshot] = useState<number>(0);
+
+  const duration = useAppSelector((state) => state.timer.duration);
+  const dispatch = useAppDispatch();
+
+  const navigation = useNavigation();
+  const router = useRouter();
 
   const handleVisibilityChange = (
     selectedVisibility: "private" | "everyone"
@@ -38,8 +86,9 @@ const SaveWorkout = () => {
     bottomSheetRef.current?.expand();
   };
 
-  const navigation = useNavigation();
-  const router = useRouter();
+  useEffect(() => {
+    setTimeSnapshot(duration);
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -50,11 +99,17 @@ const SaveWorkout = () => {
             paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 8,
+            alignItems: "center",
           }}
+          onPress={handleSaveToFirebase}
         >
-          <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
-            Save
-          </Text>
+          {!loading ? (
+            <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
+              Save
+            </Text>
+          ) : (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          )}
         </TouchableOpacity>
       ),
     });
@@ -64,9 +119,8 @@ const SaveWorkout = () => {
     setSelectedImages((prevImages) => {
       if (prevImages.length < 3) {
         return [...prevImages, uri];
-      } else {
-        setErrorMessage("Maximum of 3 images only.");
       }
+
       return prevImages;
     });
   };
@@ -89,9 +143,170 @@ const SaveWorkout = () => {
     setSelectedImageIndex(null);
   };
 
+  const deleteSubCollection = async (parentRef: any, subCollection: string) => {
+    const subRef = collection(parentRef, subCollection);
+    const snapshot = await getDocs(subRef);
+
+    for (const docItem of snapshot.docs) {
+      const setsRef = collection(docItem.ref, "sets");
+      const setsSnapshot = await getDocs(setsRef);
+      for (const set of setsSnapshot.docs) {
+        await deleteDoc(set.ref);
+      }
+      await deleteDoc(docItem.ref);
+    }
+  };
+
+  const uploadSelectedImages = async (
+    selectedImages: string[],
+    workoutId: string
+  ) => {
+    try {
+      const downloadURLs: string[] = [];
+
+      for (const uri of selectedImages) {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+
+        const filename = `${Date.now()}.jpg`;
+        const imageRef = ref(storage, `workout_images/${filename}`);
+
+        await uploadBytes(imageRef, blob);
+        const downloadURL = await getDownloadURL(imageRef);
+
+        downloadURLs.push(downloadURL);
+      }
+
+      const workoutRef = doc(db, "workouts", workoutId);
+      await updateDoc(workoutRef, { image_urls: downloadURLs });
+    } catch (error) {
+      console.error("Failed to upload images: ", error);
+    }
+  };
+
+  const handleSaveToFirebase = async () => {
+    if (!workoutTitle) {
+      setTriggerMissing(true);
+      setTriggerMessage("Please input a workout title.");
+      return;
+    }
+
+    setLoading(true);
+    const userId = auth.currentUser?.uid;
+
+    try {
+      // Create or overwrite workout document
+      const workoutRef = doc(collection(db, "workouts"));
+      const workoutSnapshot = await getDoc(workoutRef);
+
+      // Clean up existing workout if it exists
+      if (workoutSnapshot.exists()) {
+        await deleteSubCollection(workoutRef, "exercises");
+        await deleteDoc(workoutRef);
+        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
+      }
+
+      // Save workout metadata
+      await setDoc(workoutRef, {
+        workout_duration: "TBD",
+        total_volume: totalVolumeSets.totalVolume,
+        total_sets: totalVolumeSets.totalSets,
+        workout_title: workoutTitle,
+        created_at: serverTimestamp(),
+        workout_description: workoutDescription,
+        visible_to_everyone: visibility === "everyone",
+        user_id: userId,
+      });
+
+      // Upload any selected images
+      await uploadSelectedImages(selectedImages, workoutRef.id);
+
+      // Process each exercise
+      for (const [exerciseId, exercise] of Object.entries(parsedWorkoutSets)) {
+        const { name, sets } = exercise;
+
+        if (!name) {
+          console.error(`Error: 'name' missing for exercise ${exerciseId}`);
+          continue;
+        }
+
+        // Create exercise document
+        const exerciseRef = doc(collection(workoutRef, "exercises"));
+        await setDoc(exerciseRef, {
+          name,
+          exerciseId,
+        });
+
+        // Process sets if they exist
+        if (sets?.length) {
+          const validSets = sets.filter((set) => {
+            if (!set.checked) return false;
+
+            const kg = parseFloat(set.kg) || 0;
+            const reps = parseFloat(set.reps) || 0;
+
+            // Only save sets where at least one value is non-zero
+            return kg > 0 || reps > 0;
+          });
+
+          // Save each valid set
+          for (const set of validSets) {
+            await addDoc(collection(exerciseRef, "sets"), {
+              reps: parseFloat(set.reps) || 0,
+              kg: parseFloat(set.kg) || 0,
+              checked: true, // We already filtered for checked sets
+              previous: set.previous || "",
+            });
+          }
+        }
+      }
+
+      // Clear selection after successful save
+      dispatch(clearSelectedExercises());
+      dispatch(clearWorkoutSets());
+      dispatch(undraftWorkout());
+      dispatch(clearTotalVolumeSets());
+      router.replace("/screens/workout/workout-confirmation");
+
+      console.log("Workout saved successfully");
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      // You might want to add user feedback here
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const discardWorkout = () => {
+    setIsModalVisible((prev) => !prev);
+    dispatch(clearSelectedExercises());
+    dispatch(clearWorkoutSets());
+    dispatch(undraftWorkout());
+    router.replace("/(tabs)/workout");
+  };
+
   return (
     <View style={styles.container}>
-      <TextInput placeholder="Workout Title" style={styles.workoutTitle} />
+      <TextInput
+        value={workoutTitle}
+        onChangeText={(value) => setWorkoutTitle(value)}
+        placeholder="Workout Title"
+        style={
+          !triggerMissing ? styles.workoutTitle : styles.workoutTitleMissing
+        }
+      />
+      {triggerMessage && (
+        <Text
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 12,
+            color: "#721c24",
+          }}
+        >
+          Please input a workout title.
+        </Text>
+      )}
+
       <View style={styles.durationVolumeSetsContainer}>
         <View>
           <Text style={styles.title}>Duration</Text>
@@ -100,18 +315,23 @@ const SaveWorkout = () => {
               fontSize: 16,
               fontFamily: "Inter_400Regular",
               color: "#48A6A7",
+              width: "100%",
             }}
           >
-            32min
+            {formatTime(Number(timeSnapshot))}
           </Text>
         </View>
         <View>
           <Text style={styles.title}>Volume</Text>
-          <Text style={styles.volumeSets}>50 kg</Text>
+          {/* <Text style={styles.volumeSets}>50 kg</Text> */}
+          <Text style={styles.volumeSets}>
+            {totalVolumeSets.totalVolume} kg
+          </Text>
         </View>
         <View>
           <Text style={styles.title}>Sets</Text>
-          <Text style={styles.volumeSets}>1</Text>
+          {/* <Text style={styles.volumeSets}>1</Text> */}
+          <Text style={styles.volumeSets}>{totalVolumeSets.totalSets}</Text>
         </View>
       </View>
       <View style={{ paddingVertical: 20 }}>
@@ -163,13 +383,17 @@ const SaveWorkout = () => {
       </TouchableOpacity>
       {selectedImages.length === 3 && (
         <Text
-          style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "red" }}
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            color: "#032B44",
+          }}
         >
-          {errorMessage}
+          You've reached the max number of photos (3)
         </Text>
       )}
 
-      <View>
+      <View style={{ paddingVertical: 20 }}>
         <Text style={styles.title}>Description</Text>
         <TextInput
           style={{
@@ -179,6 +403,8 @@ const SaveWorkout = () => {
           }}
           placeholder="How did your workout go? Leave some notes here..."
           multiline={true}
+          value={workoutDescription}
+          onChangeText={(value) => setWorkoutDescription(value)}
         />
       </View>
       <TouchableOpacity
@@ -212,7 +438,10 @@ const SaveWorkout = () => {
           paddingVertical: 15,
         }}
       >
-        <TouchableOpacity onPress={() => setIsModalVisible((prev) => !prev)}>
+        <TouchableOpacity
+          style={styles.modalSettingsDiscardButton}
+          onPress={discardWorkout}
+        >
           <Text
             style={{
               fontFamily: "Inter_400Regular",
@@ -333,6 +562,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 18,
     borderBottomWidth: 0.5,
+  },
+  workoutTitleMissing: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#721c24",
   },
   durationVolumeSetsContainer: {
     flexDirection: "row",

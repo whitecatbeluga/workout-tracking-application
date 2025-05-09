@@ -238,7 +238,7 @@ const Step1 = ({
 
   return (
     <View>
-      <Header desc="What shall we call you?" />
+      <Header desc="Let's get you set up" />
       <Input
         value={formData.username}
         icon="person"
@@ -479,12 +479,33 @@ const Step3 = ({
         value={formData.activity_level}
         icon="heart-circle"
         placeholder="Activity Level"
+        hasDescription
         data={[
-          { label: "Fervid", value: "fervid" },
-          { label: "Active", value: "active" },
-          { label: "Light", value: "light" },
-          { label: "Moderate", value: "moderate" },
-          { label: "Sedentary", value: "sedentary" },
+          {
+            label: "Fervid",
+            value: "fervid",
+            description: "Always moving, training intensely every day",
+          },
+          {
+            label: "Active",
+            value: "active",
+            description: "Work out regularly and stay on your feet often",
+          },
+          {
+            label: "Light",
+            value: "light",
+            description: "Occasional exercise with a mostly relaxed lifestyle",
+          },
+          {
+            label: "Moderate",
+            value: "moderate",
+            description: "Exercise a few times a week and stay fairly active",
+          },
+          {
+            label: "Sedentary",
+            value: "sedentary",
+            description: "Little to no regular physical activity",
+          },
         ]}
       />
 
@@ -497,15 +518,53 @@ const Step3 = ({
         onChangeText={onChangeText("workout_type")}
         icon="barbell"
         placeholder="Workout Type"
+        hasDescription
         data={[
-          { label: "Cardio", value: "cardio" },
-          { label: "Flexibility", value: "flexibility" },
-          { label: "Functional", value: "functional" },
-          { label: "HIIT", value: "hiit" },
-          { label: "Mixed", value: "mixed" },
-          { label: "Rest", value: "rest" },
-          { label: "Sports", value: "sports" },
-          { label: "Strength", value: "strength" },
+          {
+            label: "Cardio",
+            value: "cardio",
+            description:
+              "Boost your heart rate with endurance-focused training",
+          },
+          {
+            label: "Flexibility",
+            value: "flexibility",
+            description:
+              "Improve mobility with stretching and balance exercises",
+          },
+          {
+            label: "Functional",
+            value: "functional",
+            description: "Train movements that mimic everyday activities",
+          },
+          {
+            label: "HIIT",
+            value: "hiit",
+            description:
+              "High-intensity bursts with short rest periods for fat-burning",
+          },
+          {
+            label: "Mixed",
+            value: "mixed",
+            description:
+              "A balanced blend of strength, cardio, and mobility work",
+          },
+          {
+            label: "Rest",
+            value: "rest",
+            description: "Time to recover and let your body rebuild stronger",
+          },
+          {
+            label: "Sports",
+            value: "sports",
+            description:
+              "Activity focused on specific sports or athletic skills",
+          },
+          {
+            label: "Strength",
+            value: "strength",
+            description: "Build muscle and power through resistance training",
+          },
         ]}
       />
     </View>
@@ -657,7 +716,7 @@ const RegisterPage = () => {
       const token = user.getIdToken();
 
       try {
-        const { confirmPassword, ...dataToStore } = formData;
+        const { confirmPassword, password, ...dataToStore } = formData;
 
         await setDoc(doc(db, "users", user.uid), {
           ...dataToStore,
@@ -669,7 +728,7 @@ const RegisterPage = () => {
         await dispatch(setUserToken(await token));
 
         setLoading(false);
-        router.replace("/(tabs)");
+        router.replace("/screens/landingPage/login-page");
       } catch (error) {
         console.log("Error setting user document:", error);
       }
