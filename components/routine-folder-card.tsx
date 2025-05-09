@@ -2,7 +2,11 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import Collapsible from "react-native-collapsible";
 import { Ionicons } from "@expo/vector-icons";
-import { Program, setRoutineParams } from "@/redux/slices/routine-slice";
+import {
+  Program,
+  Routine,
+  setRoutineParams,
+} from "@/redux/slices/routine-slice";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/utils/firebase-config";
 import { BtnTitle, CustomBtn } from "./custom-btn";
@@ -10,27 +14,51 @@ import { router } from "expo-router";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { setSelectExercises } from "@/redux/slices/exercise-slice";
 import { updateWorkoutSets } from "@/redux/slices/workout-slice";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
 type RoutineFolderCardProps = {
   program: Program;
   openRoutineMenu: (id: string) => void;
   openProgramMenu: (id: string) => void;
+
+  openResetWorkoutModal: (value: boolean) => void;
+  resetWorkoutType: (value: string) => void;
 };
 
 const RoutineFolderCard = ({
   program,
   openRoutineMenu,
   openProgramMenu,
+
+  openResetWorkoutModal,
+  resetWorkoutType,
 }: RoutineFolderCardProps) => {
   const [collapsed, setCollapsed] = useState(true);
 
   const dispatch = useAppDispatch();
+
+  const draftWorkout = useAppSelector((state) => state.workout.draftWorkout);
 
   const handleAddExercise = (programId: string) => {
     dispatch(setRoutineParams({ programId: programId }));
     router.push({
       pathname: "/screens/workout/create-routine",
       params: { type: "create-routine" },
+    });
+  };
+
+  const handleStartRoutine = async (routine: Routine) => {
+    dispatch(setSelectExercises(routine?.exercises));
+    dispatch(updateWorkoutSets(routine?.exercises));
+
+    if (draftWorkout) {
+      openResetWorkoutModal(true);
+      resetWorkoutType("start-routine");
+      return;
+    }
+
+    router.push({
+      pathname: "/screens/workout/add-workout",
     });
   };
 
@@ -138,12 +166,8 @@ const RoutineFolderCard = ({
                   </View>
                 ))}
                 <CustomBtn
-                  onPress={async () => {
-                    dispatch(setSelectExercises(routine?.exercises));
-                    dispatch(updateWorkoutSets(routine?.exercises));
-                    router.push({
-                      pathname: "/screens/workout/add-workout",
-                    });
+                  onPress={() => {
+                    handleStartRoutine(routine);
                   }}
                   buttonStyle={{
                     borderRadius: 6,

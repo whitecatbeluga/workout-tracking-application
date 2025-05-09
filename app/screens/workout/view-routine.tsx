@@ -17,6 +17,8 @@ import {
   deleteRoutine,
   fetchRoutine,
   Program,
+  setRoutineParams,
+  setSelectedRoutineExercises,
 } from "@/redux/slices/routine-slice";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
@@ -85,6 +87,27 @@ const ViewRoutine = () => {
     await dispatch(deleteRoutine({ userId, programId, routineId }));
 
     router.replace("/(tabs)/workout");
+  };
+
+  const handleEditRoutine = async () => {
+    const resultAction = await dispatch(
+      fetchRoutine({
+        routineId: routineId as string,
+      })
+    );
+
+    if (fetchRoutine.fulfilled.match(resultAction)) {
+      const routine = resultAction.payload;
+
+      dispatch(setRoutineParams({ routineId: routine.id }));
+      dispatch(setSelectedRoutineExercises(routine.exercises));
+
+      router.push({
+        pathname: "/screens/workout/edit-routine",
+      });
+    } else {
+      console.error("Failed to fetch routine");
+    }
   };
 
   return (
@@ -311,7 +334,7 @@ const ViewRoutine = () => {
               {routine?.routine_name}
             </Text>
             <CustomBtn
-              onPress={() => {}}
+              onPress={handleEditRoutine}
               buttonStyle={{
                 borderRadius: 6,
                 width: "100%",
