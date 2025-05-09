@@ -21,7 +21,7 @@ import {
   updateTotalVolumeSets,
 } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { useLocalSearchParams, usePathname } from "expo-router";
+import { usePathname } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
 
@@ -54,9 +54,10 @@ const ExerciseDetailCard = ({
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
 
+  const swipeableRefs = React.useRef<{ [key: number]: Swipeable | null }>({});
+
   const dispatch = useAppDispatch();
   const pathname = usePathname();
-  const { type } = useLocalSearchParams();
 
   const [setsByExercise, setSetsByExercise] = useState<{
     [key: string]: { name: string; sets: SetData[] };
@@ -65,13 +66,15 @@ const ExerciseDetailCard = ({
       name: exercise.name,
       sets:
         Array.isArray(exercise.sets) && exercise.sets.length > 0
-          ? exercise.sets.map((s, index) => ({
-              set: typeof s.set === "number" ? s.set : index + 1,
-              previous: typeof s.previous === "string" ? s.previous : "",
-              kg: typeof s.kg === "string" ? s.kg : "",
-              reps: typeof s.reps === "string" ? s.reps : "",
-              checked: typeof s.checked === "boolean" ? s.checked : false,
-            }))
+          ? exercise.sets
+              .map((s, index) => ({
+                set: typeof s.set === "number" ? s.set : index + 1,
+                previous: typeof s.previous === "string" ? s.previous : "",
+                kg: typeof s.kg === "string" ? s.kg : "",
+                reps: typeof s.reps === "string" ? s.reps : "",
+                checked: typeof s.checked === "boolean" ? s.checked : false,
+              }))
+              .sort((a, b) => a.set - b.set)
           : [
               {
                 set: 1,
@@ -84,7 +87,6 @@ const ExerciseDetailCard = ({
     },
   });
 
-  // Load sound effect
   useEffect(() => {
     async function loadSound() {
       const { sound } = await Audio.Sound.createAsync(
@@ -118,6 +120,31 @@ const ExerciseDetailCard = ({
 
     return () => clearInterval(interval);
   }, [isTimerRunning, currentRestTime]);
+
+  useEffect(() => {
+    const { totalVolume, totalSets } = calculateTotalVolumeSets(workoutSets);
+    dispatch(updateTotalVolumeSets({ totalVolume, totalSets }));
+  }, [workoutSets, dispatch]);
+
+  useEffect(() => {
+    if (workoutSets != null) {
+      const saveSets = workoutSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+
+    if (workoutRoutineSets != null) {
+      const saveSets = workoutRoutineSets[exercise.id];
+      if (saveSets) {
+        setSetsByExercise({
+          [exercise.id]: saveSets,
+        });
+      }
+    }
+  }, []);
 
   const playAlarm = async () => {
     if (sound) {
@@ -166,20 +193,30 @@ const ExerciseDetailCard = ({
         [exerciseId]: { ...exerciseData, sets: updatedSets },
       };
     });
+    setTimeout(() => setFocusedRowIndex(null), 0);
   };
 
   const handleToggleCheck = (exerciseId: string, index: number) => {
-    setSetsByExercise((prevSetsByExercise) => {
-      const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = [...exerciseData.sets];
-      updatedSets[index] = {
-        ...updatedSets[index],
-        checked: !updatedSets[index].checked,
+    setSetsByExercise((prev) => {
+      const updated = {
+        ...prev,
+        [exerciseId]: {
+          ...prev[exerciseId],
+          sets: prev[exerciseId].sets.map((set, i) =>
+            i === index ? { ...set, checked: !set.checked } : set
+          ),
+        },
       };
-      return {
-        ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
-      };
+      if (workoutSets != null) {
+        dispatch(updateWorkoutSets(updated));
+        dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(updated)));
+      }
+
+      if (workoutRoutineSets != null) {
+        dispatch(updateWorkoutRoutineSets(updated));
+      }
+
+      return updated;
     });
   };
 
@@ -204,65 +241,34 @@ const ExerciseDetailCard = ({
   };
 
   const handleDeleteSet = (exerciseId: string, index: number) => {
+    if (swipeableRefs.current[index]) {
+      swipeableRefs.current[index]?.close();
+    }
+
     setSetsByExercise((prevSetsByExercise) => {
       const exerciseData = prevSetsByExercise[exerciseId];
-      const updatedSets = exerciseData.sets.filter((_, i) => i !== index);
-      return {
+      const filteredSets = exerciseData.sets.filter((_, i) => i !== index);
+      const renumberedSets = filteredSets.map((set, i) => ({
+        ...set,
+        set: i + 1,
+      }));
+      const updatedState = {
         ...prevSetsByExercise,
-        [exerciseId]: { ...exerciseData, sets: updatedSets },
+        [exerciseId]: {
+          ...exerciseData,
+          sets: renumberedSets,
+        },
       };
+      if (workoutSets != null) {
+        dispatch(updateWorkoutSets(updatedState));
+        dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(updatedState)));
+      }
+      if (workoutRoutineSets != null) {
+        dispatch(updateWorkoutRoutineSets(updatedState));
+      }
+      return updatedState;
     });
   };
-
-  useEffect(() => {
-    if (workoutSets != null) {
-      const saveSets = workoutSets[exercise.id];
-      if (saveSets) {
-        setSetsByExercise({
-          [exercise.id]: saveSets,
-        });
-      }
-    }
-
-    if (workoutRoutineSets != null) {
-      const saveSets = workoutRoutineSets[exercise.id];
-      if (saveSets) {
-        setSetsByExercise({
-          [exercise.id]: saveSets,
-        });
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (workoutSets != null) {
-      const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
-        (acc, exerciseId) => {
-          acc[exerciseId] = {
-            name: setsByExercise[exerciseId].name,
-            sets: setsByExercise[exerciseId].sets,
-          };
-          return acc;
-        },
-        {} as WorkoutSets
-      );
-      dispatch(updateWorkoutSets(setsObject));
-    }
-
-    if (workoutRoutineSets != null) {
-      const setsObject: WorkoutSets = Object.keys(setsByExercise).reduce(
-        (acc, exerciseId) => {
-          acc[exerciseId] = {
-            name: setsByExercise[exerciseId].name,
-            sets: setsByExercise[exerciseId].sets,
-          };
-          return acc;
-        },
-        {} as WorkoutSets
-      );
-      dispatch(updateWorkoutRoutineSets(setsObject));
-    }
-  }, [setsByExercise]);
 
   const calculateTotalVolumeSets = (allWorkoutSets: WorkoutSets) => {
     let totalVolume = 0;
@@ -273,18 +279,16 @@ const ExerciseDetailCard = ({
         if (set.checked) {
           const kg = parseFloat(set.kg) || 0;
           const reps = parseFloat(set.reps) || 0;
-          totalVolume += kg * reps;
-          totalSets += 1;
+          if (kg > 0 && reps > 0) {
+            totalVolume += kg * reps;
+            totalSets += 1;
+          }
         }
       });
     });
 
     return { totalVolume, totalSets };
   };
-
-  useEffect(() => {
-    dispatch(updateTotalVolumeSets(calculateTotalVolumeSets(workoutSets)));
-  }, [workoutSets]);
 
   return (
     <View style={styles.container}>
@@ -350,6 +354,7 @@ const ExerciseDetailCard = ({
         {setsByExercise[exercise.id].sets.map((set, index) => (
           <Swipeable
             key={set.set}
+            ref={(ref) => (swipeableRefs.current[index] = ref)}
             renderRightActions={() => (
               <RectButton
                 style={styles.deleteButton}

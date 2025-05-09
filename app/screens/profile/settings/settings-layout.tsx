@@ -8,9 +8,12 @@ import ContainerSettings from "./container";
 import { signOut } from "firebase/auth";
 import { auth } from "@/utils/firebase-config";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
-import { clearProgramsAndRoutines } from "@/redux/slices/routine-slice";
+import {
+  clearProgramsAndRoutines,
+  clearWorkoutRoutineSets,
+} from "@/redux/slices/routine-slice";
 import { styles } from "../calendar";
-import { undraftWorkout } from "@/redux/slices/workout-slice";
+import { clearWorkoutSets, undraftWorkout } from "@/redux/slices/workout-slice";
 
 const otherSettings = [
   {
@@ -45,9 +48,11 @@ const SettingsScreen = () => {
     try {
       await signOut(auth);
       dispatch(clearUser());
-      dispatch(clearSelectedExercises());
       dispatch(clearProgramsAndRoutines());
       dispatch(undraftWorkout());
+      dispatch(clearSelectedExercises());
+      dispatch(clearWorkoutSets());
+      dispatch(clearWorkoutRoutineSets());
       router.replace("/screens/landingPage/login-page");
     } catch (err) {
       console.error("Logout error:", err);

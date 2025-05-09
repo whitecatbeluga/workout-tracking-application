@@ -1,34 +1,78 @@
 import { View, Text, StyleSheet } from "react-native";
-import { useEffect, useRef, useState, memo } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  memo,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { formatTime } from "../utils/format-time";
 import { setDuration } from "@/redux/slices/timer-slice";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "@/hooks/use-app-dispatch";
+import { useAppSelector } from "@/hooks/use-app-selector";
 
-const Timer = memo(() => {
-  const [displayTime, setDisplayTime] = useState<number>(0);
-  const dispatch = useDispatch();
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+interface TimerProps {
+  shouldDispatch?: boolean;
+  resetTimer?: boolean;
+}
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setDisplayTime((prev) => {
-        const updated = prev + 1;
-        dispatch(setDuration(updated));
-        return updated;
-      });
-    }, 1000);
+export interface TimerHandle {
+  finish: () => number;
+  reset: () => void;
+}
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [dispatch]);
+const Timer = memo(
+  forwardRef<TimerHandle, TimerProps>(
+    ({ shouldDispatch = true, resetTimer = false }, ref) => {
+      const duration = useAppSelector((state) => state.timer.duration);
+      const [displayTime, setDisplayTime] = useState<number>(duration || 0);
+      const intervalRef = useRef<NodeJS.Timeout | null>(null);
+      const dispatch = useAppDispatch();
 
-  return (
-    <View>
-      <Text style={styles.textSize}>{formatTime(displayTime)}</Text>
-    </View>
-  );
-});
+      useEffect(() => {
+        if (resetTimer) {
+          setDisplayTime(0);
+        }
+      }, [resetTimer]);
+
+      useImperativeHandle(ref, () => ({
+        finish: () => {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          if (shouldDispatch) {
+            dispatch(setDuration(displayTime));
+          }
+          return displayTime;
+        },
+        reset: () => {
+          setDisplayTime(0);
+        },
+      }));
+
+      useEffect(() => {
+        const initialTime = duration > 0 ? duration : 0;
+        setDisplayTime(initialTime);
+
+        intervalRef.current = setInterval(() => {
+          setDisplayTime((prev) => prev + 1);
+        }, 1000);
+
+        return () => {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+      }, [duration]);
+
+      return (
+        <View>
+          <Text style={styles.textSize}>{formatTime(displayTime)}</Text>
+        </View>
+      );
+    }
+  )
+);
 
 export default Timer;
 

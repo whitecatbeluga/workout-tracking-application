@@ -67,7 +67,10 @@ const AddExercise = () => {
 
   const toggleExercise = (exercise: Exercise) => {
     let newSelectedExercises: Exercise[];
-    if (previousRoute === "create-routine") {
+    if (
+      previousRoute === "create-routine" ||
+      previousRoute === "edit-routine"
+    ) {
       const exists = selectedRoutineExercises.find((e) => e.id === exercise.id);
       if (exists) {
         newSelectedExercises = selectedRoutineExercises.filter(
@@ -94,14 +97,21 @@ const AddExercise = () => {
     if (previousRoute === "create-routine") {
       router.replace({
         pathname: "/screens/workout/create-routine",
-        params: { type: "add-routine" },
       });
-    } else {
-      router.replace({
-        pathname: "/screens/workout/add-workout",
-        params: { type: "add-workout" },
-      });
+
+      return;
     }
+
+    if (previousRoute === "edit-routine") {
+      router.replace({
+        pathname: "/screens/workout/edit-routine",
+      });
+      return;
+    }
+
+    router.replace({
+      pathname: "/screens/workout/add-workout",
+    });
   };
 
   return (
@@ -146,7 +156,8 @@ const AddExercise = () => {
               exercise={exercise}
               onToggleSelect={() => toggleExercise(exercise)}
               isSelected={
-                previousRoute === "create-routine"
+                previousRoute === "create-routine" ||
+                previousRoute === "edit-routine"
                   ? selectedRoutineExercises.some((e) => e.id === exercise.id)
                   : selectedExercise.some((e) => e.id === exercise.id)
               }
@@ -155,7 +166,7 @@ const AddExercise = () => {
         </ScrollView>
       )}
 
-      {(previousRoute === "create-routine"
+      {(previousRoute === "create-routine" || previousRoute === "edit-routine"
         ? selectedRoutineExercises
         : selectedExercise
       ).length > 0 && (
@@ -167,13 +178,15 @@ const AddExercise = () => {
             <Text style={styles.floatingButtonText}>
               Add{" "}
               {
-                (previousRoute === "create-routine"
+                (previousRoute === "create-routine" ||
+                previousRoute === "edit-routine"
                   ? selectedRoutineExercises
                   : selectedExercise
                 ).length
               }{" "}
               Exercise
-              {(previousRoute === "create-routine"
+              {(previousRoute === "create-routine" ||
+              previousRoute === "edit-routine"
                 ? selectedRoutineExercises
                 : selectedExercise
               ).length > 1
