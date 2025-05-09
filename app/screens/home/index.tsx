@@ -406,11 +406,11 @@ const HomeScreen = () => {
                       >
                         <Image
                           style={styles.profileImage}
-                          source={
-                            item.userProfile?.profile_picture
-                              ? { uri: item.userProfile.profile_picture }
-                              : require("../../../assets/images/image_placeholder.jpg")
-                          }
+                          source={{
+                            uri:
+                              item.userProfile?.profile_picture ||
+                              "https://avatar.iran.liara.run/public/41",
+                          }}
                         />
                         <View>
                           <Text style={styles.name}>

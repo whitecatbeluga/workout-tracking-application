@@ -14,7 +14,7 @@ import PostCard from "./post-card";
 import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import BottomSheetComments from "./components/comments-bottom-sheet";
-import { db } from "@/utils/firebase-config";
+import { db, auth } from "@/utils/firebase-config";
 import {
   collection,
   doc,
@@ -82,12 +82,14 @@ const VisitProfile = () => {
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [profilePicture, setProfilePicture] = useState<string>("");
   const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Handle open comments
-  const handleOpenSheet = (type: "likes" | "comments") => {
+  const handleOpenSheet = (type: "likes" | "comments", postId: string) => {
     setSheetType(type);
+    setSelectedPostId(postId);
     bottomSheetRef.current?.expand();
   };
 
@@ -169,14 +171,21 @@ const VisitProfile = () => {
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
             <Image
               style={styles.profilePicture}
-              source={
-                profilePicture
-                  ? { uri: profilePicture }
-                  : require("../../../assets/images/image_placeholder.jpg")
-              }
+              source={{
+                uri:
+                  profilePicture || "https://avatar.iran.liara.run/public/41",
+              }}
             />
             <View>
-              <Text style={styles.name}>{fullName}</Text>
+              <Text style={styles.name}>
+                {fullName}
+                {auth.currentUser?.uid && user_id === auth.currentUser.uid && (
+                  <Text style={{ fontWeight: "normal", color: "#888" }}>
+                    {" "}
+                    (You)
+                  </Text>
+                )}
+              </Text>
               <Text style={styles.email}>{email}</Text>
             </View>
           </View>
@@ -211,16 +220,21 @@ const VisitProfile = () => {
             </View>
           </View>
         </View>
-        <View style={styles.followButtonContainer}>
-          <TouchableOpacity
-            style={!following ? styles.followButton : styles.followingButton}
-            onPress={() => setFollowing(!following)}
-          >
-            <Text style={!following ? styles.followText : styles.followingText}>
-              {!following ? "Follow" : "Following"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {auth.currentUser?.uid && user_id !== auth.currentUser.uid && (
+          <View style={styles.followButtonContainer}>
+            <TouchableOpacity
+              style={!following ? styles.followButton : styles.followingButton}
+              onPress={() => setFollowing(!following)}
+            >
+              <Text
+                style={!following ? styles.followText : styles.followingText}
+              >
+                {!following ? "Follow" : "Following"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.barChartContainer}>
           <BarChart
             data={data}
@@ -258,8 +272,8 @@ const VisitProfile = () => {
               liked={liked}
               user_id={toString(user_id)}
               onLikePress={() => setLiked(!liked)}
-              onCheckLikes={() => handleOpenSheet("likes")}
-              onCommentPress={() => handleOpenSheet("comments")}
+              onCheckLikes={() => handleOpenSheet("likes", post.id)}
+              onCommentPress={() => handleOpenSheet("comments", post.id)}
             />
           ))}
 
@@ -290,6 +304,7 @@ const VisitProfile = () => {
       <BottomSheetComments
         title="sample"
         type={sheetType}
+        postId={selectedPostId}
         ref={bottomSheetRef}
       />
     </View>
