@@ -6,6 +6,7 @@ import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 type DropdownItem = {
   label: string;
   value: string | number;
+  description?: string;
 };
 
 type InputDropdownProps = {
@@ -15,24 +16,13 @@ type InputDropdownProps = {
   icon: keyof typeof Ionicons.glyphMap;
   placeholder: string;
   onChangeText?: (name: string) => void;
+  hasDescription?: boolean;
 
   // multi select
   setSelected?: (item: string[]) => void;
   isMultiSelect?: boolean;
   multiSelectValue?: string[] | number[];
 };
-
-const renderItem = (item: DropdownItem, selected?: boolean) => (
-  <View style={styles.item}>
-    <Ionicons
-      style={styles.icon}
-      name={selected ? "checkbox" : "square-outline"}
-      size={24}
-      color="#6F7A88"
-    />
-    <Text style={styles.textItem}>{item.label}</Text>
-  </View>
-);
 
 const InputDropdown = ({
   inputLabel,
@@ -43,9 +33,42 @@ const InputDropdown = ({
   onChangeText,
   setSelected,
   isMultiSelect = false,
+  hasDescription = false,
   multiSelectValue,
 }: InputDropdownProps) => {
   const [isFocus, setIsFocus] = useState(false);
+
+  const renderItemMulti = (item: DropdownItem, selected?: boolean) => (
+    <View style={styles.itemMulti}>
+      <Ionicons
+        style={styles.icon}
+        name={selected ? "checkbox" : "square-outline"}
+        size={24}
+        color="#6F7A88"
+      />
+
+      <View
+        style={{
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={styles.textItem}>{item.label}</Text>
+        {hasDescription && (
+          <Text style={styles.textDesc}>{item.description}</Text>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderItemSingle = (item: DropdownItem, selected?: boolean) => (
+    <View style={styles.itemSingle}>
+      <Text style={styles.textItem}>{item.label}</Text>
+      {hasDescription && (
+        <Text style={styles.textDesc}>{item.description}</Text>
+      )}
+    </View>
+  );
 
   return (
     <>
@@ -77,7 +100,7 @@ const InputDropdown = ({
               color="#6F7A88"
             />
           )}
-          renderItem={renderItem}
+          renderItem={renderItemMulti}
           renderSelectedItem={(item, unSelect) => (
             <View style={styles.selectedStyle}>
               <Text style={styles.textSelectedStyle}>{item.label}</Text>
@@ -116,6 +139,7 @@ const InputDropdown = ({
               color="#6F7A88"
             />
           )}
+          renderItem={renderItemSingle}
         />
       )}
     </>
@@ -144,15 +168,24 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 8,
   },
-  item: {
+  itemMulti: {
     padding: 17,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+  },
+  itemSingle: {
+    padding: 17,
+    flexDirection: "column",
+    justifyContent: "space-between",
   },
   textItem: {
     flex: 1,
     fontSize: 16,
+  },
+  textDesc: {
+    flex: 1,
+    fontSize: 12,
+    color: "#9CA3AF",
   },
   placeholderStyle: {
     fontSize: 16,
