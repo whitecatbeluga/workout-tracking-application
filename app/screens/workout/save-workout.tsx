@@ -72,6 +72,9 @@ const SaveWorkout = () => {
   const duration = useAppSelector((state) => state.timer.duration);
   const dispatch = useAppDispatch();
 
+  const navigation = useNavigation();
+  const router = useRouter();
+
   const handleVisibilityChange = (
     selectedVisibility: "private" | "everyone"
   ) => {
@@ -83,11 +86,10 @@ const SaveWorkout = () => {
     bottomSheetRef.current?.expand();
   };
 
-  const navigation = useNavigation();
-  const router = useRouter();
   useEffect(() => {
     setTimeSnapshot(duration);
   }, []);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -99,7 +101,7 @@ const SaveWorkout = () => {
             borderRadius: 8,
             alignItems: "center",
           }}
-          onPress={handleExercises}
+          onPress={handleSaveToFirebase}
         >
           {!loading ? (
             <Text style={{ fontFamily: "Inter_400Regular", color: "#FFFFFF" }}>
@@ -117,9 +119,8 @@ const SaveWorkout = () => {
     setSelectedImages((prevImages) => {
       if (prevImages.length < 3) {
         return [...prevImages, uri];
-      } else {
-        setErrorMessage("Maximum of 3 images only.");
       }
+
       return prevImages;
     });
   };
@@ -183,7 +184,7 @@ const SaveWorkout = () => {
     }
   };
 
-  const handleSaveToFirebase = async (workoutSets: WorkoutSets) => {
+  const handleSaveToFirebase = async () => {
     if (!workoutTitle) {
       setTriggerMissing(true);
       setTriggerMessage("Please input a workout title.");
@@ -221,7 +222,7 @@ const SaveWorkout = () => {
       await uploadSelectedImages(selectedImages, workoutRef.id);
 
       // Process each exercise
-      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+      for (const [exerciseId, exercise] of Object.entries(parsedWorkoutSets)) {
         const { name, sets } = exercise;
 
         if (!name) {
@@ -262,22 +263,17 @@ const SaveWorkout = () => {
 
       // Clear selection after successful save
       dispatch(clearSelectedExercises());
+      dispatch(clearWorkoutSets());
+      dispatch(undraftWorkout());
+      dispatch(clearTotalVolumeSets());
+      router.replace("/screens/workout/workout-confirmation");
+
       console.log("Workout saved successfully");
     } catch (error) {
       console.error("Error saving workout:", error);
       // You might want to add user feedback here
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleExercises = async () => {
-    if (parsedWorkoutSets) {
-      handleSaveToFirebase(parsedWorkoutSets);
-      dispatch(clearSelectedExercises());
-      dispatch(undraftWorkout());
-      dispatch(clearTotalVolumeSets());
-      router.replace("/screens/workout/workout-confirmation");
     }
   };
 
@@ -301,7 +297,11 @@ const SaveWorkout = () => {
       />
       {triggerMessage && (
         <Text
-          style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "red" }}
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 12,
+            color: "#721c24",
+          }}
         >
           Please input a workout title.
         </Text>
@@ -383,13 +383,17 @@ const SaveWorkout = () => {
       </TouchableOpacity>
       {selectedImages.length === 3 && (
         <Text
-          style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "red" }}
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            color: "#032B44",
+          }}
         >
-          {errorMessage}
+          You've reached the max number of photos (3)
         </Text>
       )}
 
-      <View>
+      <View style={{ paddingVertical: 20 }}>
         <Text style={styles.title}>Description</Text>
         <TextInput
           style={{
@@ -563,7 +567,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 18,
     borderBottomWidth: 0.5,
-    borderBottomColor: "red",
+    borderBottomColor: "#721c24",
   },
   durationVolumeSetsContainer: {
     flexDirection: "row",

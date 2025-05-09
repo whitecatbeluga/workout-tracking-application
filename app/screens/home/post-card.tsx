@@ -248,13 +248,10 @@ const PostCard = ({
           >
             <Image
               style={styles.profileImage}
-              source={
-                profilePicture
-                  ? {
-                      uri: profilePicture,
-                    }
-                  : require("../../../assets/images/image_placeholder.jpg")
-              }
+              source={{
+                uri:
+                  profilePicture || "https://avatar.iran.liara.run/public/41",
+              }}
             />
             <View>
               <Text style={styles.name}>{name}</Text>
@@ -338,7 +335,7 @@ const PostCard = ({
           <Text style={styles.likesText}>{likeCount} likes</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
-          <Text style={styles.likesText}>{comments} comments</Text>
+          <Text style={styles.likesText}>{commentCount} comments</Text>
         </TouchableOpacity>
       </View>
 
@@ -346,13 +343,10 @@ const PostCard = ({
         <TouchableOpacity onPress={() => toggleLike(post_id)}>
           <Ionicons
             style={styles.icons}
-            name={
-              likedPosts[post_id]
-                ? "thumbs-up-sharp"
-                : "thumbs-up-outline"
-            }            size={24}
+            name={likedPosts[post_id] ? "thumbs-up-sharp" : "thumbs-up-outline"}
+            size={24}
             color={likedPosts[post_id] ? "#48A6A7" : "#606060"}
-            />
+          />
         </TouchableOpacity>
         <TouchableOpacity onPress={onCommentPress}>
           <Ionicons
