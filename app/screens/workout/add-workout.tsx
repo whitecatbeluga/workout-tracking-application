@@ -21,6 +21,7 @@ import ExerciseDetailCard from "@/components/exercise-card-detail";
 import Timer from "@/components/timer";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 import {
+  clearTotalVolumeSets,
   clearWorkoutSets,
   drarfWorkout,
   undraftWorkout,
@@ -182,6 +183,7 @@ const AddWorkout = () => {
     dispatch(clearSelectedExercises());
     dispatch(clearWorkoutSets());
     dispatch(clearWorkoutRoutineSets());
+    dispatch(clearTotalVolumeSets());
     dispatch(undraftWorkout());
     router.replace("/(tabs)/workout");
   };
