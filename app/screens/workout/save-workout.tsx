@@ -184,78 +184,90 @@ const SaveWorkout = () => {
   };
 
   const handleSaveToFirebase = async (workoutSets: WorkoutSets) => {
-    if (workoutTitle) {
-      setLoading(true);
-      const userId = auth.currentUser?.uid;
-
-      try {
-        const workoutRef = doc(collection(db, "workouts"));
-        const workoutSnapshot = await getDoc(workoutRef);
-
-        if (workoutSnapshot.exists()) {
-          await deleteSubCollection(workoutRef, "exercises");
-          await deleteDoc(workoutRef);
-          console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
-        }
-
-        await setDoc(workoutRef, {
-          workout_duration: "TBD",
-          total_volume: totalVolumeSets.totalVolume,
-          total_sets: totalVolumeSets.totalSets,
-          workout_title: workoutTitle,
-          created_at: serverTimestamp(),
-          workout_description: workoutDescription,
-          visible_to_everyone: visibility === "everyone" ? true : false,
-          user_id: userId,
-        });
-
-        await uploadSelectedImages(selectedImages, workoutRef.id);
-
-        for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
-          const { name, sets } = exercise;
-          if (!name) {
-            console.error(
-              `Error: 'name' is missing in exercise with ID ${exerciseId}`
-            );
-            continue;
-          }
-
-          const exerciseRef = doc(collection(workoutRef, "exercises"));
-          await setDoc(exerciseRef, {
-            name,
-            exerciseId,
-          });
-
-          if (sets && Array.isArray(sets)) {
-            const checkedSets = sets.filter((set) => set.checked === true);
-
-            for (const set of checkedSets) {
-              const { reps, kg, checked, previous } = set;
-              if (reps === undefined || kg === undefined) {
-                console.error(`Error: reps or kg is undefined. Skipping set.`);
-                continue;
-              }
-
-              await addDoc(collection(exerciseRef, "sets"), {
-                reps,
-                kg,
-                checked: checked || false,
-                previous: previous || "",
-              });
-            }
-          }
-        }
-        dispatch(clearSelectedExercises());
-        console.log(`Workout saved`);
-      } catch (error) {
-        console.error("Error saving workout to Firestore: ", error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
+    if (!workoutTitle) {
       setTriggerMissing(true);
       setTriggerMessage("Please input a workout title.");
       return;
+    }
+
+    setLoading(true);
+    const userId = auth.currentUser?.uid;
+
+    try {
+      // Create or overwrite workout document
+      const workoutRef = doc(collection(db, "workouts"));
+      const workoutSnapshot = await getDoc(workoutRef);
+
+      // Clean up existing workout if it exists
+      if (workoutSnapshot.exists()) {
+        await deleteSubCollection(workoutRef, "exercises");
+        await deleteDoc(workoutRef);
+        console.log(`Deleted existing workout with ID: ${workoutRef.id}`);
+      }
+
+      // Save workout metadata
+      await setDoc(workoutRef, {
+        workout_duration: "TBD",
+        total_volume: totalVolumeSets.totalVolume,
+        total_sets: totalVolumeSets.totalSets,
+        workout_title: workoutTitle,
+        created_at: serverTimestamp(),
+        workout_description: workoutDescription,
+        visible_to_everyone: visibility === "everyone",
+        user_id: userId,
+      });
+
+      // Upload any selected images
+      await uploadSelectedImages(selectedImages, workoutRef.id);
+
+      // Process each exercise
+      for (const [exerciseId, exercise] of Object.entries(workoutSets)) {
+        const { name, sets } = exercise;
+
+        if (!name) {
+          console.error(`Error: 'name' missing for exercise ${exerciseId}`);
+          continue;
+        }
+
+        // Create exercise document
+        const exerciseRef = doc(collection(workoutRef, "exercises"));
+        await setDoc(exerciseRef, {
+          name,
+          exerciseId,
+        });
+
+        // Process sets if they exist
+        if (sets?.length) {
+          const validSets = sets.filter((set) => {
+            if (!set.checked) return false;
+
+            const kg = parseFloat(set.kg) || 0;
+            const reps = parseFloat(set.reps) || 0;
+
+            // Only save sets where at least one value is non-zero
+            return kg > 0 || reps > 0;
+          });
+
+          // Save each valid set
+          for (const set of validSets) {
+            await addDoc(collection(exerciseRef, "sets"), {
+              reps: parseFloat(set.reps) || 0,
+              kg: parseFloat(set.kg) || 0,
+              checked: true, // We already filtered for checked sets
+              previous: set.previous || "",
+            });
+          }
+        }
+      }
+
+      // Clear selection after successful save
+      dispatch(clearSelectedExercises());
+      console.log("Workout saved successfully");
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      // You might want to add user feedback here
+    } finally {
+      setLoading(false);
     }
   };
 
