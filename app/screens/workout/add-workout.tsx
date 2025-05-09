@@ -18,7 +18,7 @@ import { useRouter, useNavigation } from "expo-router";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import ExerciseDetailCard from "@/components/exercise-card-detail";
-import Timer from "@/components/timer";
+import Timer, { TimerHandle } from "@/components/timer";
 import { WorkoutSets } from "@/custom-types/exercise-type";
 import {
   clearTotalVolumeSets,
@@ -48,7 +48,7 @@ const AddWorkout = () => {
   const createNewRoutineRef = useRef<BottomSheet>(null);
 
   // const [duration, setDuration] = useState<number>(60);
-  const duration = useAppSelector((state) => state.timer.duration);
+  // const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
 
@@ -59,12 +59,14 @@ const AddWorkout = () => {
   const openCreateNewRoutine = () => {
     createNewRoutineRef.current?.expand();
   };
+
+  const timerRef = useRef<TimerHandle>(null);
+
   // To be passed to save workout
   const workoutDuration = useAppSelector(
     (state: RootState) => state.timer.duration
   );
 
-  const exercises = useAppSelector((state) => state.exercise.exercise);
   const workoutSets = useAppSelector((state) => state.workout.workoutSets);
   const selectedExercises = useAppSelector(
     (state) => state.exercise.selectedExercise
@@ -87,6 +89,9 @@ const AddWorkout = () => {
             marginRight: 12,
           }}
           onPress={() => {
+            if (timerRef.current) {
+              timerRef.current.finish();
+            }
             dispatch(drarfWorkout());
             router.replace("/(tabs)/workout");
           }}
@@ -117,7 +122,7 @@ const AddWorkout = () => {
         </View>
       ),
     });
-  }, [selectedExercises, duration, navigation, workoutSets]);
+  }, [selectedExercises, navigation, workoutSets]);
 
   const handleCancel = () => {
     setIsTimerPlaying(false);
@@ -154,6 +159,11 @@ const AddWorkout = () => {
   };
 
   const handleFinish = () => {
+    if (timerRef.current) {
+      const finalTime = timerRef.current.finish();
+      console.log("Workout completed in:", finalTime);
+    }
+
     if (!workoutSets) {
       setAddExerciseModal(true);
       console.error("Error: workoutSets is null or undefined");
@@ -168,14 +178,9 @@ const AddWorkout = () => {
         workoutSets: JSON.stringify(workoutSets),
         totalVolume: totalVolume.toString(),
         totalSets: totalSets.toString(),
-        totalDuration: duration,
+        // totalDuration: duration,
       },
     });
-    console.log("Workout sets: ", JSON.stringify(workoutSets, null, 2));
-    console.log("Total Volume: ", totalVolume);
-    console.log("Total Sets: ", totalSets);
-    console.log("Total Duration: ", workoutDuration);
-    // dispatch(resetDuration());
   };
 
   const discardWorkout = () => {
@@ -185,10 +190,11 @@ const AddWorkout = () => {
     dispatch(clearWorkoutRoutineSets());
     dispatch(clearTotalVolumeSets());
     dispatch(undraftWorkout());
+    dispatch(resetDuration());
+    timerRef.current?.reset();
     router.replace("/(tabs)/workout");
   };
-  // console.log("counter-add workout");
-  // console.log("isModalVisible", isModalVisible);
+
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
@@ -201,7 +207,7 @@ const AddWorkout = () => {
               color: "#48A6A7",
             }}
           >
-            {/* <Timer /> */}
+            <Timer ref={timerRef} shouldDispatch={true} />
           </Text>
         </View>
         <View>
@@ -392,7 +398,7 @@ const AddWorkout = () => {
                         -15s
                       </Text>
                     </TouchableOpacity>
-                    <CountdownCircleTimer
+                    {/* <CountdownCircleTimer
                       isPlaying={isTimerPlaying}
                       duration={duration}
                       key={key}
@@ -423,7 +429,7 @@ const AddWorkout = () => {
                           .toString()
                           .padStart(2, "0")}`}</Text>
                       )}
-                    </CountdownCircleTimer>
+                    </CountdownCircleTimer> */}
                     <TouchableOpacity
                     // onPress={() => setDuration((prev) => prev + 15)}
                     >
