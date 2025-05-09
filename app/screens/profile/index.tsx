@@ -7,8 +7,9 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Href, useRouter } from "expo-router";
 
 // imported components
@@ -23,6 +24,8 @@ import WorkoutCard from "./components/workout-card";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { useTabVisibility } from "@/app/(tabs)/_layout";
 import { useAppSelector } from "@/hooks/use-app-selector";
+import { db, auth } from "@/utils/firebase-config";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 
 const routeNames: {
   routeName: string;
@@ -60,8 +63,82 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("Duration");
   const user = useAppSelector((state) => state.auth.user);
   const access_token = useAppSelector((state) => state.auth.access_token);
+  const [followerCount, setFollowerCount] = useState<number>(0);
+  const [followingCount, setFollowingCount] = useState<number>(0);
+  const [routineCount, setRoutineCount] = useState<number>(0);
+  const [workoutCount, setWorkoutCount] = useState<number>(0);
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const fetchCounts = async () => {
+      setLoading(true);
+      try {
+        // Followers & following
+        const followersSnapshot = await getDocs(
+          collection(db, "users", currentUser.uid, "followers")
+        );
+        const followingSnapshot = await getDocs(
+          collection(db, "users", currentUser.uid, "following")
+        );
+
+        // Programs - routine_ids count
+        const programsRef = collection(
+          db,
+          "users",
+          currentUser.uid,
+          "programs"
+        );
+        const snapshot = await getDocs(programsRef);
+
+        let total = 0;
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (Array.isArray(data.routine_ids)) {
+            total += data.routine_ids.length;
+          }
+        });
+
+        // Workouts count
+        const workoutsRef = collection(db, "workouts");
+        const workoutsSnapshot = await getDocs(workoutsRef);
+
+        let userWorkoutCount = 0;
+        workoutsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.user_id === currentUser.uid) {
+            userWorkoutCount++;
+          }
+        });
+
+        // Fetch profile picture
+        const usersRef = doc(db, "users", currentUser.uid);
+        const usersSnap = await getDoc(usersRef);
+
+        if (usersSnap.exists()) {
+          const data = usersSnap.data();
+          setProfilePicture(data.profile_picture);
+        }
+
+        setFollowerCount(followersSnapshot.size);
+        setFollowingCount(followingSnapshot.size);
+        setRoutineCount(total);
+        setWorkoutCount(userWorkoutCount);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCounts();
+  }, []);
 
   const handleOpenBottomSheet = () => {
     bottomSheetRef.current?.expand();
@@ -90,13 +167,13 @@ const ProfilePage = () => {
   const tabLabels = Object.keys(graphDataMap);
 
   const profileInfo = [
-    { label: "Followers", count: 152 },
-    { label: "Following", count: 52 },
+    { label: "Followers", count: followerCount },
+    { label: "Following", count: followingCount },
   ];
 
   const cards = [
-    { count: 56, label: "Total Exercises", unit: "exercises" },
-    { count: 12, label: "Total Workouts", unit: "workouts" },
+    { count: routineCount, label: "Total Routines", unit: "routines" },
+    { count: workoutCount, label: "Total Workouts", unit: "workouts" },
   ];
 
   // To hide bottom nav
@@ -112,6 +189,21 @@ const ProfilePage = () => {
 
     offset.current = currentOffset;
   };
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "white",
+        }}
+      >
+        <ActivityIndicator size="large" color="#48A6A7" />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -133,7 +225,10 @@ const ProfilePage = () => {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <TouchableOpacity onPress={() => setIsVisible(true)}>
               <Image
-                source={{ uri: "https://avatar.iran.liara.run/public/41" }}
+                source={{
+                  uri:
+                    profilePicture || "https://avatar.iran.liara.run/public/41",
+                }}
                 style={Styles.profileImage}
               />
             </TouchableOpacity>
