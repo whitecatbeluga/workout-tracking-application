@@ -60,7 +60,7 @@ const CreateRoutine = () => {
       }
 
       if (!workoutRoutineSets || Object.keys(workoutRoutineSets).length === 0) {
-        validationErrors.push("Please select at least one exercise.");
+        validationErrors.push("Please set a workout routine set.");
       }
 
       if (validationErrors.length > 0) {
