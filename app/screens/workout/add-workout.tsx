@@ -27,7 +27,10 @@ import {
   undraftWorkout,
 } from "@/redux/slices/workout-slice";
 import { useAppDispatch } from "@/hooks/use-app-dispatch";
-import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import {
+  clearSelectedExercises,
+  deleteSelectedExercise,
+} from "@/redux/slices/exercise-slice";
 import { RootState } from "@/redux/store";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -55,10 +58,10 @@ const AddWorkout = () => {
   // For stopwatch
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [selectExerciseToDelete, setSelectExerciseToDelete] =
+    useState<string>("");
+
   const dispatch = useAppDispatch();
-  const openCreateNewRoutine = () => {
-    createNewRoutineRef.current?.expand();
-  };
 
   const timerRef = useRef<TimerHandle>(null);
 
@@ -123,6 +126,11 @@ const AddWorkout = () => {
       ),
     });
   }, [selectedExercises, navigation, workoutSets]);
+
+  const openCreateNewRoutine = (exerciseId: string) => {
+    setSelectExerciseToDelete(exerciseId);
+    createNewRoutineRef.current?.expand();
+  };
 
   const handleCancel = () => {
     setIsTimerPlaying(false);
@@ -194,6 +202,10 @@ const AddWorkout = () => {
     timerRef.current?.reset();
     router.replace("/(tabs)/workout");
   };
+  const handleDeleteExercise = (exerciseId: string) => {
+    dispatch(deleteSelectedExercise(exerciseId));
+    createNewRoutineRef.current?.close();
+  };
 
   return (
     <View style={styles.container}>
@@ -237,7 +249,7 @@ const AddWorkout = () => {
           selectedExercises.map((selectedExercise) => (
             <ExerciseDetailCard
               key={selectedExercise.id}
-              openRoutine={openCreateNewRoutine}
+              openRoutine={() => openCreateNewRoutine(selectedExercise.id)}
               exercise={selectedExercise}
             />
           ))
@@ -542,7 +554,7 @@ const AddWorkout = () => {
         <BottomSheetOverlay ref={createNewRoutineRef}>
           <CustomBtn
             // key=
-            onPress={() => {}}
+            onPress={() => handleDeleteExercise(selectExerciseToDelete)}
             buttonStyle={{
               borderRadius: 6,
               width: "100%",
