@@ -18,6 +18,7 @@ export default {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
+      package: "com.philippetanjg.workout",
     },
     web: {
       bundler: "metro",
@@ -41,11 +42,14 @@ export default {
       typedRoutes: true,
     },
     extra: {
-      FIREBASE_KEY:process.env.FIREBASE_KEY,
+      FIREBASE_KEY: process.env.FIREBASE_KEY,
       API_URL: process.env.API_URL,
       REACT_NATIVE_SUPABASE_URL: process.env.REACT_NATIVE_SUPABASE_URL,
       REACT_NATIVE_SUPABASE_ANON_KEY:
         process.env.REACT_NATIVE_SUPABASE_ANON_KEY,
+      eas: {
+        projectId: "37e71de1-7f6b-483d-8409-78395b59bd55",
+      },
     },
   },
 };

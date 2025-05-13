@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
   },
   guestText: {
     color: "#006A71",
-
     fontFamily: "Inter_600SemiBold",
     fontSize: 16,
   },

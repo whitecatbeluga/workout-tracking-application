@@ -29,7 +29,7 @@ const routines = [
   {
     id: 3,
     name: "Legs (Quads, Hamstrings, Glutes)",
-    image: require("../../../assets/images/leg-day.jpg"),
+    image: require("../../../assets/images/legpush.jpg"),
     imageKey: "legs",
   },
   {
