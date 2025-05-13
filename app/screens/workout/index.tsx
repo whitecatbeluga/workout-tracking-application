@@ -406,7 +406,6 @@ const WorkoutPage = () => {
                 alignItems: "center",
               }}
             >
-              <Text>Loading...</Text>
               <SkeletonLoader />
               <SkeletonLoader />
               <SkeletonLoader />
