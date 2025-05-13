@@ -130,7 +130,6 @@ const AddWorkout = () => {
   const openCreateNewRoutine = (exerciseId: string) => {
     setSelectExerciseToDelete(exerciseId);
     createNewRoutineRef.current?.expand();
-    console.log("exerciseId:", exerciseId);
   };
 
   const handleCancel = () => {
