@@ -576,7 +576,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
   return (
     <View>
       <Header
-        desc={`Almost done, ${formData.first_name}! Review your information below`}
+        desc={`Almost done, ${formData.username}! Review your information below`}
       />
       <View style={{ backgroundColor: "white", borderRadius: 16 }}>
         <ReviewInfo icon="person" label="Username" data={formData.username} />
