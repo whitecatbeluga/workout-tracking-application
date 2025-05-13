@@ -163,7 +163,7 @@ export const RoutineService = {
           finalProgramId = programsSnap.docs[0].id;
         } else {
           const newProgramRef = await addDoc(programsRef, {
-            program_name: "Default Program",
+            program_name: "Default Folder",
             createdAt: Timestamp.now(),
             routine_ids: [],
           });
