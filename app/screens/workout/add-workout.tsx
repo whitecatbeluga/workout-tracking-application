@@ -47,7 +47,7 @@ const AddWorkout = () => {
   );
   const createNewRoutineRef = useRef<BottomSheet>(null);
 
-  // const [duration, setDuration] = useState<number>(60);
+  const [duration, setDuration] = useState<number>(60);
   // const duration = useAppSelector((state) => state.timer.duration);
   const [isTimerPlaying, setIsTimerPlaying] = useState<boolean>(false);
   const [key, setKey] = useState<number>(0);
@@ -392,13 +392,15 @@ const AddWorkout = () => {
                     style={{ flexDirection: "row", alignItems: "flex-end" }}
                   >
                     <TouchableOpacity
-                    // onPress={() => setDuration((prev) => Math.max(prev - 15, 0))}
+                      onPress={() =>
+                        setDuration((prev) => Math.max(prev - 15, 0))
+                      }
                     >
                       <Text style={{ fontFamily: "Inter_600SemiBold" }}>
                         -15s
                       </Text>
                     </TouchableOpacity>
-                    {/* <CountdownCircleTimer
+                    <CountdownCircleTimer
                       isPlaying={isTimerPlaying}
                       duration={duration}
                       key={key}
@@ -429,9 +431,9 @@ const AddWorkout = () => {
                           .toString()
                           .padStart(2, "0")}`}</Text>
                       )}
-                    </CountdownCircleTimer> */}
+                    </CountdownCircleTimer>
                     <TouchableOpacity
-                    // onPress={() => setDuration((prev) => prev + 15)}
+                      onPress={() => setDuration((prev) => prev + 15)}
                     >
                       <Text style={{ fontFamily: "Inter_600SemiBold" }}>
                         +15s
