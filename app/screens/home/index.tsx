@@ -370,7 +370,7 @@ const HomeScreen = () => {
   };
 
   return (
-    <View>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
@@ -416,7 +416,6 @@ const HomeScreen = () => {
         style={{
           flexGrow: 1,
           paddingTop: 16,
-          paddingBottom: 120,
         }}
       >
         {!loading ? (

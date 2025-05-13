@@ -174,7 +174,7 @@ const BottomSheetComments = forwardRef<RefType, Props>((props, ref) => {
         style={{ flex: 1 }}
       >
         <BottomSheetView
-          style={{ flex: 1, backgroundColor: "#F4F4F4", paddingBottom: 80 }}
+          style={{ flex: 1, backgroundColor: "#F4F4F4" }}
         >
           <View>
             <Text
