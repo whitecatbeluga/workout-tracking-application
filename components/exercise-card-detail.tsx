@@ -24,6 +24,7 @@ import { useAppDispatch } from "@/hooks/use-app-dispatch";
 import { usePathname } from "expo-router";
 import { useAppSelector } from "@/hooks/use-app-selector";
 import { updateWorkoutRoutineSets } from "@/redux/slices/routine-slice";
+import useDebouncedWorkoutSetUpdate from "@/hooks/use-debounce-workout";
 
 interface ExerciseDetailCardProps {
   exercise: Exercise;
@@ -145,6 +146,8 @@ const ExerciseDetailCard = ({
       }
     }
   }, []);
+
+  useDebouncedWorkoutSetUpdate(setsByExercise);
 
   const playAlarm = async () => {
     if (sound) {
@@ -298,47 +301,53 @@ const ExerciseDetailCard = ({
           <Feather name="more-vertical" size={20} color="#000" />
         </TouchableOpacity>
       </View>
+      {pathname === "/screens/workout/add-workout" && (
+        <TouchableOpacity
+          onPress={() => setIsRestModalVisible(true)}
+          style={[
+            styles.restTimerContainer,
+            isAlarmPlaying && styles.alarmActiveContainer,
+          ]}
+        >
+          <View style={styles.timerDisplay}>
+            {
+              <Icon
+                name="clock-o"
+                size={20}
+                color={isAlarmPlaying ? "#ff3b30" : "#007bff"}
+                style={{ marginRight: 5 }}
+              />
+            }
+            <Text
+              style={[
+                styles.timerText,
+                isAlarmPlaying && styles.alarmActiveText,
+              ]}
+            >
+              {isAlarmPlaying
+                ? "TIME'S UP!"
+                : `Rest timer: ${currentRestTime}s`}
+            </Text>
+          </View>
 
-      <TouchableOpacity
-        onPress={() => setIsRestModalVisible(true)}
-        style={[
-          styles.restTimerContainer,
-          isAlarmPlaying && styles.alarmActiveContainer,
-        ]}
-      >
-        <View style={styles.timerDisplay}>
-          {
-            <Icon
-              name="clock-o"
-              size={20}
-              color={isAlarmPlaying ? "#ff3b30" : "#007bff"}
-              style={{ marginRight: 5 }}
-            />
-          }
-          <Text
-            style={[styles.timerText, isAlarmPlaying && styles.alarmActiveText]}
-          >
-            {isAlarmPlaying ? "TIME'S UP!" : `Rest timer: ${currentRestTime}s`}
-          </Text>
-        </View>
-
-        {isAlarmPlaying ? (
-          <TouchableOpacity
-            onPress={stopAlarm}
-            style={[styles.timerControl, styles.alarmControl]}
-          >
-            <Icon name="bell-slash" size={20} color="#ff3b30" />
-          </TouchableOpacity>
-        ) : isTimerRunning ? (
-          <TouchableOpacity onPress={stopTimer} style={styles.timerControl}>
-            <Icon name="stop" size={20} color="#ff3b30" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={startTimer} style={styles.timerControl}>
-            <Icon name="play" size={20} color="#007bff" />
-          </TouchableOpacity>
-        )}
-      </TouchableOpacity>
+          {isAlarmPlaying ? (
+            <TouchableOpacity
+              onPress={stopAlarm}
+              style={[styles.timerControl, styles.alarmControl]}
+            >
+              <Icon name="bell-slash" size={20} color="#ff3b30" />
+            </TouchableOpacity>
+          ) : isTimerRunning ? (
+            <TouchableOpacity onPress={stopTimer} style={styles.timerControl}>
+              <Icon name="stop" size={20} color="#ff3b30" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={startTimer} style={styles.timerControl}>
+              <Icon name="play" size={20} color="#007bff" />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+      )}
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>

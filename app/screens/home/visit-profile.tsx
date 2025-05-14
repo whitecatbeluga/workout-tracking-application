@@ -17,11 +17,14 @@ import BottomSheetComments from "./components/comments-bottom-sheet";
 import { db, auth } from "@/utils/firebase-config";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
@@ -79,6 +82,11 @@ const VisitProfile = () => {
 
   const [liked, setLiked] = useState(isLiked === "true");
   const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followerCount, setFollowerCount] = useState<number>(0);
+  const [followingCount, setFollowingCount] = useState<number>(0);
+  const [routineCount, setRoutineCount] = useState<number>(0);
+  const [workoutCount, setWorkoutCount] = useState<number>(0);
   const [sheetType, setSheetType] = useState<"likes" | "comments">("comments");
   const [profilePicture, setProfilePicture] = useState<string>("");
   const [userPosts, setUserPosts] = useState<any[]>([]);
@@ -133,6 +141,48 @@ const VisitProfile = () => {
           };
         });
 
+        // Followers & following
+        const followersSnapshot = await getDocs(
+          collection(db, "users", toString(user_id), "followers")
+        );
+        const followingSnapshot = await getDocs(
+          collection(db, "users", toString(user_id), "following")
+        );
+
+        // Programs - routine_ids count
+        const programsRef = collection(
+          db,
+          "users",
+          toString(user_id),
+          "programs"
+        );
+        const programsSnapshot = await getDocs(programsRef);
+
+        let total = 0;
+
+        programsSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (Array.isArray(data.routine_ids)) {
+            total += data.routine_ids.length;
+          }
+        });
+
+        // Workouts count
+        const workoutCountRef = collection(db, "workouts");
+        const workoutCountSnapshot = await getDocs(workoutCountRef);
+
+        let userWorkoutCount = 0;
+        workoutCountSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.user_id === user_id) {
+            userWorkoutCount++;
+          }
+        });
+
+        setFollowerCount(followersSnapshot.size);
+        setFollowingCount(followingSnapshot.size);
+        setRoutineCount(total);
+        setWorkoutCount(userWorkoutCount);
         setUserPosts(posts);
       } catch (error) {
         console.error("Error fetching data: ", error);
@@ -145,6 +195,70 @@ const VisitProfile = () => {
 
     fetchData();
   }, [user_id]);
+
+  // check following status
+  useEffect(() => {
+    const checkFollowingStatus = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const followingRef = doc(
+        db,
+        "users",
+        currentUser.uid,
+        "following",
+        toString(user_id)
+      );
+      const docSnap = await getDoc(followingRef);
+
+      setFollowing(docSnap.exists());
+    };
+
+    if (user_id) {
+      checkFollowingStatus();
+    }
+  }, [user_id]);
+
+  const handleFollowToggle = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !user_id) return;
+
+    const followingRef = doc(
+      db,
+      "users",
+      currentUser.uid,
+      "following",
+      toString(user_id)
+    );
+    const followersRef = doc(
+      db,
+      "users",
+      toString(user_id),
+      "followers",
+      currentUser.uid
+    );
+
+    try {
+      setFollowLoading(true);
+      if (!following) {
+        await setDoc(followingRef, {
+          followed_at: serverTimestamp(),
+        });
+        await setDoc(followersRef, {
+          followed_at: serverTimestamp(),
+        });
+        setFollowing(true);
+      } else {
+        await deleteDoc(followingRef);
+        await deleteDoc(followersRef);
+        setFollowing(false);
+      }
+    } catch (error) {
+      console.error("Error toggling follow: ", error);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -190,11 +304,11 @@ const VisitProfile = () => {
             </View>
           </View>
           <View>
-            <Text style={styles.fcount}>123</Text>
+            <Text style={styles.fcount}>{followerCount}</Text>
             <Text style={styles.ftext}>Followers</Text>
           </View>
           <View>
-            <Text style={styles.fcount}>52</Text>
+            <Text style={styles.fcount}>{followingCount}</Text>
             <Text style={styles.ftext}>Following</Text>
           </View>
         </View>
@@ -202,12 +316,12 @@ const VisitProfile = () => {
           style={{ flexDirection: "row", justifyContent: "center", gap: 14 }}
         >
           <View style={styles.totalContainer}>
-            <Text style={styles.totalTitle}>Total Exercises</Text>
+            <Text style={styles.totalTitle}>Total Routines</Text>
             <View
               style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
             >
-              <Text style={styles.totalCount}>14</Text>
-              <Text style={styles.totalName}>Exercises</Text>
+              <Text style={styles.totalCount}>{routineCount}</Text>
+              <Text style={styles.totalName}>Routines</Text>
             </View>
           </View>
           <View style={styles.totalContainer}>
@@ -215,7 +329,7 @@ const VisitProfile = () => {
             <View
               style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}
             >
-              <Text style={styles.totalCount}>12</Text>
+              <Text style={styles.totalCount}>{workoutCount}</Text>
               <Text style={styles.totalName}>Workouts</Text>
             </View>
           </View>
@@ -224,13 +338,17 @@ const VisitProfile = () => {
           <View style={styles.followButtonContainer}>
             <TouchableOpacity
               style={!following ? styles.followButton : styles.followingButton}
-              onPress={() => setFollowing(!following)}
+              onPress={handleFollowToggle}
             >
-              <Text
-                style={!following ? styles.followText : styles.followingText}
-              >
-                {!following ? "Follow" : "Following"}
-              </Text>
+              {!followLoading ? (
+                <Text
+                  style={!following ? styles.followText : styles.followingText}
+                >
+                  {!following ? "Follow" : "Following"}
+                </Text>
+              ) : (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              )}
             </TouchableOpacity>
           </View>
         )}

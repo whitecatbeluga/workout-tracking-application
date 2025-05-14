@@ -24,6 +24,7 @@ interface InitialState {
   error: string | null | Record<string, string>;
   exercise: Exercise[];
   selectedExercise: Exercise[];
+  toDelete: string;
 }
 
 const initialState: InitialState = {
@@ -31,6 +32,7 @@ const initialState: InitialState = {
   error: null,
   exercise: [],
   selectedExercise: [],
+  toDelete: "",
 };
 
 const exerciseSlice = createSlice({
@@ -46,6 +48,12 @@ const exerciseSlice = createSlice({
         ...state.selectedExercise,
         ...newSelectedExercise,
       };
+    },
+    deleteSelectedExercise: (state, action) => {
+      const toDelete = action.payload;
+      state.selectedExercise = state.selectedExercise.filter(
+        (exercise) => exercise.id !== toDelete
+      );
     },
     clearSelectedExercises: (state) => {
       state.selectedExercise = [];
@@ -73,6 +81,7 @@ export const {
   setSelectExercises,
   updateSelectedExercises,
   clearSelectedExercises,
+  deleteSelectedExercise,
 } = exerciseSlice.actions;
 
 export default exerciseSlice.reducer;

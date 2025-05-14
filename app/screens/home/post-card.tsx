@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -184,7 +183,9 @@ const PostCard = ({
         style={{
           flex: 1,
           justifyContent: "center",
-          backgroundColor: "#FFFFFF",
+          alignItems: "center",
+          backgroundColor: "white",
+          height: 550,
         }}
       >
         <ActivityIndicator size="large" color="#48A6A7" />
@@ -281,29 +282,31 @@ const PostCard = ({
             </View>
           </View>
         </View>
-        <View style={{ height: 300 }}>
-          <FlatList
-            data={image_urls}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(url, index) => index.toString()}
-            renderItem={({ item: url }) => (
-              <Image
-                source={{ uri: url }}
-                style={styles.postedPicture}
-                resizeMode="cover"
-              />
-            )}
-            onMomentumScrollEnd={(event) => {
-              const index = Math.round(
-                event.nativeEvent.contentOffset.x /
-                  event.nativeEvent.layoutMeasurement.width
-              );
-              setCurrentImageIndex(index);
-            }}
-          />
-        </View>
+        {image_urls && image_urls.length > 0 && (
+          <View style={{ height: 300 }}>
+            <FlatList
+              data={image_urls}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(url, index) => index.toString()}
+              renderItem={({ item: url }) => (
+                <Image
+                  source={{ uri: url }}
+                  style={styles.postedPicture}
+                  resizeMode="cover"
+                />
+              )}
+              onMomentumScrollEnd={(event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x /
+                    event.nativeEvent.layoutMeasurement.width
+                );
+                setCurrentImageIndex(index);
+              }}
+            />
+          </View>
+        )}
 
         {image_urls.length > 1 && (
           <View

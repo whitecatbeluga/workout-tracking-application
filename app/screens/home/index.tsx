@@ -28,6 +28,8 @@ import {
   query,
   where,
   onSnapshot,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 
@@ -71,6 +73,13 @@ const HomeScreen = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [followingMap, setFollowingMap] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [followLoading, setFollowLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
@@ -116,6 +125,9 @@ const HomeScreen = () => {
   //     [postId]: !prev[postId],
   //   }));
   // };
+
+  // check following status
+
   const toggleLike = async (postId: string) => {
     const currentUser = auth.currentUser;
 
@@ -185,6 +197,17 @@ const HomeScreen = () => {
         const workoutDocs = querySnapshot.docs;
 
         const currentUserId = auth.currentUser?.uid;
+
+        // Fetch the list of followed users
+        let followedIds: string[] = [];
+
+        if (currentUserId) {
+          const followingSnapshot = await getDocs(
+            collection(db, "users", currentUserId, "following")
+          );
+          followedIds = followingSnapshot.docs.map((doc) => doc.id);
+        }
+
         const userIds = Array.from(
           new Set(workoutDocs.map((doc) => doc.data().user_id))
         );
@@ -203,7 +226,19 @@ const HomeScreen = () => {
 
         // Create base workout list
         const baseWorkouts: Workout[] = workoutDocs
-          .filter((doc) => doc.data().user_id !== currentUserId)
+          .filter((doc) => {
+            const data = doc.data();
+            const isOwnPost = data.user_id === currentUserId;
+            const isFollowing = followedIds.includes(data.user_id);
+
+            if (activeButton === "following") {
+              // Only show posts by followed users, not yourself
+              return isFollowing && !isOwnPost;
+            }
+
+            // "Discover": show everyone's posts except your own
+            return !isOwnPost;
+          })
           .map((doc) => {
             const data = doc.data();
             return {
@@ -225,6 +260,21 @@ const HomeScreen = () => {
               comment_count: 0,
             };
           });
+
+        if (currentUserId) {
+          const unsubscribeFollowing = onSnapshot(
+            collection(db, "users", currentUserId, "following"),
+            (snapshot) => {
+              const updatedMap: { [key: string]: boolean } = {};
+              snapshot.forEach((doc) => {
+                updatedMap[doc.id] = true;
+              });
+              setFollowingMap(updatedMap);
+            }
+          );
+
+          unsubscribeFns.push(unsubscribeFollowing);
+        }
 
         setWorkouts(baseWorkouts);
 
@@ -284,17 +334,53 @@ const HomeScreen = () => {
     return () => {
       unsubscribeFns.forEach((unsub) => unsub());
     };
-  }, []);
+  }, [activeButton]);
+
+  const handleFollow = async (targetUserId: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const currentUserId = currentUser.uid;
+
+    const followingRef = doc(
+      db,
+      "users",
+      currentUserId,
+      "following",
+      targetUserId
+    );
+    const followersRef = doc(
+      db,
+      "users",
+      targetUserId,
+      "followers",
+      currentUserId
+    );
+    try {
+      setFollowLoading((prev) => ({ ...prev, [targetUserId]: true }));
+      await setDoc(followingRef, { followed_at: serverTimestamp() });
+      await setDoc(followersRef, { followed_at: serverTimestamp() });
+
+      setFollowingMap((prev) => ({ ...prev, [targetUserId]: true }));
+    } catch (error) {
+      console.error("Error following user:", error);
+    } finally {
+      setFollowLoading((prev) => ({ ...prev, [targetUserId]: false }));
+    }
+  };
 
   return (
-    <View>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
             styles.followingButton,
             activeButton === "following" && styles.activeButton,
           ]}
-          onPress={() => setActiveButton("following")}
+          onPress={() => {
+            setLoading(true);
+            setActiveButton("following");
+          }}
         >
           <Text
             style={[
@@ -310,7 +396,10 @@ const HomeScreen = () => {
             styles.discoverButton,
             activeButton === "discover" && styles.activeButton,
           ]}
-          onPress={() => setActiveButton("discover")}
+          onPress={() => {
+            setLoading(true);
+            setActiveButton("discover");
+          }}
         >
           <Text
             style={[
@@ -327,7 +416,6 @@ const HomeScreen = () => {
         style={{
           flexGrow: 1,
           paddingTop: 16,
-          paddingBottom: 120,
         }}
       >
         {!loading ? (
@@ -419,14 +507,24 @@ const HomeScreen = () => {
                           <Text style={styles.active}>{item.created_at}</Text>
                         </View>
                       </TouchableOpacity>
-                      <TouchableOpacity style={{ flexDirection: "row" }}>
-                        <Ionicons
-                          name="add-outline"
-                          size={20}
-                          color="#48A6A7"
-                        />
-                        <Text style={styles.followButton}>Follow</Text>
-                      </TouchableOpacity>
+                      {!followingMap[item.user_id] && (
+                        <TouchableOpacity
+                          onPress={() => handleFollow(item.user_id)}
+                        >
+                          {!followLoading[item.user_id] ? (
+                            <View style={{ flexDirection: "row" }}>
+                              <Ionicons
+                                name="add-outline"
+                                size={20}
+                                color="#48A6A7"
+                              />
+                              <Text style={styles.followButton}>Follow</Text>
+                            </View>
+                          ) : (
+                            <ActivityIndicator size="small" color="#48A6A7" />
+                          )}
+                        </TouchableOpacity>
+                      )}
                     </View>
                     <Text style={styles.postTitle}>{item.workout_title}</Text>
                     <Text style={styles.postDescription}>
@@ -447,29 +545,32 @@ const HomeScreen = () => {
                       </View>
                     </View>
                   </View>
-                  <View style={{ height: 300 }}>
-                    <FlatList
-                      data={item.image_urls}
-                      keyExtractor={(url, index) => index.toString()}
-                      renderItem={({ item: url }) => (
-                        <Image
-                          source={{ uri: url }}
-                          style={styles.postedPicture}
-                          resizeMode="cover"
-                        />
-                      )}
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      onMomentumScrollEnd={(event) => {
-                        const index = Math.round(
-                          event.nativeEvent.contentOffset.x /
-                            event.nativeEvent.layoutMeasurement.width
-                        );
-                        setCurrentImageIndex(index);
-                      }}
-                    />
-                  </View>
+                  {item.image_urls && item.image_urls.length > 0 && (
+                    <View style={{ height: 300 }}>
+                      <FlatList
+                        data={item.image_urls}
+                        keyExtractor={(url, index) => index.toString()}
+                        renderItem={({ item: url }) => (
+                          <Image
+                            source={{ uri: url }}
+                            style={styles.postedPicture}
+                            resizeMode="cover"
+                          />
+                        )}
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        onMomentumScrollEnd={(event) => {
+                          const index = Math.round(
+                            event.nativeEvent.contentOffset.x /
+                              event.nativeEvent.layoutMeasurement.width
+                          );
+                          setCurrentImageIndex(index);
+                        }}
+                      />
+                    </View>
+                  )}
+
                   {item.image_urls.length > 1 && (
                     <View
                       style={{
@@ -550,7 +651,15 @@ const HomeScreen = () => {
             )}
           />
         ) : (
-          <ActivityIndicator size="large" color="#48A6A7" />
+          <View
+            style={{
+              height: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ActivityIndicator size="large" color="#48A6A7" />
+          </View>
         )}
       </View>
 
