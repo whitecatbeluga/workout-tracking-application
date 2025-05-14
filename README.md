@@ -40,7 +40,7 @@ If your using WSL (list all the emulator installed in your machine)
 RUN the imulator from WSL
 
 ```
- /mnt/c/Users/Bluewind/AppData/Local/Android/Sdk/emulator/emulator.exe -avd Medium_Phone_API_36
+emulator.exe -avd Medium_Phone
 ```
 
 ## To run the app in android
