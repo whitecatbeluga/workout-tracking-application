@@ -545,29 +545,32 @@ const HomeScreen = () => {
                       </View>
                     </View>
                   </View>
-                  <View style={{ height: 300 }}>
-                    <FlatList
-                      data={item.image_urls}
-                      keyExtractor={(url, index) => index.toString()}
-                      renderItem={({ item: url }) => (
-                        <Image
-                          source={{ uri: url }}
-                          style={styles.postedPicture}
-                          resizeMode="cover"
-                        />
-                      )}
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      onMomentumScrollEnd={(event) => {
-                        const index = Math.round(
-                          event.nativeEvent.contentOffset.x /
-                            event.nativeEvent.layoutMeasurement.width
-                        );
-                        setCurrentImageIndex(index);
-                      }}
-                    />
-                  </View>
+                  {item.image_urls && item.image_urls.length > 0 && (
+                    <View style={{ height: 300 }}>
+                      <FlatList
+                        data={item.image_urls}
+                        keyExtractor={(url, index) => index.toString()}
+                        renderItem={({ item: url }) => (
+                          <Image
+                            source={{ uri: url }}
+                            style={styles.postedPicture}
+                            resizeMode="cover"
+                          />
+                        )}
+                        horizontal
+                        pagingEnabled
+                        showsHorizontalScrollIndicator={false}
+                        onMomentumScrollEnd={(event) => {
+                          const index = Math.round(
+                            event.nativeEvent.contentOffset.x /
+                              event.nativeEvent.layoutMeasurement.width
+                          );
+                          setCurrentImageIndex(index);
+                        }}
+                      />
+                    </View>
+                  )}
+
                   {item.image_urls.length > 1 && (
                     <View
                       style={{
