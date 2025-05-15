@@ -153,7 +153,7 @@ const ViewPostScreen = () => {
             backgroundColor: index % 2 === 0 ? "#9ACBD0" : "transparent",
           }}
         >
-          <Text style={{ fontFamily: "Inter_400Regular" }}>{set.set}</Text>
+          <Text style={{ fontFamily: "Inter_400Regular" }}>{index + 1}</Text>
           <Text style={{ fontFamily: "Inter_400Regular" }}>
             {set.kg}kg x {set.reps} reps
           </Text>
