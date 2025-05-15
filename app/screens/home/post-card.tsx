@@ -277,8 +277,8 @@ const PostCard = ({
               <Text>{sets}</Text>
             </View>
             <View>
-              <Text style={styles.tvsr}>Records</Text>
-              <Text>{records}</Text>
+              {/* <Text style={styles.tvsr}>Records</Text>
+              <Text>{records}</Text> */}
             </View>
           </View>
         </View>
