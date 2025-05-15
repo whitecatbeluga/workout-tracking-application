@@ -247,7 +247,7 @@ const ViewRoutine = () => {
 
                       {/* Table Rows */}
                       {exercise.sets.map((set, index) => {
-                        const setNumber = set.set ? `Set ${set.set}` : "";
+                        const setNumber = set.set ? `Set ${index + 1}` : "";
                         const weight = set.kg ? `${set.kg}kg` : "";
                         const reps = set.reps ? `${set.reps} reps` : "";
 

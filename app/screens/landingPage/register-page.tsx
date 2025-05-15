@@ -492,14 +492,14 @@ const Step3 = ({
             description: "Work out regularly and stay on your feet often",
           },
           {
-            label: "Light",
-            value: "light",
-            description: "Occasional exercise with a mostly relaxed lifestyle",
-          },
-          {
             label: "Moderate",
             value: "moderate",
             description: "Exercise a few times a week and stay fairly active",
+          },
+          {
+            label: "Light",
+            value: "light",
+            description: "Occasional exercise with a mostly relaxed lifestyle",
           },
           {
             label: "Sedentary",

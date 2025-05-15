@@ -17,14 +17,19 @@ const LandingPage = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.header}>Workout Tracking Application</Text>
+        {/* <Text style={styles.header}>Workout Tracking Application</Text> */}
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={{ width: 300, height: 80 }}
+        />
         <Image
           source={require("../assets/images/landing-page.jpg")}
           style={{ width: screenWidth - 40, height: screenWidth - 40 }}
         />
+        <Text style={styles.description}>The Repository for your Reps.</Text>
         <Text style={styles.description}>
-          Your Personalized Fitness Companion – Plan Smarter, Train Harder,
-          Progress Faster.
+          Record your workouts, track your progress, and build consistent
+          results.
         </Text>
       </View>
       <View style={styles.buttonContainer}>
