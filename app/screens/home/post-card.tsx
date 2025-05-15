@@ -23,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/utils/firebase-config";
 import { Dimensions } from "react-native";
+import { formatTime } from "@/utils/format-time";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -266,11 +267,11 @@ const PostCard = ({
           <View style={{ flexDirection: "row", gap: 46 }}>
             <View>
               <Text style={styles.tvsr}>Time</Text>
-              <Text>{time}</Text>
+              <Text>{formatTime(parseInt(time))}</Text>
             </View>
             <View>
               <Text style={styles.tvsr}>Volume</Text>
-              <Text>{volume}</Text>
+              <Text>{volume} kg</Text>
             </View>
             <View>
               <Text style={styles.tvsr}>Sets</Text>
