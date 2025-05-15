@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LoginFormData } from "@/custom-types/form-data-type";
@@ -211,7 +212,20 @@ const LoginPage = () => {
               width: "100%",
             }}
           >
-            <Text style={styles.header}>Workout Tracking Application</Text>
+            {/* <Text style={styles.header}>Workout Tracking Application</Text> */}
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <Image
+                source={require("../../../assets/images/logo.png")}
+                style={{ width: 300, height: 80 }}
+              />
+            </View>
 
             <View style={{ gap: 10 }}>
               {error && (

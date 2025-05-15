@@ -101,8 +101,9 @@ const ProfilePage = () => {
   //   });
   // }, [navigation]);
 
+  const currentUser = auth.currentUser;
+
   useEffect(() => {
-    const currentUser = auth.currentUser;
     if (!currentUser) return;
 
     const fetchCounts = async () => {
