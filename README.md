@@ -19,7 +19,7 @@
 
 ---
 
-## Step 1: Navigate to the Emulator Directory
+## Step 1: Navigate to User path (sample[ C:\Users\Bluewind> ])
 
 > **Note:** If the emulator is not installed, install it via Android Studio.
 
@@ -27,6 +27,12 @@ Navigate to the Android SDK emulator path:
 
 ```
 cd ~
+```
+
+## CLONE THE REPOSITORY inside the PS C:\Users\Bluewind>
+
+```
+https://github.com/whitecatbeluga/workout-tracking-application
 ```
 
 ```
