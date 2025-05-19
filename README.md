@@ -32,7 +32,7 @@ cd ~
 ## CLONE THE REPOSITORY inside the PS C:\Users\Bluewind>
 
 ```
-https://github.com/whitecatbeluga/workout-tracking-application
+git clone https://github.com/whitecatbeluga/workout-tracking-application
 ```
 
 ```
