@@ -26,10 +26,14 @@
 Navigate to the Android SDK emulator path:
 
 ```
-cd C:\Users\Bluewind\AppData\Local\Android\Sdk\emulator
+cd ~
 ```
 
-List all available emulators:
+```
+cd AppData\Local\Android\Sdk\emulator
+```
+
+List all available emulators if you dont have an emulator you to install it using android studio:
 
 ```
 ./emulator -list-avds
