@@ -33,7 +33,7 @@
 - **APP_DOCUMENTATION** - Contains detailed technical documentation about the application, including architecture, tech stack, and usage guidelines.
 - **README** - Provides setup instructions, installation steps, and essential information for running the application locally.
 
-# Workout Application Workflow
+# Workout Application "REPO" Workflow
 
 ##### 1. User Registration
 
