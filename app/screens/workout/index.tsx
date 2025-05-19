@@ -64,6 +64,7 @@ import { auth } from "@/utils/firebase-config";
 import CustomModal from "@/components/custom-modal";
 import { seedFirestore } from "@/utils/seeders";
 import { clearSelectedExercises } from "@/redux/slices/exercise-slice";
+import { ActivityIndicator } from "react-native";
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
@@ -86,6 +87,7 @@ const WorkoutPage = () => {
   const [programName, setProgramName] = useState<string>("");
   const [newProgramName, setNewProgramName] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [loadingIndicator, setLoadingIndicator] = useState<boolean>(false);
 
   const [isModalRoutineVisible, setIsModalRoutineVisible] =
     useState<boolean>(false);
@@ -213,9 +215,11 @@ const WorkoutPage = () => {
 
   const handleCreateProgram = async (userId: string, programName: string) => {
     if (programName === "") {
-      setError("Please enter a program name.");
+      setError("Please enter a folder name.");
       return;
     }
+
+    setLoadingIndicator(true);
 
     await dispatch(createProgram({ userId, programName }));
 
@@ -223,6 +227,7 @@ const WorkoutPage = () => {
 
     setError("");
     setProgramName("");
+    setLoadingIndicator(false);
 
     setIsModalCreateProgramVisible(false);
   };
@@ -233,9 +238,11 @@ const WorkoutPage = () => {
     programName: string
   ) => {
     if (programName === "") {
-      setError("Please enter a program name.");
+      setError("Please enter a folder name.");
       return;
     }
+
+    setLoadingIndicator(true);
 
     await dispatch(updateProgramName({ userId, programId, programName }));
 
@@ -243,6 +250,7 @@ const WorkoutPage = () => {
 
     setError("");
     setNewProgramName("");
+    setLoadingIndicator(false);
     setIsModalUpdateProgramVisible(false);
   };
 
@@ -337,9 +345,9 @@ const WorkoutPage = () => {
                 <WorkoutHeader />
               </View>
 
-              <TouchableOpacity onPress={seedFirestore}>
+              {/* <TouchableOpacity onPress={seedFirestore}>
                 <Text>Seeders</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <View style={styles.routine}>
                 <Text style={styles.routineTxt}>Routines</Text>
@@ -406,7 +414,6 @@ const WorkoutPage = () => {
                 alignItems: "center",
               }}
             >
-              <Text>Loading...</Text>
               <SkeletonLoader />
               <SkeletonLoader />
               <SkeletonLoader />
@@ -480,13 +487,13 @@ const WorkoutPage = () => {
             <CustomModal
               isModalVisible={isModalCreateProgramVisible}
               setIsModalVisible={setIsModalCreateProgramVisible}
-              modalTitle="Create Program"
-              modalActionButtonText="Create Program"
+              modalTitle="Create Folder"
+              modalActionButtonText="Create Folder"
               modalActionButtonColor="#48A6A7"
               allowInput
             >
               <Input
-                placeholder="Program Name"
+                placeholder="Folder Name"
                 value={programName}
                 onChangeText={setProgramName}
                 icon={"folder-outline"}
@@ -502,12 +509,17 @@ const WorkoutPage = () => {
                   backgroundColor: "#48A6A7",
                 }}
               >
-                <Ionicons name="add" size={18} color="white" />
-
-                <BtnTitle
-                  title="Create Program"
-                  textStyle={{ fontSize: 14, color: "white" }}
-                />
+                {loadingIndicator ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Ionicons name="add" size={18} color="white" />
+                    <BtnTitle
+                      title="Create Folder"
+                      textStyle={{ fontSize: 14, color: "white" }}
+                    />
+                  </>
+                )}
               </CustomBtn>
             </CustomModal>
 
@@ -515,13 +527,13 @@ const WorkoutPage = () => {
             <CustomModal
               isModalVisible={isModalUpdateProgramVisible}
               setIsModalVisible={setIsModalUpdateProgramVisible}
-              modalTitle="Update Program"
-              modalActionButtonText="UpdateProgram"
+              modalTitle="Update Folder"
+              modalActionButtonText="Update Folder"
               modalActionButtonColor="#48A6A7"
               allowInput
             >
               <Input
-                placeholder="Update Program Name"
+                placeholder="Update Folder Name"
                 value={newProgramName}
                 onChangeText={setNewProgramName}
                 icon={"folder-outline"}
@@ -541,12 +553,18 @@ const WorkoutPage = () => {
                   backgroundColor: "#48A6A7",
                 }}
               >
-                <Ionicons name="pencil" size={18} color="white" />
+                {loadingIndicator ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Ionicons name="pencil" size={18} color="white" />
 
-                <BtnTitle
-                  title="Update Program Name"
-                  textStyle={{ fontSize: 14, color: "white" }}
-                />
+                    <BtnTitle
+                      title="Update Folder Name"
+                      textStyle={{ fontSize: 14, color: "white" }}
+                    />
+                  </>
+                )}
               </CustomBtn>
             </CustomModal>
 
@@ -554,8 +572,8 @@ const WorkoutPage = () => {
             <CustomModal
               isModalVisible={isModalProgramVisible}
               setIsModalVisible={setIsModalProgramVisible}
-              modalTitle="Delete Program"
-              modalDescription="Are you sure you want to delete this program?"
+              modalTitle="Delete Folder"
+              modalDescription="Are you sure you want to delete this folder?"
               modalActionButtonText="Confirm Deletion"
               modalActionButton={() => {
                 handleDeleteProgram(
@@ -569,8 +587,8 @@ const WorkoutPage = () => {
             <CustomModal
               isModalVisible={isModalProgramRoutineVisible}
               setIsModalVisible={setIsModalProgramRoutineVisible}
-              modalTitle="Delete Program and Routines"
-              modalDescription="Are you sure you want to delete this program and routines"
+              modalTitle="Delete Folder and Routines"
+              modalDescription="Are you sure you want to delete this folder and routines"
               modalActionButtonText="Confirm Deletion"
               modalActionButton={() => {
                 handleDeleteProgramRoutine(
@@ -669,7 +687,7 @@ const WorkoutPage = () => {
                 <Ionicons name="pencil" size={18} color="black" />
 
                 <BtnTitle
-                  title="Edit Program"
+                  title="Edit Folder"
                   textStyle={{ fontSize: 14, color: "black" }}
                 />
               </CustomBtn>
@@ -688,7 +706,7 @@ const WorkoutPage = () => {
                   <Ionicons name="trash" size={18} color="#991B1B" />
 
                   <BtnTitle
-                    title="Delete Program"
+                    title="Delete Folder"
                     textStyle={{ fontSize: 14, color: "#991B1B" }}
                   />
                 </CustomBtn>

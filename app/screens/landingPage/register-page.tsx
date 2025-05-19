@@ -492,14 +492,14 @@ const Step3 = ({
             description: "Work out regularly and stay on your feet often",
           },
           {
-            label: "Light",
-            value: "light",
-            description: "Occasional exercise with a mostly relaxed lifestyle",
-          },
-          {
             label: "Moderate",
             value: "moderate",
             description: "Exercise a few times a week and stay fairly active",
+          },
+          {
+            label: "Light",
+            value: "light",
+            description: "Occasional exercise with a mostly relaxed lifestyle",
           },
           {
             label: "Sedentary",
@@ -576,7 +576,7 @@ const Step4 = ({ formData }: { formData: RegisterFormData }) => {
   return (
     <View>
       <Header
-        desc={`Almost done, ${formData.first_name}! Review your information below`}
+        desc={`Almost done, ${formData.username}! Review your information below`}
       />
       <View style={{ backgroundColor: "white", borderRadius: 16 }}>
         <ReviewInfo icon="person" label="Username" data={formData.username} />

@@ -28,6 +28,8 @@ import {
   query,
   where,
   onSnapshot,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 
@@ -71,6 +73,13 @@ const HomeScreen = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [followingMap, setFollowingMap] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [followLoading, setFollowLoading] = useState<{
+    [key: string]: boolean;
+  }>({});
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const router = useRouter();
 
@@ -116,6 +125,9 @@ const HomeScreen = () => {
   //     [postId]: !prev[postId],
   //   }));
   // };
+
+  // check following status
+
   const toggleLike = async (postId: string) => {
     const currentUser = auth.currentUser;
 
@@ -185,6 +197,17 @@ const HomeScreen = () => {
         const workoutDocs = querySnapshot.docs;
 
         const currentUserId = auth.currentUser?.uid;
+
+        // Fetch the list of followed users
+        let followedIds: string[] = [];
+
+        if (currentUserId) {
+          const followingSnapshot = await getDocs(
+            collection(db, "users", currentUserId, "following")
+          );
+          followedIds = followingSnapshot.docs.map((doc) => doc.id);
+        }
+
         const userIds = Array.from(
           new Set(workoutDocs.map((doc) => doc.data().user_id))
         );
@@ -203,7 +226,19 @@ const HomeScreen = () => {
 
         // Create base workout list
         const baseWorkouts: Workout[] = workoutDocs
-          .filter((doc) => doc.data().user_id !== currentUserId)
+          .filter((doc) => {
+            const data = doc.data();
+            const isOwnPost = data.user_id === currentUserId;
+            const isFollowing = followedIds.includes(data.user_id);
+
+            if (activeButton === "following") {
+              // Only show posts by followed users, not yourself
+              return isFollowing && !isOwnPost;
+            }
+
+            // "Discover": show everyone's posts except your own
+            return !isOwnPost;
+          })
           .map((doc) => {
             const data = doc.data();
             return {
@@ -225,6 +260,21 @@ const HomeScreen = () => {
               comment_count: 0,
             };
           });
+
+        if (currentUserId) {
+          const unsubscribeFollowing = onSnapshot(
+            collection(db, "users", currentUserId, "following"),
+            (snapshot) => {
+              const updatedMap: { [key: string]: boolean } = {};
+              snapshot.forEach((doc) => {
+                updatedMap[doc.id] = true;
+              });
+              setFollowingMap(updatedMap);
+            }
+          );
+
+          unsubscribeFns.push(unsubscribeFollowing);
+        }
 
         setWorkouts(baseWorkouts);
 
@@ -284,17 +334,53 @@ const HomeScreen = () => {
     return () => {
       unsubscribeFns.forEach((unsub) => unsub());
     };
-  }, []);
+  }, [activeButton]);
+
+  const handleFollow = async (targetUserId: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    const currentUserId = currentUser.uid;
+
+    const followingRef = doc(
+      db,
+      "users",
+      currentUserId,
+      "following",
+      targetUserId
+    );
+    const followersRef = doc(
+      db,
+      "users",
+      targetUserId,
+      "followers",
+      currentUserId
+    );
+    try {
+      setFollowLoading((prev) => ({ ...prev, [targetUserId]: true }));
+      await setDoc(followingRef, { followed_at: serverTimestamp() });
+      await setDoc(followersRef, { followed_at: serverTimestamp() });
+
+      setFollowingMap((prev) => ({ ...prev, [targetUserId]: true }));
+    } catch (error) {
+      console.error("Error following user:", error);
+    } finally {
+      setFollowLoading((prev) => ({ ...prev, [targetUserId]: false }));
+    }
+  };
 
   return (
-    <View>
+    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
             styles.followingButton,
             activeButton === "following" && styles.activeButton,
           ]}
-          onPress={() => setActiveButton("following")}
+          onPress={() => {
+            setLoading(true);
+            setActiveButton("following");
+          }}
         >
           <Text
             style={[
@@ -310,7 +396,10 @@ const HomeScreen = () => {
             styles.discoverButton,
             activeButton === "discover" && styles.activeButton,
           ]}
-          onPress={() => setActiveButton("discover")}
+          onPress={() => {
+            setLoading(true);
+            setActiveButton("discover");
+          }}
         >
           <Text
             style={[
@@ -323,236 +412,281 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View
-        style={{
-          flexGrow: 1,
-          paddingTop: 16,
-          paddingBottom: 120,
-        }}
-      >
-        {!loading ? (
-          <FlatList
-            data={workouts}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingVertical: 16 }}
-            showsVerticalScrollIndicator={false}
-            overScrollMode="never"
-            renderItem={({ item }) => (
-              <View style={{ paddingVertical: 6 }}>
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: "/screens/home/view-post",
-                      params: {
-                        post_id: item.id, // for fetching the posted images
-                        name: item.userProfile?.username,
-                        fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
-                        email: item.userProfile?.email,
-                        postTitle: item.workout_title,
-                        description: item.workout_description,
-                        time: item.workout_duration,
-                        volume: item.total_volume,
-                        likes: item.like_count,
-                        comments: item.comment_count,
-                        date: item.created_at,
-                        user_id: item.user_id, // for fetching the user profile picture
-                        sets: item.total_sets,
-                        // image_urls: item.image_urls,
-                        // records: item.records,
-                        isLiked: likedPosts[item.id] ? "true" : "false",
-                      },
-                    })
-                  }
-                >
-                  <View style={{ paddingHorizontal: 16 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <TouchableOpacity
+      {activeButton === "following" &&
+      Object.keys(followingMap).length === 0 ? (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 50,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Inter_500Medium",
+              fontSize: 14,
+              textAlign: "center",
+            }}
+          >
+            You are not following anyone yet. Follow some users to see their
+            posts!
+          </Text>
+        </View>
+      ) : (
+        <View
+          style={{
+            flexGrow: 1,
+            paddingTop: 16,
+          }}
+        >
+          {!loading ? (
+            <FlatList
+              data={workouts}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingVertical: 16 }}
+              showsVerticalScrollIndicator={false}
+              overScrollMode="never"
+              renderItem={({ item }) => (
+                <View style={{ paddingVertical: 6 }}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/screens/home/view-post",
+                        params: {
+                          post_id: item.id, // for fetching the posted images
+                          name: item.userProfile?.username,
+                          fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
+                          email: item.userProfile?.email,
+                          postTitle: item.workout_title,
+                          description: item.workout_description,
+                          time: item.workout_duration,
+                          volume: item.total_volume,
+                          likes: item.like_count,
+                          comments: item.comment_count,
+                          date: item.created_at,
+                          user_id: item.user_id, // for fetching the user profile picture
+                          sets: item.total_sets,
+                          // image_urls: item.image_urls,
+                          // records: item.records,
+                          isLiked: likedPosts[item.id] ? "true" : "false",
+                        },
+                      })
+                    }
+                  >
+                    <View style={{ paddingHorizontal: 16 }}>
+                      <View
                         style={{
                           flexDirection: "row",
-                          alignItems: "center",
-                          gap: 5,
+                          justifyContent: "space-between",
                         }}
-                        onPress={() =>
-                          router.push({
-                            pathname: "/screens/home/visit-profile",
-                            params: {
-                              post_id: item.id, // for fetching the posted images
-                              name: item.userProfile?.username,
-                              postTitle: item.workout_title,
-                              description: item.workout_description,
-                              time: item.workout_duration,
-                              volume: item.total_volume,
-                              likes: item.like_count,
-                              comments: item.comment_count,
-                              date: item.created_at,
-                              user_id: item.user_id, // for fetching the user profile picture
-                              // profilePicture: item.userProfile?.profile_picture,
-                              // postedPicture: item.postedPicture,
-                              sets: item.total_sets,
-                              // records: item.records,
-                              fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
-                              email: item.userProfile?.email,
-                              isLiked: likedPosts[item.id] ? "true" : "false",
-                            },
-                          })
-                        }
                       >
-                        <Image
-                          style={styles.profileImage}
-                          source={{
-                            uri:
-                              item.userProfile?.profile_picture ||
-                              "https://avatar.iran.liara.run/public/41",
-                          }}
-                        />
-                        <View>
-                          <Text style={styles.name}>
-                            {item.userProfile?.username}
-                          </Text>
-                          <Text style={styles.active}>{item.created_at}</Text>
-                        </View>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={{ flexDirection: "row" }}>
-                        <Ionicons
-                          name="add-outline"
-                          size={20}
-                          color="#48A6A7"
-                        />
-                        <Text style={styles.followButton}>Follow</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.postTitle}>{item.workout_title}</Text>
-                    <Text style={styles.postDescription}>
-                      {item.workout_description}
-                    </Text>
-                    <View style={{ flexDirection: "row", gap: 40 }}>
-                      <View>
-                        <Text style={styles.timevolume}>Time</Text>
-                        <Text style={styles.itemTimeVolume}>
-                          {item.workout_duration}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text style={styles.timevolume}>Volume</Text>
-                        <Text style={styles.itemTimeVolume}>
-                          {item.total_volume}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  <View style={{ height: 300 }}>
-                    <FlatList
-                      data={item.image_urls}
-                      keyExtractor={(url, index) => index.toString()}
-                      renderItem={({ item: url }) => (
-                        <Image
-                          source={{ uri: url }}
-                          style={styles.postedPicture}
-                          resizeMode="cover"
-                        />
-                      )}
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      onMomentumScrollEnd={(event) => {
-                        const index = Math.round(
-                          event.nativeEvent.contentOffset.x /
-                            event.nativeEvent.layoutMeasurement.width
-                        );
-                        setCurrentImageIndex(index);
-                      }}
-                    />
-                  </View>
-                  {item.image_urls.length > 1 && (
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        marginTop: 8,
-                      }}
-                    >
-                      {item.image_urls.map((_, index) => (
-                        <View
-                          key={index}
+                        <TouchableOpacity
                           style={{
-                            height: 6,
-                            width: 6,
-                            borderRadius: 3,
-                            backgroundColor:
-                              currentImageIndex === index ? "#48A6A7" : "#ccc",
-                            marginHorizontal: 4,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
+                          onPress={() =>
+                            router.push({
+                              pathname: "/screens/home/visit-profile",
+                              params: {
+                                post_id: item.id, // for fetching the posted images
+                                name: item.userProfile?.username,
+                                postTitle: item.workout_title,
+                                description: item.workout_description,
+                                time: item.workout_duration,
+                                volume: item.total_volume,
+                                likes: item.like_count,
+                                comments: item.comment_count,
+                                date: item.created_at,
+                                user_id: item.user_id, // for fetching the user profile picture
+                                // profilePicture: item.userProfile?.profile_picture,
+                                // postedPicture: item.postedPicture,
+                                sets: item.total_sets,
+                                // records: item.records,
+                                fullName: `${item.userProfile?.first_name} ${item.userProfile?.last_name}`,
+                                email: item.userProfile?.email,
+                                isLiked: likedPosts[item.id] ? "true" : "false",
+                              },
+                            })
+                          }
+                        >
+                          <Image
+                            style={styles.profileImage}
+                            source={{
+                              uri:
+                                item.userProfile?.profile_picture ||
+                                "https://avatar.iran.liara.run/public/41",
+                            }}
+                          />
+                          <View>
+                            <Text style={styles.name}>
+                              {item.userProfile?.username}
+                            </Text>
+                            <Text style={styles.active}>{item.created_at}</Text>
+                          </View>
+                        </TouchableOpacity>
+                        {!followingMap[item.user_id] && (
+                          <TouchableOpacity
+                            onPress={() => handleFollow(item.user_id)}
+                          >
+                            {!followLoading[item.user_id] ? (
+                              <View style={{ flexDirection: "row" }}>
+                                <Ionicons
+                                  name="add-outline"
+                                  size={20}
+                                  color="#48A6A7"
+                                />
+                                <Text style={styles.followButton}>Follow</Text>
+                              </View>
+                            ) : (
+                              <ActivityIndicator size="small" color="#48A6A7" />
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                      <Text style={styles.postTitle}>{item.workout_title}</Text>
+                      <Text style={styles.postDescription}>
+                        {item.workout_description}
+                      </Text>
+                      <View style={{ flexDirection: "row", gap: 40 }}>
+                        <View>
+                          <Text style={styles.timevolume}>Time</Text>
+                          <Text style={styles.itemTimeVolume}>
+                            {item.workout_duration}
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={styles.timevolume}>Volume</Text>
+                          <Text style={styles.itemTimeVolume}>
+                            {item.total_volume}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    {item.image_urls && item.image_urls.length > 0 && (
+                      <View style={{ height: 300 }}>
+                        <FlatList
+                          data={item.image_urls}
+                          keyExtractor={(url, index) => index.toString()}
+                          renderItem={({ item: url }) => (
+                            <Image
+                              source={{ uri: url }}
+                              style={styles.postedPicture}
+                              resizeMode="cover"
+                            />
+                          )}
+                          horizontal
+                          pagingEnabled
+                          showsHorizontalScrollIndicator={false}
+                          onMomentumScrollEnd={(event) => {
+                            const index = Math.round(
+                              event.nativeEvent.contentOffset.x /
+                                event.nativeEvent.layoutMeasurement.width
+                            );
+                            setCurrentImageIndex(index);
                           }}
                         />
-                      ))}
-                    </View>
-                  )}
-                </TouchableOpacity>
+                      </View>
+                    )}
 
-                <View style={styles.likesContainer}>
-                  <TouchableOpacity
-                    onPress={() => handleOpenSheet("likes", item.id)}
-                  >
-                    <Text style={styles.likesText}>
-                      {item.like_count} likes
-                    </Text>
+                    {item.image_urls.length > 1 && (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "center",
+                          marginTop: 8,
+                        }}
+                      >
+                        {item.image_urls.map((_, index) => (
+                          <View
+                            key={index}
+                            style={{
+                              height: 6,
+                              width: 6,
+                              borderRadius: 3,
+                              backgroundColor:
+                                currentImageIndex === index
+                                  ? "#48A6A7"
+                                  : "#ccc",
+                              marginHorizontal: 4,
+                            }}
+                          />
+                        ))}
+                      </View>
+                    )}
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleOpenSheet("comments", item.id)}
-                  >
-                    <Text style={styles.likesText}>
-                      {item.comment_count} comments
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
-                <View style={styles.likeCommentShareContainer}>
-                  <TouchableOpacity onPress={() => toggleLike(item.id)}>
-                    <Ionicons
-                      style={styles.icons}
-                      name={
-                        likedPosts[item.id] === true
-                          ? "thumbs-up-sharp"
-                          : "thumbs-up-outline"
-                      }
-                      size={24}
-                      color={
-                        likedPosts[item.id] === true ? "#48A6A7" : "#606060"
-                      }
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => handleOpenSheet("comments", item.id)}
-                  >
-                    <Ionicons
-                      style={styles.icons}
-                      name="chatbubble-outline"
-                      size={24}
-                      color="#606060"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity>
-                    <Ionicons
-                      style={styles.icons}
-                      name="share-outline"
-                      size={24}
-                      color="#606060"
-                    />
-                  </TouchableOpacity>
+                  <View style={styles.likesContainer}>
+                    <TouchableOpacity
+                      onPress={() => handleOpenSheet("likes", item.id)}
+                    >
+                      <Text style={styles.likesText}>
+                        {item.like_count} likes
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleOpenSheet("comments", item.id)}
+                    >
+                      <Text style={styles.likesText}>
+                        {item.comment_count} comments
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.likeCommentShareContainer}>
+                    <TouchableOpacity onPress={() => toggleLike(item.id)}>
+                      <Ionicons
+                        style={styles.icons}
+                        name={
+                          likedPosts[item.id] === true
+                            ? "thumbs-up-sharp"
+                            : "thumbs-up-outline"
+                        }
+                        size={24}
+                        color={
+                          likedPosts[item.id] === true ? "#48A6A7" : "#606060"
+                        }
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleOpenSheet("comments", item.id)}
+                    >
+                      <Ionicons
+                        style={styles.icons}
+                        name="chatbubble-outline"
+                        size={24}
+                        color="#606060"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                      <Ionicons
+                        style={styles.icons}
+                        name="share-outline"
+                        size={24}
+                        color="#606060"
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            )}
-          />
-        ) : (
-          <ActivityIndicator size="large" color="#48A6A7" />
-        )}
-      </View>
+              )}
+            />
+          ) : (
+            <View
+              style={{
+                height: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <ActivityIndicator size="large" color="#48A6A7" />
+            </View>
+          )}
+        </View>
+      )}
 
       <BottomSheetComments
         title="sample"

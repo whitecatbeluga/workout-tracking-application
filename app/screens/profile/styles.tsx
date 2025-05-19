@@ -5,6 +5,7 @@ const Styles = StyleSheet.create({
   profileImage: {
     width: 50,
     height: 50,
+    borderRadius: 25,
   },
   profileName: {
     fontSize: 16,
@@ -25,7 +26,7 @@ const Styles = StyleSheet.create({
   tabContainer: {
     flexDirection: "row",
     marginBottom: 10,
-
+    paddingHorizontal: 20,
     gap: 10,
     justifyContent: "space-between",
   },
@@ -73,6 +74,7 @@ const Styles = StyleSheet.create({
   dashboardContainer: {
     gap: 6,
     justifyContent: "space-between",
+    paddingHorizontal: 20
   },
   dashboardButton: {
     width: "100%",

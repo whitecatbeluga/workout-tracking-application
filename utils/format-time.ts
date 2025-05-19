@@ -6,11 +6,11 @@ export const formatTime = (time: number) => {
   let formatted = "";
 
   if (hours > 0) {
-    formatted += `${hours} h `;
+    formatted += `${hours}h `;
   }
   if (minutes > 0 || hours > 0) {
-    formatted += `${minutes} min `;
+    formatted += `${minutes}min `;
   }
-  formatted += `${seconds} s`;
+  formatted += `${seconds}s`;
   return formatted.trim();
 };

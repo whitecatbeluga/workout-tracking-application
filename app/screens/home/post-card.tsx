@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/utils/firebase-config";
 import { Dimensions } from "react-native";
+import { formatTime } from "@/utils/format-time";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -184,7 +184,9 @@ const PostCard = ({
         style={{
           flex: 1,
           justifyContent: "center",
-          backgroundColor: "#FFFFFF",
+          alignItems: "center",
+          backgroundColor: "white",
+          height: 550,
         }}
       >
         <ActivityIndicator size="large" color="#48A6A7" />
@@ -265,45 +267,47 @@ const PostCard = ({
           <View style={{ flexDirection: "row", gap: 46 }}>
             <View>
               <Text style={styles.tvsr}>Time</Text>
-              <Text>{time}</Text>
+              <Text>{formatTime(parseInt(time))}</Text>
             </View>
             <View>
               <Text style={styles.tvsr}>Volume</Text>
-              <Text>{volume}</Text>
+              <Text>{volume} kg</Text>
             </View>
             <View>
               <Text style={styles.tvsr}>Sets</Text>
               <Text>{sets}</Text>
             </View>
             <View>
-              <Text style={styles.tvsr}>Records</Text>
-              <Text>{records}</Text>
+              {/* <Text style={styles.tvsr}>Records</Text>
+              <Text>{records}</Text> */}
             </View>
           </View>
         </View>
-        <View style={{ height: 300 }}>
-          <FlatList
-            data={image_urls}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(url, index) => index.toString()}
-            renderItem={({ item: url }) => (
-              <Image
-                source={{ uri: url }}
-                style={styles.postedPicture}
-                resizeMode="cover"
-              />
-            )}
-            onMomentumScrollEnd={(event) => {
-              const index = Math.round(
-                event.nativeEvent.contentOffset.x /
-                  event.nativeEvent.layoutMeasurement.width
-              );
-              setCurrentImageIndex(index);
-            }}
-          />
-        </View>
+        {image_urls && image_urls.length > 0 && (
+          <View style={{ height: 300 }}>
+            <FlatList
+              data={image_urls}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(url, index) => index.toString()}
+              renderItem={({ item: url }) => (
+                <Image
+                  source={{ uri: url }}
+                  style={styles.postedPicture}
+                  resizeMode="cover"
+                />
+              )}
+              onMomentumScrollEnd={(event) => {
+                const index = Math.round(
+                  event.nativeEvent.contentOffset.x /
+                    event.nativeEvent.layoutMeasurement.width
+                );
+                setCurrentImageIndex(index);
+              }}
+            />
+          </View>
+        )}
 
         {image_urls.length > 1 && (
           <View

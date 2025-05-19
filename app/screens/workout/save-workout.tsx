@@ -208,7 +208,7 @@ const SaveWorkout = () => {
 
       // Save workout metadata
       await setDoc(workoutRef, {
-        workout_duration: "TBD",
+        workout_duration: duration,
         total_volume: totalVolumeSets.totalVolume,
         total_sets: totalVolumeSets.totalSets,
         workout_title: workoutTitle,

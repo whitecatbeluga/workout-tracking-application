@@ -1,31 +1,99 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getDocs, collection, query, where } from "firebase/firestore";
-import { db } from "@/utils/firebase-config";
-import { auth } from "@/utils/firebase-config";
+import {
+  getDocs,
+  collection,
+  query,
+  where,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import { db, auth } from "@/utils/firebase-config";
 import { MarkedDate } from "../../custom-types/calendar-type";
+import { formatDistanceToNow } from "date-fns";
 
 export const fetchMarkedDates = createAsyncThunk(
   "calendar/fetchMarkedDates",
   async (_, thunkAPI) => {
+    // try {
+    //   const user_id = auth.currentUser?.uid;
+    //   const workoutsCollectionRef = collection(db, "workouts");
+    //   const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
+    //   const workoutsSnapshot = await getDocs(q);
+    //   const markedDates = workoutsSnapshot.docs
+    //     .map((doc) => {
+    //       const data = doc.data();
+    //       const date = data?.created_at?.toDate()?.toISOString().split("T")[0];
+    //       const img_url = data?.image_urls?.[0] ?? undefined;
+    //       if (!date) return null;
+    //       return { date, img_url };
+    //     })
+    //     .filter((entry): entry is MarkedDate => entry !== null);
+    //   return markedDates;
+    // } catch (err) {
+    //   return thunkAPI.rejectWithValue("Failed to fetch calendar data");
+    // }
     try {
       const user_id = auth.currentUser?.uid;
       const workoutsCollectionRef = collection(db, "workouts");
       const q = query(workoutsCollectionRef, where("user_id", "==", user_id));
       const workoutsSnapshot = await getDocs(q);
 
-      const markedDates = workoutsSnapshot.docs
-        .map((doc) => {
-          const data = doc.data();
+      const markedDates = await Promise.all(
+        workoutsSnapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          const workoutId = docSnap.id;
           const date = data?.created_at?.toDate()?.toISOString().split("T")[0];
           const img_url = data?.image_urls?.[0] ?? undefined;
           if (!date) return null;
-          return { date, img_url };
-        })
-        .filter((entry): entry is MarkedDate => entry !== null);
 
-      return markedDates;
-    } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to fetch calendar data");
+          const likesCollectionRef = collection(
+            db,
+            "workouts",
+            workoutId,
+            "likes"
+          );
+          const commentsCollectionRef = collection(
+            db,
+            "workouts",
+            workoutId,
+            "comments"
+          );
+
+          const [likesSnapshot, commentsSnapshot] = await Promise.all([
+            getDocs(likesCollectionRef),
+            getDocs(commentsCollectionRef),
+          ]);
+
+          let liked_by_current_user = false;
+          if (user_id) {
+            const userLikeDoc = await getDoc(
+              doc(db, "workouts", workoutId, "likes", user_id)
+            );
+            liked_by_current_user = userLikeDoc.exists();
+          }
+
+          return {
+            date,
+            img_url,
+            id: workoutId,
+            postTitle: data.workout_title,
+            postDescription: data.workout_description,
+            postDuration: data.workout_duration,
+            created_at: formatDistanceToNow(
+              data.created_at.toDate?.() || data.created_at,
+              { addSuffix: true }
+            ),
+            total_sets: data.total_sets,
+            total_volume: data.total_volume,
+            like_count: likesSnapshot.size,
+            comment_count: commentsSnapshot.size,
+            liked_by_current_user,
+          };
+        })
+      );
+      return markedDates.filter((entry): entry is MarkedDate => entry !== null);
+    } catch (error) {
+      return thunkAPI.rejectWithValue("Failed to fetch calendar data.");
     }
   }
 );
